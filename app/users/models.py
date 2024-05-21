@@ -14,7 +14,7 @@ from core.database.db import Base
 
 
 class User(Base):
-    __tablename__ = 'users'
+    __tablename__ = "users"
 
     id = Column(
         Integer,
@@ -28,13 +28,11 @@ class User(Base):
     is_active = Column(Boolean, default=False)
     username = Column(String(256), unique=True)
     date_joined = Column(DateTime, server_default=sql.func.now())
-    profile = relationship(
-        "Profile", uselist=False, back_populates="user"
-    )
+    profile = relationship("Profile", uselist=False, back_populates="user")
 
 
 class Profile(Base):
-    __tablename__ = 'profiles'
+    __tablename__ = "profiles"
 
     id = Column(
         Integer,

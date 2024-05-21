@@ -42,5 +42,5 @@ class ProfileCRUD:
             except TypeError:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Такой профиль не найден"
+                    detail="Такой профиль не найден",
                 )

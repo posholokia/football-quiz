@@ -1,7 +1,7 @@
 from typing import Annotated
-from annotated_types import MinLen, MaxLen
+from annotated_types import MaxLen
 
-from pydantic import BaseModel, EmailStr, field_validator
+from pydantic import BaseModel
 
 
 class ProfileSchema(BaseModel):

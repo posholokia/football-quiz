@@ -14,7 +14,7 @@ router = APIRouter()
 
 @router.post("/create_profile/", status_code=status.HTTP_201_CREATED)
 async def create_profile(
-        session: AsyncSession = Depends(get_session),
+    session: AsyncSession = Depends(get_session),
 ) -> ProfileSchema:
     """Создать профиль игрока"""
     crud = ProfileCRUD(session)
