@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "football-quiz-fun"
+version = "1.0"
+description = "API для мобильного приложения Футбольная викторина"
+authors = ["posholokia <ilya.posholokk@gmail.com>"]
+readme = "README.md"
+packages = [{include = "football_quiz"}]
+
+[tool.poetry.dependencies]
+python = "^3.12"
+fastapi = "^0.111.0"
+alembic = "^1.13.1"
+sqlalchemy = "^2.0.30"
+pydantic = "^2.7.1"
+asyncpg = "^0.29.0"
+psycopg2-binary = "^2.9.9"
+gunicorn = "^22.0.0"
+uvicorn = "^0.29.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

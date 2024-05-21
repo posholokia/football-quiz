@@ -1,0 +1,41 @@
+stages:
+  - build
+  - deploy
+
+
+.common:
+  only:
+    - master
+  tags:
+    - back
+
+
+build:
+  stage: build
+  before_script:
+    - echo "$DOCKER_KEY" | docker login --username $DOCKER_USER --password-stdin
+  script:
+    - docker build --network host -t $CI_REGISTRY_IMAGE .
+    - docker push $CI_REGISTRY_IMAGE
+  extends: .common
+
+deploy:
+  stage: deploy
+  image: docker:20.10-git
+  dependencies:
+    - build
+  before_script:
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - eval $(ssh-agent -s)
+    - echo "${SSH_PRIVATE_KEY}" | tr -d '\r' | ssh-add -
+    - echo "$DOCKER_KEY" | docker login --username $DOCKER_USER --password-stdin
+  script:
+    - docker pull $CI_REGISTRY_IMAGE
+    - docker run --rm --env-file $env --network db-net $CI_REGISTRY_IMAGE -m alembic upgrade head
+    - docker stack deploy --with-registry-auth --resolve-image always -c ./.ci/docker/app.yml back
+  after_script:
+    - rm -r -f ~/.ssh
+    - docker image prune -f -a && docker container prune -f || true
+  extends: .common
+

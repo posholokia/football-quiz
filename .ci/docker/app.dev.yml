@@ -1,0 +1,42 @@
+version: "3.8"
+
+services:
+  fastapi-quiz:
+    container_name: fastapi-quiz
+    build:
+      context: ../../
+      dockerfile: Dockerfile
+    env_file:
+      - ../../.env
+    tty: true
+    ports:
+      - "8000:8000"
+    networks:
+      - dev-net
+
+  quiz-db:
+    container_name: quiz-db
+    image: postgres:15
+    environment:
+      POSTGRES_DB: "quiz"
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "123456"
+    ports:
+      - "5432:5432"
+    networks:
+      - dev-net
+    volumes:
+      - fqdb_data:/var/lib/postgresql/data/
+      - /var/run/docker.sock:/var/run/docker.sock
+
+
+volumes:
+  fqdb_data:
+    name: fqdb_data
+
+
+networks:
+  dev-net:
+    name: dev-net
+    driver: bridge
+    external: true
