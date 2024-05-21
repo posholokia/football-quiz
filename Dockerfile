@@ -13,7 +13,8 @@ WORKDIR /app
 RUN apt-get update -y && \
     apt-get install -y gcc \
     musl-dev \
-    libpq-dev
+    libpq-dev \
+    curl
 
 
 RUN python3 -m pip install --no-cache-dir --no-warn-script-location --upgrade pip &&\
