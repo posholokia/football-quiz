@@ -11,7 +11,7 @@ services:
        - db-net
        - service-net
     healthcheck:
-      test: "curl --fail http://localhost:8000/api/v1/heathcheck/"
+      test: "curl --fail http://localhost:8000/api/v1/healthcheck/"
       interval: 10s
       timeout: 2s
       retries: 3
