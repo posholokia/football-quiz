@@ -31,3 +31,12 @@ services:
       rollback_config:
         parallelism: 0
         order: stop-first
+
+
+networks:
+  nginx-net:
+    external: true
+  db-net:
+    external: true
+  service-net:
+    external: true
