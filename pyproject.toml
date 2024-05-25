@@ -22,3 +22,21 @@ ruff = "^0.4.4"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.ruff]
+exclude = [
+    ".ci",
+    ".ruff_cache",
+    ".venv",
+    "venv",
+    "core/database/base.py",
+    "core/database/migrations",
+    ]
+
+line-length = 79
+indent-width = 4
+
+target-version = "py312"
+
+[tool.ruff.lint]
+ignore = ["E712"]

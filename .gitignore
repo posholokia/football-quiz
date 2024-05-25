@@ -3,3 +3,4 @@ __pycache__
 .idea
 Makefile
 .env
+.ruff_cache
