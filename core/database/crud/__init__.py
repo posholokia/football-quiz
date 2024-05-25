@@ -1,3 +1,9 @@
-from .profile import ProfileCRUD
+from .users_db import ProfileCRUD, StatisticsCRUD
+from .quiz_db import QuestionsCRUD
 
-__all__ = ("ProfileCRUD",)
+
+__all__ = (
+    "ProfileCRUD",
+    "StatisticsCRUD",
+    "QuestionsCRUD",
+)

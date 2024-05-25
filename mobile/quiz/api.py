@@ -1,9 +1,11 @@
 from fastapi import Depends, APIRouter
 from fastapi.security import HTTPBearer
 
+from starlette import status
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from core.database.crud.questions import QuestionsCRUD
+from core.database.crud import QuestionsCRUD
 from core.database.db import get_session
 from core.security.mobile_auth import MobileAuthorizationCredentials
 from core.security.utils import get_device_exists_profile
@@ -14,7 +16,7 @@ router = APIRouter()
 http_bearer = HTTPBearer()
 
 
-@router.get("/get_questions/")
+@router.get("/get_questions/", status_code=status.HTTP_200_OK)
 async def get_questions(
     limit: int = 10,
     session: AsyncSession = Depends(get_session),
