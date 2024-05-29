@@ -1,14 +1,31 @@
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, update, desc
 from dataclasses import dataclass
 
-from services.storage_service.dto import StatisticDTO, ProfileDTO
-from apps.users.models import Statistic, Profile
-from services.storage_service.user_db.converter import statistics_orm_row_to_entity, profile_model_to_dto, \
-    profile_orm_row_to_entity
+from sqlalchemy import (
+    desc,
+    select,
+    update,
+)
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql import func
 
-from services.storage_service.base import IStatisticService, IProfileService
+from apps.users.models import (
+    Profile,
+    Statistic,
+)
+
+from services.storage_service.base import (
+    IProfileService,
+    IStatisticService,
+)
+from services.storage_service.dto import (
+    ProfileDTO,
+    StatisticDTO,
+)
+from services.storage_service.user_db.converter import (
+    profile_model_to_dto,
+    profile_orm_row_to_entity,
+    statistics_orm_row_to_entity,
+)
 
 
 @dataclass
@@ -66,18 +83,18 @@ class ORMStatisticService(IStatisticService):
         self.session.add(profile_statistic)
 
     async def get_user_statistics(
-            self, pk: int,
+        self,
+        pk: int,
     ) -> StatisticDTO:
-        query = (select(Statistic).
-                 where(Statistic.profile_id == pk))
+        query = select(Statistic).where(Statistic.profile_id == pk)
         res = await self.session.execute(query)
         orm_result = res.fetchone()
 
         return await statistics_orm_row_to_entity(orm_result[0])
 
     async def update_user_statistics(
-            self,
-            new_stat: StatisticDTO,
+        self,
+        new_stat: StatisticDTO,
     ) -> StatisticDTO:
         query = (
             update(Statistic)
@@ -97,22 +114,17 @@ class ORMStatisticService(IStatisticService):
         return await statistics_orm_row_to_entity(orm_result[0])
 
     async def get_user_rank(
-            self,
-            new_stat: StatisticDTO,
+        self,
+        new_stat: StatisticDTO,
     ) -> int:
-        subquery = (
-            select(
-                Statistic.id,
-                Statistic.score,
-                func.row_number().over(
-                    order_by=[desc(Statistic.score), desc(Statistic.games)]
-                ).label('rank')
-            ).subquery()
-        )
-        query = (
-            select(subquery.c.rank)
-            .where(subquery.c.id == new_stat.id)
-        )
+        subquery = select(
+            Statistic.id,
+            Statistic.score,
+            func.row_number()
+            .over(order_by=[desc(Statistic.score), desc(Statistic.games)])
+            .label("rank"),
+        ).subquery()
+        query = select(subquery.c.rank).where(subquery.c.id == new_stat.id)
 
         result = await self.session.execute(query)
         rank = result.fetchone()[0]
@@ -120,21 +132,25 @@ class ORMStatisticService(IStatisticService):
         return rank
 
     async def get_changed_statistic(
-            self,
-            current_place: int,
-            new_place: int,
+        self,
+        current_place: int,
+        new_place: int,
     ) -> list[StatisticDTO]:
-        start, end = (current_place, new_place) \
-            if current_place < new_place \
+        start, end = (
+            (current_place, new_place)
+            if current_place < new_place
             else (new_place, current_place)
-        subquery = (
-            select(
-                Statistic,
-                func.row_number().over(
-                    order_by=[desc(Statistic.score), ]
-                ).label('rank')
-            ).subquery()
         )
+        subquery = select(
+            Statistic,
+            func.row_number()
+            .over(
+                order_by=[
+                    desc(Statistic.score),
+                ]
+            )
+            .label("rank"),
+        ).subquery()
         query = (
             select(Statistic)
             .join(subquery, subquery.c.id == Statistic.id)

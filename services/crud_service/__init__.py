@@ -1,5 +1,8 @@
-from .crud_users import ProfileCRUD, StatisticsCRUD
 from .crud_quiz import QuestionsCRUD
+from .crud_users import (
+    ProfileCRUD,
+    StatisticsCRUD,
+)
 
 
 __all__ = (

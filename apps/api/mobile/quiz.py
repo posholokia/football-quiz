@@ -1,13 +1,19 @@
-from fastapi import Depends, APIRouter
+from fastapi import (
+    APIRouter,
+    Depends,
+)
 from fastapi.security import HTTPBearer
-
 from starlette import status
 
-from services.crud_service import QuestionsCRUD
+from apps.quiz.schema import QuestionSchema
+
 from core.security.mobile_auth import MobileAuthorizationCredentials
 from core.security.utils import check_device_profile_exists
-from apps.quiz.schema import QuestionSchema
+
+from services.crud_service import QuestionsCRUD
+
 from .depends import get_auth_credentials
+
 
 router = APIRouter()
 http_bearer = HTTPBearer()

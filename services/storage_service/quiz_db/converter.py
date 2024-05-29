@@ -2,10 +2,15 @@ from typing import Sequence
 
 from sqlalchemy.engine.row import Row
 
-from services.storage_service.dto import QuestionDTO, AnswerDTO
+from services.storage_service.dto import (
+    AnswerDTO,
+    QuestionDTO,
+)
 
 
-async def list_question_orm_row_to_dto(orm_result: Sequence[Row]) -> list[QuestionDTO]:
+async def list_question_orm_row_to_dto(
+    orm_result: Sequence[Row],
+) -> list[QuestionDTO]:
     question_list = []
     for question in orm_result:
         answer_list = []

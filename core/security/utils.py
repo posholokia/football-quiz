@@ -1,8 +1,10 @@
 import string
+
 from fastapi import HTTPException
 from starlette import status
 
 from core.security.mobile_auth import MobileAuthorizationCredentials
+
 from services.crud_service import ProfileCRUD
 
 

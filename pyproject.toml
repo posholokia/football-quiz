@@ -19,6 +19,9 @@ uvicorn = "^0.29.0"
 ruff = "^0.4.4"
 
 
+[tool.poetry.group.dev.dependencies]
+isort = "^5.13.2"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
@@ -63,13 +66,19 @@ skip_glob=[
     ".ruff_cache",
     "venv",
 ]
-known_django=["django","ninja"]
-known_first_party=["core"]
+known_fastapi=["fastapi", "starlette", "sqlalchemy"]
+known_firstparty=["apps"]
+known_secondparty=["core"]
+known_thirdparty=["services"]
+known_fourparty=["config"]
+
 sections=[
     "FUTURE",
     "STDLIB",
-    "DJANGO",
-    "THIRDPARTY",
+    "FASTAPI",
     "FIRSTPARTY",
+    "SECONDPARTY",
+    "THIRDPARTY",
+    "FOURPARTY",
     "LOCALFOLDER",
 ]

@@ -1,15 +1,17 @@
 from typing import Optional
 
-from fastapi import HTTPException
-from starlette import status
-
-from fastapi import Depends
+from fastapi import (
+    Depends,
+    HTTPException,
+)
 from fastapi.security import HTTPBearer
+from starlette import status
 
 from core.security.mobile_auth import (
     HTTPDevice,
     MobileAuthorizationCredentials,
 )
+
 
 http_bearer_no_error = HTTPBearer(auto_error=False)
 http_device = HTTPDevice()

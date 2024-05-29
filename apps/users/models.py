@@ -1,11 +1,11 @@
 from sqlalchemy import (
-    Column,
-    String,
-    Integer,
-    DateTime,
     Boolean,
-    sql,
+    Column,
+    DateTime,
     ForeignKey,
+    Integer,
+    sql,
+    String,
     UniqueConstraint,
 )
 from sqlalchemy.orm import relationship
@@ -28,9 +28,7 @@ class User(Base):
     is_active = Column(Boolean, default=False)
     username = Column(String(256), unique=True)
     date_joined = Column(DateTime, server_default=sql.func.now())
-    profile = relationship(
-        "Profile", uselist=False, back_populates="user"
-    )
+    profile = relationship("Profile", uselist=False, back_populates="user")
 
 
 class Profile(Base):
@@ -72,6 +70,4 @@ class Statistic(Base):
     profile_id = Column(Integer, ForeignKey("profiles.id"), nullable=False)
     profile = relationship("Profile", back_populates="statistic")
 
-    __table_args__ = (
-        UniqueConstraint("profile_id"),
-    )
+    __table_args__ = (UniqueConstraint("profile_id"),)

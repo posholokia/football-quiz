@@ -1,7 +1,14 @@
-from services.storage_service.dto import StatisticDTO, ProfileDTO
 from sqlalchemy.engine.row import Row
 
-from apps.users.models import Statistic, Profile
+from apps.users.models import (
+    Profile,
+    Statistic,
+)
+
+from services.storage_service.dto import (
+    ProfileDTO,
+    StatisticDTO,
+)
 
 
 async def statistics_orm_row_to_entity(orm_result: Row) -> StatisticDTO:

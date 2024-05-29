@@ -1,6 +1,6 @@
 from typing import Annotated
-from annotated_types import MaxLen
 
+from annotated_types import MaxLen
 from pydantic import BaseModel
 
 

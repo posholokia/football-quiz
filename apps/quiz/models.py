@@ -1,13 +1,16 @@
 from typing import List
 
 from sqlalchemy import (
-    Column,
-    Integer,
     Boolean,
+    Column,
     ForeignKey,
+    Integer,
     Text,
 )
-from sqlalchemy.orm import relationship, Mapped
+from sqlalchemy.orm import (
+    Mapped,
+    relationship,
+)
 
 from core.database.db import Base
 

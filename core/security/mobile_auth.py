@@ -1,8 +1,8 @@
 from typing import Optional
 
 from fastapi import Request
-from fastapi.security.base import SecurityBase
 from fastapi.openapi.models import APIKey
+from fastapi.security.base import SecurityBase
 
 from pydantic.main import BaseModel
 

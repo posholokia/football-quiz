@@ -1,14 +1,30 @@
-from fastapi import Depends, APIRouter
+from fastapi import (
+    APIRouter,
+    Depends,
+)
 from fastapi.security import HTTPBearer
-
 from starlette import status
 
-from apps.users.schema import ProfileSchema, SetStatisticsSchema, GetStatisticsSchema, UpdateProfileSchema
+from apps.users.schema import (
+    GetStatisticsSchema,
+    ProfileSchema,
+    SetStatisticsSchema,
+    UpdateProfileSchema,
+)
 
-from services.crud_service import ProfileCRUD, StatisticsCRUD
 from core.security.mobile_auth import MobileAuthorizationCredentials
-from core.security.utils import check_device_permissions, check_device_token
+from core.security.utils import (
+    check_device_permissions,
+    check_device_token,
+)
+
+from services.crud_service import (
+    ProfileCRUD,
+    StatisticsCRUD,
+)
+
 from .depends import get_auth_credentials
+
 
 router = APIRouter()
 http_bearer = HTTPBearer()
@@ -16,7 +32,7 @@ http_bearer = HTTPBearer()
 
 @router.post("/create_profile/", status_code=status.HTTP_201_CREATED)
 async def create_profile(
-        cred: MobileAuthorizationCredentials = Depends(get_auth_credentials),
+    cred: MobileAuthorizationCredentials = Depends(get_auth_credentials),
 ):
     """Создать профиль игрока"""
     if cred.type == "device":
@@ -29,8 +45,8 @@ async def create_profile(
 
 @router.get("/get_profile/{pk}/", status_code=status.HTTP_200_OK)
 async def get_profile(
-        pk: int,
-        cred: MobileAuthorizationCredentials = Depends(get_auth_credentials),
+    pk: int,
+    cred: MobileAuthorizationCredentials = Depends(get_auth_credentials),
 ) -> ProfileSchema:
     """Получить данные профиля по id"""
     await check_device_permissions(pk, cred)
@@ -42,25 +58,26 @@ async def get_profile(
 
 @router.patch("/change_profile/{pk}/", status_code=status.HTTP_200_OK)
 async def change_profile(
-        pk: int,
-        profile: UpdateProfileSchema,
-        cred: MobileAuthorizationCredentials = Depends(get_auth_credentials),
+    pk: int,
+    profile: UpdateProfileSchema,
+    cred: MobileAuthorizationCredentials = Depends(get_auth_credentials),
 ) -> ProfileSchema:
     """Смена имени пользователя"""
     await check_device_permissions(pk, cred)
     crud = await ProfileCRUD.start()
     async with crud.session.begin():
         profile = await crud.patch(
-            pk, name=profile.name,
+            pk,
+            name=profile.name,
         )
     return profile
 
 
 @router.post("/user_statistic/{pk}/")
 async def set_user_statistic(
-        pk: int,
-        stat: SetStatisticsSchema,
-        cred: MobileAuthorizationCredentials = Depends(get_auth_credentials),
+    pk: int,
+    stat: SetStatisticsSchema,
+    cred: MobileAuthorizationCredentials = Depends(get_auth_credentials),
 ) -> GetStatisticsSchema:
     """
     Записать статистику за игру у пользователя.\n\n
@@ -78,8 +95,8 @@ async def set_user_statistic(
 
 @router.get("/user_statistic/{pk}/")
 async def get_user_statistic(
-        pk: int,
-        cred: MobileAuthorizationCredentials = Depends(get_auth_credentials),
+    pk: int,
+    cred: MobileAuthorizationCredentials = Depends(get_auth_credentials),
 ) -> GetStatisticsSchema:
     await check_device_permissions(pk, cred)
     crud = await StatisticsCRUD.start()

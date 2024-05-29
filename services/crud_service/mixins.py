@@ -1,5 +1,6 @@
-from sqlalchemy.ext.asyncio import AsyncSession
 from dataclasses import dataclass
+
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.database.db import get_session
 
