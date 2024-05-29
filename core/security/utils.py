@@ -1,11 +1,9 @@
-from sqlalchemy import select
 import string
-from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import HTTPException
 from starlette import status
 
-from mobile.users.models import Profile
 from core.security.mobile_auth import MobileAuthorizationCredentials
+from services.crud_service import ProfileCRUD
 
 
 async def check_device_token(token: str) -> None:
@@ -19,34 +17,37 @@ async def check_device_token(token: str) -> None:
         )
 
 
-async def get_device_exists_profile(
-    token: str,
-    session: AsyncSession,
-) -> int:
-    async with session.begin():
-        stmt = select(Profile.id).where(Profile.device_uuid == token)
-        result = await session.execute(stmt)
-        profile_id = result.fetchone()
+async def check_device_profile_exists(
+    cred: MobileAuthorizationCredentials,
+) -> None:
+    if cred.type == "device":
+        await check_device_token(cred.token)
+        crud = await ProfileCRUD.start()
+        async with crud.session.begin():
+            try:
+                await crud.get_device_profile(cred.token)
+            except TypeError:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Некорректный токен устройства",
+                )
 
-        if not profile_id:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Некорректный токен устройства",
-            )
-
-        return profile_id[0]
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+        )
 
 
 async def check_device_permissions(
     pk: int,
     cred: MobileAuthorizationCredentials,
-    session: AsyncSession,
 ) -> None:
     if cred.type == "device":
         await check_device_token(cred.token)
-        profile_id = await get_device_exists_profile(cred.token, session)
+        crud = await ProfileCRUD.start()
+        async with crud.session.begin():
+            profile = await crud.get(pk)
 
-        if pk == profile_id:
+        if profile.device_uuid == cred.token:
             return
 
     raise HTTPException(

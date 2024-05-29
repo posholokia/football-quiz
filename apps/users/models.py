@@ -55,7 +55,7 @@ class Profile(Base):
 
 
 class Statistic(Base):
-    __tablename__ = "statictics"
+    __tablename__ = "statistics"
 
     id = Column(
         Integer,
@@ -66,10 +66,12 @@ class Statistic(Base):
     )
     games = Column(Integer, default=0)
     score = Column(Integer, default=0)
-    place = Column(Integer)
+    place = Column(Integer, unique=True)
     rights = Column(Integer, default=0)
     wrongs = Column(Integer, default=0)
     profile_id = Column(Integer, ForeignKey("profiles.id"), nullable=False)
     profile = relationship("Profile", back_populates="statistic")
 
-    __table_args__ = (UniqueConstraint("profile_id"),)
+    __table_args__ = (
+        UniqueConstraint("profile_id"),
+    )

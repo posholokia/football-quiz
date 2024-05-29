@@ -9,6 +9,10 @@ class ProfileSchema(BaseModel):
     name: Annotated[str | None, MaxLen(50)]
 
 
+class UpdateProfileSchema(BaseModel):
+    name: Annotated[str | None, MaxLen(50)]
+
+
 class SetStatisticsSchema(BaseModel):
     score: int
     rights: int
