@@ -1,4 +1,4 @@
-FROM python:3.12.2-slim-bullseye
+FROM public.ecr.aws/docker/library/python:3.12.2-slim-bullseye
 
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
@@ -11,7 +11,8 @@ RUN addgroup --gid 1000 app &&\
 WORKDIR /app
 
 RUN apt-get update -y && \
-    apt-get install -y gcc \
+    apt-get install -y apt-utils \
+    gcc \
     musl-dev \
     libpq-dev \
     curl
@@ -20,11 +21,10 @@ RUN apt-get update -y && \
 RUN python3 -m pip install --no-cache-dir --no-warn-script-location --upgrade pip &&\
     python3 -m pip install --no-cache-dir --no-warn-script-location poetry
 
-COPY poetry.lock .
-COPY pyproject.toml .
+COPY poetry.lock pyproject.toml ./
 
 RUN python3 -m poetry config virtualenvs.in-project true &&\
-    python3 -m poetry install --no-cache --no-root -n
+    python3 -m poetry install --no-cache --no-root -n --without dev
 
 COPY . .
 
