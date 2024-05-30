@@ -28,6 +28,7 @@ async def check_device_profile_exists(
         async with crud.session.begin():
             try:
                 await crud.get_device_profile(cred.token)
+                return
             except TypeError:
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
