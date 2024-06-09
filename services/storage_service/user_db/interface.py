@@ -12,7 +12,6 @@ from apps.users.models import (
     Profile,
     Statistic,
 )
-
 from services.storage_service.base import (
     IProfileService,
     IStatisticService,

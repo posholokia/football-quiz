@@ -6,22 +6,22 @@ from fastapi.security import HTTPBearer
 from starlette import status
 
 from apps.users.schema import (
+    ApiKeySchema,
     GetStatisticsSchema,
     ProfileSchema,
     SetStatisticsSchema,
     UpdateProfileSchema,
 )
-
+from core.actions import (
+    ProfileActions,
+    StatisticsActions,
+)
 from core.security.mobile_auth import MobileAuthorizationCredentials
 from core.security.utils import (
     check_device_permissions,
     check_device_token,
 )
-
-from services.crud_service import (
-    ProfileCRUD,
-    StatisticsCRUD,
-)
+from services.firebase import check_firebase_apikey
 
 from .depends import get_auth_credentials
 
@@ -32,14 +32,16 @@ http_bearer = HTTPBearer()
 
 @router.post("/create_profile/", status_code=status.HTTP_201_CREATED)
 async def create_profile(
+    firebase_key: ApiKeySchema,
     cred: MobileAuthorizationCredentials = Depends(get_auth_credentials),
-):
+) -> ProfileSchema:
     """Создать профиль игрока"""
     if cred.type == "device":
         await check_device_token(cred.token)
-    crud = await ProfileCRUD.start()
-    async with crud.session.begin():
-        profile = await crud.create(cred.token)
+    await check_firebase_apikey(firebase_key.api_key)
+
+    crud = await ProfileActions.start_session()
+    profile = await crud.create(cred.token)
     return profile
 
 
@@ -50,9 +52,8 @@ async def get_profile(
 ) -> ProfileSchema:
     """Получить данные профиля по id"""
     await check_device_permissions(pk, cred)
-    crud = await ProfileCRUD.start()
-    async with crud.session.begin():
-        profile = await crud.get(pk)
+    crud = await ProfileActions.start_session()
+    profile = await crud.get(pk)
     return profile
 
 
@@ -64,12 +65,11 @@ async def change_profile(
 ) -> ProfileSchema:
     """Смена имени пользователя"""
     await check_device_permissions(pk, cred)
-    crud = await ProfileCRUD.start()
-    async with crud.session.begin():
-        profile = await crud.patch(
-            pk,
-            name=profile.name,
-        )
+    crud = await ProfileActions.start_session()
+    profile = await crud.patch(
+        pk,
+        name=profile.name,
+    )
     return profile
 
 
@@ -87,9 +87,8 @@ async def set_user_statistic(
     wrongs: количество неверных ответов за игру
     """
     await check_device_permissions(pk, cred)
-    crud = await StatisticsCRUD.start()
-    async with crud.session.begin():
-        user_stat = await crud.patch(pk, stat)
+    crud = await StatisticsActions.start_session()
+    user_stat = await crud.patch(pk, stat)
     return user_stat
 
 
@@ -99,7 +98,6 @@ async def get_user_statistic(
     cred: MobileAuthorizationCredentials = Depends(get_auth_credentials),
 ) -> GetStatisticsSchema:
     await check_device_permissions(pk, cred)
-    crud = await StatisticsCRUD.start()
-    async with crud.session.begin():
-        stat = await crud.get_statistic(pk)
+    crud = await StatisticsActions.start_session()
+    stat = await crud.get_statistic(pk)
     return stat

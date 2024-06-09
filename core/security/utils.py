@@ -3,9 +3,8 @@ import string
 from fastapi import HTTPException
 from starlette import status
 
+from core.actions import ProfileActions
 from core.security.mobile_auth import MobileAuthorizationCredentials
-
-from services.crud_service import ProfileCRUD
 
 
 async def check_device_token(token: str) -> None:
@@ -24,20 +23,19 @@ async def check_device_profile_exists(
 ) -> None:
     if cred.type == "device":
         await check_device_token(cred.token)
-        crud = await ProfileCRUD.start()
-        async with crud.session.begin():
-            try:
-                await crud.get_device_profile(cred.token)
-                return
-            except TypeError:
-                raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="Некорректный токен устройства",
-                )
+        crud = await ProfileActions.start_session()
+        try:
+            await crud.get_device_profile(cred.token)
+            return
+        except TypeError:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Некорректный токен устройства",
+            )
 
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-        )
+    raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+    )
 
 
 async def check_device_permissions(
@@ -46,9 +44,8 @@ async def check_device_permissions(
 ) -> None:
     if cred.type == "device":
         await check_device_token(cred.token)
-        crud = await ProfileCRUD.start()
-        async with crud.session.begin():
-            profile = await crud.get(pk)
+        crud = await ProfileActions.start_session()
+        profile = await crud.get(pk)
 
         if profile.device_uuid == cred.token:
             return

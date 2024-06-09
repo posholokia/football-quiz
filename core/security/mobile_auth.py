@@ -1,10 +1,10 @@
 from typing import Optional
 
+from pydantic.main import BaseModel
+
 from fastapi import Request
 from fastapi.openapi.models import APIKey
 from fastapi.security.base import SecurityBase
-
-from pydantic.main import BaseModel
 
 
 api_key_scheme = {

@@ -6,11 +6,9 @@ from fastapi.security import HTTPBearer
 from starlette import status
 
 from apps.quiz.schema import QuestionSchema
-
+from core.actions import QuestionsActions
 from core.security.mobile_auth import MobileAuthorizationCredentials
 from core.security.utils import check_device_profile_exists
-
-from services.crud_service import QuestionsCRUD
 
 from .depends import get_auth_credentials
 
@@ -26,7 +24,6 @@ async def get_questions(
 ) -> list[QuestionSchema]:
     """Получение выборки вопросов"""
     await check_device_profile_exists(cred)
-    crud = await QuestionsCRUD.start()
-    async with crud.session.begin():
-        questions = await crud.get(limit)
+    crud = await QuestionsActions.start_session()
+    questions = await crud.get(limit)
     return questions

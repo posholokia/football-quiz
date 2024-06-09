@@ -13,14 +13,21 @@ alembic = "^1.13.1"
 sqlalchemy = "^2.0.30"
 pydantic = "^2.7.1"
 asyncpg = "^0.29.0"
-psycopg2-binary = "^2.9.9"
+psycopg2 = "^2.9.9"
 gunicorn = "^22.0.0"
 uvicorn = "^0.29.0"
-ruff = "^0.4.4"
+requests = "^2.32.3"
+google-api-python-client = "^2.132.0"
+google-auth-httplib2 = "^0.2.0"
+google-auth-oauthlib = "^1.2.0"
+aiohttp = "^3.9.5"
 
 
 [tool.poetry.group.dev.dependencies]
 isort = "^5.13.2"
+ruff = "^0.4.4"
+psycopg2-binary = "^2.9.9"
+
 
 [build-system]
 requires = ["poetry-core"]
@@ -45,6 +52,7 @@ target-version = "py312"
 ignore = ["E712"]
 
 [tool.isort]
+order_by_type = true
 multi_line_output=3
 include_trailing_comma=true
 line_length=120
@@ -65,20 +73,17 @@ skip_glob=[
     ".ci",
     ".ruff_cache",
     "venv",
+    "core/database/migrations"
 ]
+default_section = "THIRDPARTY"
 known_fastapi=["fastapi", "starlette", "sqlalchemy"]
-known_firstparty=["apps"]
-known_secondparty=["core"]
-known_thirdparty=["services"]
-known_fourparty=["config"]
+known_firstparty=["apps", "config", "core", "services"]
 
 sections=[
     "FUTURE",
     "STDLIB",
+    "THIRDPARTY",
     "FASTAPI",
     "FIRSTPARTY",
-    "SECONDPARTY",
-    "THIRDPARTY",
-    "FOURPARTY",
     "LOCALFOLDER",
 ]
