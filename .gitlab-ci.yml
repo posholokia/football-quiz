@@ -33,7 +33,7 @@ deploy:
   script:
     - docker pull $CI_REGISTRY_IMAGE
     - docker run --rm --env-file $env --network db-net $CI_REGISTRY_IMAGE -m alembic upgrade head
-    - docker stack deploy --with-registry-auth --resolve-image always -c ./.ci/docker/app.yml back
+    - CONFIG_VERSION=$(date +%Y%m%d%H%m%s) docker stack deploy --with-registry-auth --resolve-image always -c ./.ci/docker/app.yml back
   after_script:
     - rm -r -f ~/.ssh
     - docker image prune -f -a && docker container prune -f || true
