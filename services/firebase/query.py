@@ -24,15 +24,15 @@ async def _get_remote_config() -> ClientResponse:
     cred = await _get_credentials()
     headers = {"Authorization": "Bearer " + cred.token}
     async with aiohttp.ClientSession() as session:
-        response = await session.get(
+        async with session.get(
             REMOTE_CONFIG_URL,
             headers=headers,
-        )
-        if response.status != 200:
-            raise HTTPException(
-                status_code=503,
-                detail="Не удалось загрузить RemoteConfig из Firebase",
-            )
+        ) as response:
+            if response.status != 200:
+                raise HTTPException(
+                    status_code=503,
+                    detail="Не удалось загрузить RemoteConfig из Firebase",
+                )
         return response
 
 
