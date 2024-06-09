@@ -7,8 +7,8 @@ stages:
   - echo "$DOCKER_KEY" | docker login --username $DOCKER_USER --password-stdin $CONTAINER_REGISTRY
 
 .clear_secrets: &clear_secrets
-  - chmod +x ./ci/scripts/clear_secrets.sh
-  - ./ci/scripts/clear_secrets.sh
+  - chmod +x ./.ci/scripts/clear_secrets.sh
+  - ./.ci/scripts/clear_secrets.sh
 
 .common:
   only:
