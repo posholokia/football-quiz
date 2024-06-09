@@ -15,4 +15,3 @@ routers.include_router(quiz_router)
 async def health_check() -> None:
     """Сервисное API, проверка, что контейнер жив"""
     return None
-

@@ -4,7 +4,6 @@ from apps.users.models import (
     Profile,
     Statistic,
 )
-
 from services.storage_service.dto import (
     ProfileDTO,
     StatisticDTO,

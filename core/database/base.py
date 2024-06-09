@@ -6,5 +6,4 @@ from apps.users.models import (
     Profile,
     User,
 )
-
 from core.database.db import Base

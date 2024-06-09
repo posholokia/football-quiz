@@ -23,3 +23,7 @@ class GetStatisticsSchema(SetStatisticsSchema):
     id: int
     games: int
     place: int
+
+
+class ApiKeySchema(BaseModel):
+    api_key: str

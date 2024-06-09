@@ -4,7 +4,6 @@ from sqlalchemy.sql import func
 
 from apps.users.models import Statistic
 from apps.users.schema import SetStatisticsSchema
-
 from services.storage_service.dto import StatisticDTO
 
 

@@ -10,7 +10,6 @@ from sqlalchemy.orm import (
 from sqlalchemy.sql.functions import random
 
 from apps.quiz.models import Question
-
 from services.storage_service.base import IQuestionService
 from services.storage_service.dto import QuestionDTO
 from services.storage_service.quiz_db.converter import list_question_orm_row_to_dto

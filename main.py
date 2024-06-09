@@ -1,7 +1,6 @@
 from fastapi import FastAPI
 
 from apps.api.routers import routers
-
 from config.settings import DEBUG
 
 

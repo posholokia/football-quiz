@@ -5,7 +5,6 @@ from abc import (
 from dataclasses import dataclass
 
 from apps.users.schema import SetStatisticsSchema
-
 from services.storage_service.dto import (
     ProfileDTO,
     QuestionDTO,
