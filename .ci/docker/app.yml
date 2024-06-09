@@ -10,6 +10,8 @@ services:
        - nginx-net
        - db-net
        - service-net
+    secrets:
+      - remote_config
     healthcheck:
       test: "curl --fail http://localhost:8000/api/v1/healthcheck/"
       interval: 10s
@@ -40,3 +42,9 @@ networks:
     external: true
   service-net:
     external: true
+
+
+secrets:
+  remote_config:
+    name: remote_config-${CONFIG_VERSION:-0}
+    file: $FIREBASE_JSON_CONF
