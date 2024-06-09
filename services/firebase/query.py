@@ -1,5 +1,6 @@
+from typing import Any
+
 import aiohttp
-from aiohttp.client_reqrep import ClientResponse
 from google.auth.transport.requests import Request
 from google.oauth2.service_account import Credentials
 
@@ -20,7 +21,7 @@ async def _get_credentials() -> Credentials:
     return credentials
 
 
-async def _get_remote_config() -> ClientResponse:
+async def _get_remote_config() -> tuple[Any, dict]:
     cred = await _get_credentials()
     headers = {"Authorization": "Bearer " + cred.token}
     async with aiohttp.ClientSession() as session:
@@ -33,11 +34,12 @@ async def _get_remote_config() -> ClientResponse:
                     status_code=503,
                     detail="Не удалось загрузить RemoteConfig из Firebase",
                 )
-        return response
+            response_json = await response.json()
+            response_headers = dict(response.headers)
+        return response_json, response_headers
 
 
-async def _get_etag_header(response: ClientResponse) -> str:
-    headers = response.headers
+async def _get_etag_header(headers: dict) -> str:
     etag = headers.get("Etag")
 
     if etag is None:
@@ -48,6 +50,5 @@ async def _get_etag_header(response: ClientResponse) -> str:
     return etag
 
 
-async def _get_api_key(response: ClientResponse) -> str:
-    response_json = await response.json()
-    return response_json["parameters"]["api_key"]["defaultValue"]["value"]
+async def _get_api_key(response: Any) -> str:
+    return response["parameters"]["api_key"]["defaultValue"]["value"]
