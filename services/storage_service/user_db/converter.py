@@ -10,7 +10,7 @@ from services.storage_service.dto import (
 )
 
 
-async def statistics_orm_row_to_entity(orm_result: Row) -> StatisticDTO:
+async def statistics_orm_row_to_dto(orm_result: Row) -> StatisticDTO:
     return StatisticDTO(
         id=orm_result.id,
         games=orm_result.games,
@@ -22,7 +22,7 @@ async def statistics_orm_row_to_entity(orm_result: Row) -> StatisticDTO:
     )
 
 
-async def statistics_entity_to_orm(entity: StatisticDTO) -> Statistic:
+async def statistics_dto_to_orm_model(entity: StatisticDTO) -> Statistic:
     return Statistic(
         id=entity.id,
         games=entity.games,
@@ -43,7 +43,7 @@ async def profile_model_to_dto(profile: Profile) -> ProfileDTO:
     )
 
 
-async def profile_orm_row_to_entity(orm_result: Row) -> ProfileDTO:
+async def profile_orm_row_to_dto(orm_result: Row) -> ProfileDTO:
     return ProfileDTO(
         id=orm_result.id,
         name=orm_result.name,

@@ -2,7 +2,6 @@ from fastapi import (
     APIRouter,
     Depends,
 )
-from fastapi.security import HTTPBearer
 from starlette import status
 
 from apps.users.schema import (
@@ -12,7 +11,7 @@ from apps.users.schema import (
     SetStatisticsSchema,
     UpdateProfileSchema,
 )
-from core.actions import (
+from apps.api.actions import (
     ProfileActions,
     StatisticsActions,
 )

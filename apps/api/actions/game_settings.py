@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from core.actions.mixins import ORMAlchemy
+from apps.api.actions.mixins import ORMAlchemy
 from services.storage_service.dto import GameSettingsDTO
 from services.storage_service.game_settings_db.interface import ORMGameSettingsService
 

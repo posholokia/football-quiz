@@ -3,7 +3,7 @@ import string
 from fastapi import HTTPException
 from starlette import status
 
-from core.actions import ProfileActions
+from apps.api.actions import ProfileActions
 from core.security.mobile_auth import MobileAuthorizationCredentials
 
 

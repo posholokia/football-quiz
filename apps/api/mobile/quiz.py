@@ -2,11 +2,10 @@ from fastapi import (
     APIRouter,
     Depends,
 )
-from fastapi.security import HTTPBearer
 from starlette import status
 
 from apps.quiz.schema import QuestionSchema
-from core.actions import QuestionsActions
+from apps.api.actions import QuestionsActions
 from core.security.mobile_auth import MobileAuthorizationCredentials
 from core.security.utils import check_device_profile_exists
 
