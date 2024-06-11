@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from core.actions.mixins import ORMAlchemy
+from apps.api.actions.mixins import ORMAlchemy
 from services.storage_service.dto import QuestionDTO
 from services.storage_service.quiz_db.interface import ORMQuestionsService
 

@@ -22,8 +22,8 @@ from services.storage_service.dto import (
 )
 from services.storage_service.user_db.converter import (
     profile_model_to_dto,
-    profile_orm_row_to_entity,
-    statistics_orm_row_to_entity,
+    profile_orm_row_to_dto,
+    statistics_orm_row_to_dto,
 )
 
 
@@ -51,19 +51,19 @@ class ORMProfileService(IProfileService):
         result = await self.session.execute(query)
         orm_result = result.fetchone()
 
-        return await profile_orm_row_to_entity(orm_result[0])
+        return await profile_orm_row_to_dto(orm_result[0])
 
     async def get_profile(self, pk: int) -> ProfileDTO:
         query = select(Profile).where(Profile.id == pk)
         result = await self.session.execute(query)
         orm_result = result.fetchone()
-        return await profile_orm_row_to_entity(orm_result[0])
+        return await profile_orm_row_to_dto(orm_result[0])
 
     async def get_device_profile(self, token: str) -> ProfileDTO:
         query = select(Profile).where(Profile.device_uuid == token)
         result = await self.session.execute(query)
         orm_result = result.fetchone()
-        return await profile_orm_row_to_entity(orm_result[0])
+        return await profile_orm_row_to_dto(orm_result[0])
 
 
 @dataclass
@@ -89,7 +89,7 @@ class ORMStatisticService(IStatisticService):
         res = await self.session.execute(query)
         orm_result = res.fetchone()
 
-        return await statistics_orm_row_to_entity(orm_result[0])
+        return await statistics_orm_row_to_dto(orm_result[0])
 
     async def update_user_statistics(
         self,
@@ -110,7 +110,7 @@ class ORMStatisticService(IStatisticService):
         result = await self.session.execute(query)
         orm_result = result.fetchone()
 
-        return await statistics_orm_row_to_entity(orm_result[0])
+        return await statistics_orm_row_to_dto(orm_result[0])
 
     async def get_user_rank(
         self,
@@ -160,4 +160,4 @@ class ORMStatisticService(IStatisticService):
         result = await self.session.execute(query)
         orm_res = result.all()
 
-        return [await statistics_orm_row_to_entity(row[0]) for row in orm_res]
+        return [await statistics_orm_row_to_dto(row[0]) for row in orm_res]
