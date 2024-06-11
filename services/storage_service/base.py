@@ -9,6 +9,7 @@ from services.storage_service.dto import (
     ProfileDTO,
     QuestionDTO,
     StatisticDTO,
+    GameSettingsDTO,
 )
 
 
@@ -59,3 +60,9 @@ class IStatisticService(ABC):
         current_place: int,
         new_place: int,
     ) -> list[StatisticDTO]: ...
+
+
+@dataclass
+class IGameSettingsService(ABC):
+    @abstractmethod
+    async def get_game_settings(self) -> GameSettingsDTO: ...

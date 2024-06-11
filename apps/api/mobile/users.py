@@ -27,7 +27,6 @@ from .depends import get_auth_credentials
 
 
 router = APIRouter()
-http_bearer = HTTPBearer()
 
 
 @router.post("/create_profile/", status_code=status.HTTP_201_CREATED)

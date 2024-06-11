@@ -14,7 +14,6 @@ from .depends import get_auth_credentials
 
 
 router = APIRouter()
-http_bearer = HTTPBearer()
 
 
 @router.get("/get_questions/", status_code=status.HTTP_200_OK)
