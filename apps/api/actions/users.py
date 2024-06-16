@@ -41,6 +41,7 @@ class ProfileActions(ORMAlchemy):
                 stat_crud = await StatisticsActions.start_session(self.session)
                 await stat_crud.create(profile.id)
 
+                await self.session.commit()
                 return profile
 
             except IntegrityError:
