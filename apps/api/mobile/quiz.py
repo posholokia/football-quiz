@@ -4,13 +4,18 @@ from fastapi import (
 )
 from starlette import status
 
-from apps.quiz.schema import QuestionSchema, CreateComplaintSchema, RetrieveComplaintSchema
 from apps.api.actions.quiz import QuestionsActions
+from apps.quiz.schema import (
+    CreateComplaintSchema,
+    QuestionSchema,
+    RetrieveComplaintSchema,
+)
 from core.security.mobile_auth import MobileAuthorizationCredentials
 from core.security.utils import check_device_profile_exists
 
-from .depends import get_auth_credentials
 from ..actions.quiz import ComplaintsActions
+from .depends import get_auth_credentials
+
 
 router = APIRouter()
 
@@ -29,8 +34,8 @@ async def get_questions(
 
 @router.post("/complain/", status_code=status.HTTP_200_OK)
 async def create_complaint(
-        complaint: CreateComplaintSchema,
-        cred: MobileAuthorizationCredentials = Depends(get_auth_credentials),
+    complaint: CreateComplaintSchema,
+    cred: MobileAuthorizationCredentials = Depends(get_auth_credentials),
 ) -> RetrieveComplaintSchema:
     """Оставить жалобу"""
     await check_device_profile_exists(cred)

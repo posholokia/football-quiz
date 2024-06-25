@@ -4,16 +4,16 @@ from fastapi import (
 )
 from starlette import status
 
+from apps.api.actions.users import (
+    ProfileActions,
+    StatisticsActions,
+)
 from apps.users.schema import (
     ApiKeySchema,
     GetStatisticsSchema,
     ProfileSchema,
     SetStatisticsSchema,
     UpdateProfileSchema,
-)
-from apps.api.actions.users import (
-    ProfileActions,
-    StatisticsActions,
 )
 from core.security.mobile_auth import MobileAuthorizationCredentials
 from core.security.utils import (

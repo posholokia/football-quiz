@@ -1,8 +1,6 @@
 from sqlalchemy.engine.row import Row
 
-from services.storage_service.dto import (
-    GameSettingsDTO,
-)
+from services.storage_service.dto import GameSettingsDTO
 
 
 async def game_settings_orm_to_dto(orm_result: Row) -> GameSettingsDTO:

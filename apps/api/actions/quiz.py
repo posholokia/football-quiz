@@ -2,12 +2,15 @@ from dataclasses import dataclass
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from apps.api.actions.users import ProfileActions
 from apps.api.actions.mixins import ORMAlchemy
-from services.storage_service.dto import QuestionDTO, ComplaintDTO
+from apps.api.actions.users import ProfileActions
+from services.storage_service.dto import (
+    ComplaintDTO,
+    QuestionDTO,
+)
 from services.storage_service.quiz_db.interface import (
-    ORMQuestionsService,
     ORMComplaintService,
+    ORMQuestionsService,
 )
 
 
@@ -29,15 +32,17 @@ class ComplaintsActions(ORMAlchemy):
     storage: ORMComplaintService = ORMComplaintService
 
     async def create(
-            self,
-            text: str,
-            question_id: int,
-            token: str,
+        self,
+        text: str,
+        question_id: int,
+        token: str,
     ) -> ComplaintDTO:
         async with self.session.begin():
             profile_actions = await ProfileActions.start_session(self.session)
             profile = await profile_actions.get_device_profile(token)
-            question_actions = await QuestionsActions.start_session(self.session)
+            question_actions = await QuestionsActions.start_session(
+                self.session
+            )
             question = await question_actions.get(question_id)
             return await self.storage.create_complaint(
                 text,

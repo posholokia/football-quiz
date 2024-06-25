@@ -4,13 +4,13 @@ from abc import (
 )
 from dataclasses import dataclass
 
-from apps.quiz.schema import CreateComplaintSchema
 from apps.users.schema import SetStatisticsSchema
 from services.storage_service.dto import (
+    ComplaintDTO,
+    GameSettingsDTO,
     ProfileDTO,
     QuestionDTO,
     StatisticDTO,
-    GameSettingsDTO, ComplaintDTO,
 )
 
 
@@ -76,8 +76,8 @@ class IGameSettingsService(ABC):
 class IComplaintService(ABC):
     @abstractmethod
     async def create_complaint(
-            self,
-            text: str,
-            question: int,
-            profile: int,
+        self,
+        text: str,
+        question: int,
+        profile: int,
     ) -> ComplaintDTO: ...

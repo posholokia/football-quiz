@@ -1,11 +1,14 @@
 from typing import Sequence
 
-from sqlalchemy.engine.row import Row
-
-from apps.quiz.models import Complaint, Question
+from apps.quiz.models import (
+    Complaint,
+    Question,
+)
 from services.storage_service.dto import (
     AnswerDTO,
-    QuestionDTO, ComplaintDTO, ProfileDTO,
+    ComplaintDTO,
+    ProfileDTO,
+    QuestionDTO,
 )
 
 
@@ -19,9 +22,7 @@ async def list_question_orm_row_to_dto(
     return question_list
 
 
-async def question_orm_row_to_dto(
-    orm_result: Question
-) -> QuestionDTO:
+async def question_orm_row_to_dto(orm_result: Question) -> QuestionDTO:
     answer_list = []
     answers = orm_result.answers
     for answer in answers:
@@ -33,21 +34,19 @@ async def question_orm_row_to_dto(
                 question_id=answer.question_id,
             )
         )
-    question = (
-        QuestionDTO(
-            id=orm_result.id,
-            text=orm_result.text,
-            published=orm_result.published,
-            answers=answer_list,
-        )
+    question = QuestionDTO(
+        id=orm_result.id,
+        text=orm_result.text,
+        published=orm_result.published,
+        answers=answer_list,
     )
     return question
 
 
 async def complaint_model_to_dto(
-        complaint: Complaint,
-        question: QuestionDTO,
-        profile: ProfileDTO,
+    complaint: Complaint,
+    question: QuestionDTO,
+    profile: ProfileDTO,
 ) -> ComplaintDTO:
     return ComplaintDTO(
         id=complaint.id,

@@ -5,11 +5,12 @@ from fastapi import (
 from starlette import status
 
 from apps.api.actions.game_settings import GameSettingsActions
+from apps.game_settings.schema import GameSettings
 from core.security.mobile_auth import MobileAuthorizationCredentials
 from core.security.utils import check_device_profile_exists
 
 from .depends import get_auth_credentials
-from apps.game_settings.schema import GameSettings
+
 
 router = APIRouter()
 

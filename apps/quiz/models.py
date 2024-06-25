@@ -3,10 +3,10 @@ from typing import List
 from sqlalchemy import (
     Boolean,
     Column,
+    DateTime,
     ForeignKey,
     Integer,
     Text,
-    DateTime,
 )
 from sqlalchemy.orm import (
     Mapped,

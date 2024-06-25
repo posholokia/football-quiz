@@ -29,4 +29,3 @@ class RetrieveComplaintSchema(BaseModel):
     text: str
     created_at: datetime
     solved: bool
-
