@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from datetime import datetime
 
 
 @dataclass
@@ -55,3 +56,13 @@ class GameSettingsDTO:
     round_cost: int
     question_skip_cost: int
     energy_perfect_round: int
+
+
+@dataclass
+class ComplaintDTO:
+    id: int
+    text: str
+    created_at: datetime
+    solved: bool
+    question: QuestionDTO
+    profile: ProfileDTO

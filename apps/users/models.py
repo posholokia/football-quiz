@@ -48,6 +48,9 @@ class Profile(Base):
     statistic = relationship(
         "Statistic", uselist=False, back_populates="profile"
     )
+    complaints = relationship(
+        "Complaint", back_populates="profile"
+    )
 
     __table_args__ = (UniqueConstraint("user_id"),)
 

@@ -6,6 +6,7 @@ from sqlalchemy import (
     ForeignKey,
     Integer,
     Text,
+    DateTime,
 )
 from sqlalchemy.orm import (
     Mapped,
@@ -30,6 +31,9 @@ class Question(Base):
     answers: Mapped[List["Answer"]] = relationship(
         "Answer", back_populates="question"
     )
+    complaints: Mapped[List["Complaint"]] = relationship(
+        "Complaint", back_populates="question"
+    )
 
 
 class Answer(Base):
@@ -46,3 +50,22 @@ class Answer(Base):
     right = Column(Boolean)
     question_id = Column(Integer, ForeignKey("questions.id"), nullable=False)
     question = relationship("Question", back_populates="answers")
+
+
+class Complaint(Base):
+    __tablename__ = "complaints"
+
+    id = Column(
+        Integer,
+        primary_key=True,
+        unique=True,
+        index=True,
+        autoincrement=True,
+    )
+    profile_id = Column(Integer, ForeignKey("profiles.id"), nullable=True)
+    profile = relationship("Profile", back_populates="complaints")
+    question_id = Column(Integer, ForeignKey("questions.id"), nullable=False)
+    question = relationship("Question", back_populates="complaints")
+    text = Column(Text)
+    created_at = Column(DateTime)
+    solved = Column(Boolean)

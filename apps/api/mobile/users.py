@@ -11,7 +11,7 @@ from apps.users.schema import (
     SetStatisticsSchema,
     UpdateProfileSchema,
 )
-from apps.api.actions import (
+from apps.api.actions.users import (
     ProfileActions,
     StatisticsActions,
 )

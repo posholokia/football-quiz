@@ -4,12 +4,13 @@ from abc import (
 )
 from dataclasses import dataclass
 
+from apps.quiz.schema import CreateComplaintSchema
 from apps.users.schema import SetStatisticsSchema
 from services.storage_service.dto import (
     ProfileDTO,
     QuestionDTO,
     StatisticDTO,
-    GameSettingsDTO,
+    GameSettingsDTO, ComplaintDTO,
 )
 
 
@@ -17,6 +18,9 @@ from services.storage_service.dto import (
 class IQuestionService(ABC):
     @abstractmethod
     async def get_random(self, limit: int) -> QuestionDTO: ...
+
+    @abstractmethod
+    async def get(self, pk: int) -> QuestionDTO: ...
 
 
 @dataclass
@@ -66,3 +70,14 @@ class IStatisticService(ABC):
 class IGameSettingsService(ABC):
     @abstractmethod
     async def get_game_settings(self) -> GameSettingsDTO: ...
+
+
+@dataclass
+class IComplaintService(ABC):
+    @abstractmethod
+    async def create_complaint(
+            self,
+            text: str,
+            question: int,
+            profile: int,
+    ) -> ComplaintDTO: ...

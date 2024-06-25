@@ -4,13 +4,13 @@ from fastapi import (
 )
 from starlette import status
 
-from apps.quiz.schema import QuestionSchema
-from apps.api.actions import QuestionsActions
+from apps.quiz.schema import QuestionSchema, CreateComplaintSchema, RetrieveComplaintSchema
+from apps.api.actions.quiz import QuestionsActions
 from core.security.mobile_auth import MobileAuthorizationCredentials
 from core.security.utils import check_device_profile_exists
 
 from .depends import get_auth_credentials
-
+from ..actions.quiz import ComplaintsActions
 
 router = APIRouter()
 
@@ -23,5 +23,21 @@ async def get_questions(
     """Получение выборки вопросов"""
     await check_device_profile_exists(cred)
     crud = await QuestionsActions.start_session()
-    questions = await crud.get(limit)
+    questions = await crud.get_random(limit)
+    return questions
+
+
+@router.post("/complain/", status_code=status.HTTP_200_OK)
+async def create_complaint(
+        complaint: CreateComplaintSchema,
+        cred: MobileAuthorizationCredentials = Depends(get_auth_credentials),
+) -> RetrieveComplaintSchema:
+    """Оставить жалобу"""
+    await check_device_profile_exists(cred)
+    crud = await ComplaintsActions.start_session()
+    questions = await crud.create(
+        text=complaint.text,
+        question_id=complaint.question,
+        token=cred.token,
+    )
     return questions

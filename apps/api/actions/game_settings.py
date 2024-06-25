@@ -13,5 +13,4 @@ class GameSettingsActions(ORMAlchemy):
     storage: ORMGameSettingsService = ORMGameSettingsService
 
     async def get(self) -> GameSettingsDTO:
-        async with self.session.begin():
-            return await self.storage.get_game_settings()
+        return await self.storage.get_game_settings()

@@ -4,7 +4,7 @@ from fastapi import (
 )
 from starlette import status
 
-from apps.api.actions import GameSettingsActions
+from apps.api.actions.game_settings import GameSettingsActions
 from core.security.mobile_auth import MobileAuthorizationCredentials
 from core.security.utils import check_device_profile_exists
 

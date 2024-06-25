@@ -53,31 +53,28 @@ class ProfileActions(ORMAlchemy):
                 pass  # закинуть логи
 
     async def get(self, pk: int) -> ProfileDTO:
-        async with self.session.begin():
-            try:
-                profile = await self.storage.get_profile(pk)
-                return profile
-            except TypeError:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Такой профиль не найден",
-                )
+        try:
+            profile = await self.storage.get_profile(pk)
+            return profile
+        except TypeError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Такой профиль не найден",
+            )
 
     async def get_device_profile(self, token: str) -> ProfileDTO:
-        async with self.session.begin():
-            profile = await self.storage.get_device_profile(token)
-            return profile
+        profile = await self.storage.get_device_profile(token)
+        return profile
 
     async def patch(self, pk: int, **kwargs) -> ProfileDTO:
-        async with self.session.begin():
-            try:
-                profile = await self.storage.patch_profile(pk, **kwargs)
-                return profile
-            except TypeError:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Такой профиль не найден",
-                )
+        try:
+            profile = await self.storage.patch_profile(pk, **kwargs)
+            return profile
+        except TypeError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Такой профиль не найден",
+            )
 
 
 @dataclass
@@ -124,8 +121,7 @@ class StatisticsActions(ORMAlchemy):
             return profile_stat
 
     async def get_statistic(self, pk: int) -> StatisticDTO:
-        async with self.session.begin():
-            return await self.storage.get_user_statistics(pk)
+        return await self.storage.get_user_statistics(pk)
 
     @staticmethod
     async def get_updated_places(

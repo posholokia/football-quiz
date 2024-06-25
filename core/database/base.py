@@ -1,6 +1,7 @@
 from apps.quiz.models import (
     Answer,
     Question,
+    Complaint,
 )
 from apps.users.models import (
     Profile,
