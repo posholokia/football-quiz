@@ -10,6 +10,7 @@ from core.apps.users.dto import ProfileDTO
 from core.apps.users.permissions.profile import ProfilePermissions
 from core.apps.users.schema import ProfileSchema, ApiKeySchema, UpdateProfileSchema, SetStatisticsSchema, \
     GetStatisticsSchema
+from core.services.firebase import check_firebase_apikey
 from core.services.security.device_validator import DeviceTokenValidate
 from core.services.security.mobile_auth import MobileAuthorizationCredentials
 from core.config.containers import get_container
@@ -20,10 +21,12 @@ router = APIRouter()
 
 @router.post("/create_profile/", status_code=status.HTTP_201_CREATED)
 async def create_profile(
-    firebase_key: ApiKeySchema,
+    firebase: ApiKeySchema,
     cred: MobileAuthorizationCredentials = Depends(get_auth_credentials),
 ) -> ProfileSchema:
     """Создать профиль игрока"""
+    await check_firebase_apikey(firebase.api_key)
+
     container = get_container()
     device: DeviceTokenValidate = container.resolve(DeviceTokenValidate)
     await device.validate(cred)
