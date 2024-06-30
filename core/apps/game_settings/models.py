@@ -56,3 +56,13 @@ class GameSettings(Base):
         doc="Энергия за раунд без ошибок",
         nullable=False,
     )
+    recovery_period = Column(
+        Integer,
+        doc="Частота восстановления энергии, сек",
+        nullable=False,
+    )
+    recovery_value = Column(
+        Integer,
+        doc="По сколько энергии восстанавливается со временем",
+        nullable=False,
+    )

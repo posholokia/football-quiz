@@ -12,4 +12,6 @@ async def game_settings_orm_to_dto(orm_result: GameSettings) -> GameSettingsDTO:
         round_cost=orm_result.round_cost,
         question_skip_cost=orm_result.question_skip_cost,
         energy_perfect_round=orm_result.energy_perfect_round,
+        recovery_period=orm_result.recovery_period,
+        recovery_value=orm_result.recovery_value,
     )

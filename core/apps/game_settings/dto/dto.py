@@ -11,3 +11,5 @@ class GameSettingsDTO:
     round_cost: int
     question_skip_cost: int
     energy_perfect_round: int
+    recovery_period: int
+    recovery_value: int

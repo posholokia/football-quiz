@@ -11,7 +11,7 @@ from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.orm import sessionmaker
 
-from apps.game_settings.models import GameSettings
+from core.apps.game_settings.models import GameSettings
 
 # revision identifiers, used by Alembic.
 revision: str = 'e6a82a62ea8b'
