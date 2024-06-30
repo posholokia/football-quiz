@@ -34,10 +34,25 @@ class CreateComplaintSchema(BaseModel):
     question: int
 
 
-class RetrieveComplaintSchema(BaseModel):
+class RetrieveComplaintSchema(PydanticMapper, BaseModel):
     id: int
     profile: ProfileSchema
     question: QuestionSchema
     text: str
     created_at: datetime
     solved: bool
+
+    @classmethod
+    def from_dto(
+            cls: Type["RetrieveComplaintSchema"],
+            obj: Any
+    ) -> "RetrieveComplaintSchema":
+        mapped_fields = dict()
+        for attr in cls.model_fields.keys():
+            value = getattr(obj, attr)
+            if attr == "profile":
+                value = ProfileSchema.from_dto(value)
+            elif attr == "question":
+                value = QuestionSchema.from_dto(value)
+            mapped_fields.update({attr: value})
+        return cls(**mapped_fields)

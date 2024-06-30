@@ -67,7 +67,7 @@ async def change_profile(
     return ProfileSchema.from_dto(profile)
 
 
-@router.post("/user_statistic/{pk}/")
+@router.post("/user_statistic/{pk}/", status_code=status.HTTP_200_OK)
 async def set_user_statistic(
     pk: int,
     stat: SetStatisticsSchema,
@@ -89,7 +89,7 @@ async def set_user_statistic(
     return GetStatisticsSchema.from_dto(stat)
 
 
-@router.get("/user_statistic/{pk}/")
+@router.get("/user_statistic/{pk}/", status_code=status.HTTP_200_OK)
 async def get_user_statistic(
     pk: int,
     cred: MobileAuthorizationCredentials = Depends(get_auth_credentials),

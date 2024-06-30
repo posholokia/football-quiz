@@ -1,4 +1,7 @@
 from dataclasses import dataclass
+from datetime import datetime
+
+from core.apps.users.dto import ProfileDTO
 
 
 @dataclass
@@ -16,4 +19,13 @@ class QuestionDTO:
     published: bool
     answers: list[AnswerDTO]
 
+
+@dataclass
+class ComplaintDTO:
+    id: int
+    profile: ProfileDTO
+    question: QuestionDTO
+    text: str
+    created_at: datetime
+    solved: bool
 

@@ -1,6 +1,7 @@
-# import datetime
 import random as python_random
 from dataclasses import dataclass
+from datetime import datetime
+
 #
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -29,9 +30,11 @@ from sqlalchemy.sql.functions import random
 #     question_orm_row_to_dto,
 # )
 from core.apps.quiz.dto import QuestionDTO
-from core.apps.quiz.dto.converter import list_question_orm_to_dto, question_orm_to_dto
-from core.apps.quiz.models import Question
-from core.apps.quiz.services.storage.base import IQuestionService
+from core.apps.quiz.dto.converter import list_question_orm_to_dto, question_orm_to_dto, complaint_orm_to_dto
+from core.apps.quiz.dto.dto import ComplaintDTO
+from core.apps.quiz.exceptions.quiz import QuestionDoesNotExists
+from core.apps.quiz.models import Question, Complaint
+from core.apps.quiz.services.storage.base import IQuestionService, IComplaintService
 from core.apps.users.dto import ProfileDTO
 
 
@@ -58,7 +61,7 @@ class ORMQuestionsService(IQuestionService):
             )
         return await list_question_orm_to_dto(questions)
 
-    async def get(self, pk: int) -> QuestionDTO:
+    async def get_by_id(self, pk: int) -> QuestionDTO:
         query = (
             select(Question)
             .where(Question.id == pk)
@@ -66,26 +69,33 @@ class ORMQuestionsService(IQuestionService):
         )
         result = await self.session.execute(query)
         orm_result = result.fetchone()
+
+        if orm_result is None:
+            raise QuestionDoesNotExists()
         return await question_orm_to_dto(orm_result[0])
 
 
-# @dataclass
-# class ORMComplaintService(IComplaintService):
-#     session: AsyncSession
-#
-#     async def create_complaint(
-#         self,
-#         text: str,
-#         question: QuestionDTO,
-#         profile: ProfileDTO,
-#     ) -> ComplaintDTO:
-#         complaint = Complaint(
-#             profile_id=profile.id,
-#             question_id=question.id,
-#             text=text,
-#             created_at=datetime.datetime.now(),
-#             solved=False,
-#         )
-#         self.session.add(complaint)
-#         await self.session.flush()
-#         return await complaint_model_to_dto(complaint, question, profile)
+@dataclass
+class ORMComplaintService(IComplaintService):
+    session: AsyncSession
+
+    async def create(
+        self,
+        text: str,
+        question: QuestionDTO,
+        profile: ProfileDTO,
+    ) -> ComplaintDTO:
+        complaint = Complaint(
+            profile_id=profile.id,
+            question_id=question.id,
+            text=text,
+            created_at=datetime.now(),
+            solved=False,
+        )
+        self.session.add(complaint)
+        await self.session.commit()
+        return await complaint_orm_to_dto(complaint, question, profile)
+
+    async def get_by_id(self, pk: int) -> ComplaintDTO: ...
+
+    async def list(self) -> ComplaintDTO: ...
