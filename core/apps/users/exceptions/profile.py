@@ -24,3 +24,9 @@ class AlreadyExistsProfile(BaseHTTPException):
 class ProfileDoesNotMatchTheDevice(BaseHTTPException):
     code: int = 403
     detail: str = "Этот профиль не соответствует устройству"
+
+
+@dataclass(eq=False)
+class InvalidProfileName(BaseHTTPException):
+    code: int = 400
+    detail: str = "Некорректное имя пользователя"

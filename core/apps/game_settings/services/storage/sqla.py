@@ -14,7 +14,8 @@ class ORMGameSettingsService(IGameSettingsService):
     session: AsyncSession
 
     async def get(self) -> GameSettingsDTO:
-        query = select(GameSettings).limit(1)
-        result = await self.session.execute(query)
-        orm_result = result.scalars().first()
-        return await game_settings_orm_to_dto(orm_result)
+        async with self.session.begin():
+            query = select(GameSettings).limit(1)
+            result = await self.session.execute(query)
+            orm_result = result.scalars().first()
+            return await game_settings_orm_to_dto(orm_result)

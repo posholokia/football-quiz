@@ -43,36 +43,38 @@ class ORMQuestionsService(IQuestionService):
     session: AsyncSession
 
     async def get_random(self, limit: int) -> list[QuestionDTO]:
-        q = aliased(Question)
-        query = (
-            select(
-                q,
+        async with self.session.begin():
+            q = aliased(Question)
+            query = (
+                select(
+                    q,
+                )
+                .filter(q.published == True)
+                .order_by(random())
+                .limit(limit)
+                .options(selectinload(q.answers))
             )
-            .filter(q.published == True)
-            .order_by(random())
-            .limit(limit)
-            .options(selectinload(q.answers))
-        )
-        result = await self.session.execute(query)
-        questions = result.scalars().all()
-        for question in questions:
-            question.answers = sorted(
-                question.answers, key=lambda x: python_random.random()
-            )
-        return await list_question_orm_to_dto(questions)
+            result = await self.session.execute(query)
+            questions = result.scalars().all()
+            for question in questions:
+                question.answers = sorted(
+                    question.answers, key=lambda x: python_random.random()
+                )
+            return await list_question_orm_to_dto(questions)
 
     async def get_by_id(self, pk: int) -> QuestionDTO:
-        query = (
-            select(Question)
-            .where(Question.id == pk)
-            .options(selectinload(Question.answers))
-        )
-        result = await self.session.execute(query)
-        orm_result = result.fetchone()
+        async with self.session.begin():
+            query = (
+                select(Question)
+                .where(Question.id == pk)
+                .options(selectinload(Question.answers))
+            )
+            result = await self.session.execute(query)
+            orm_result = result.fetchone()
 
-        if orm_result is None:
-            raise QuestionDoesNotExists()
-        return await question_orm_to_dto(orm_result[0])
+            if orm_result is None:
+                raise QuestionDoesNotExists()
+            return await question_orm_to_dto(orm_result[0])
 
 
 @dataclass
@@ -85,16 +87,17 @@ class ORMComplaintService(IComplaintService):
         question: QuestionDTO,
         profile: ProfileDTO,
     ) -> ComplaintDTO:
-        complaint = Complaint(
-            profile_id=profile.id,
-            question_id=question.id,
-            text=text,
-            created_at=datetime.now(),
-            solved=False,
-        )
-        self.session.add(complaint)
-        await self.session.commit()
-        return await complaint_orm_to_dto(complaint, question, profile)
+        async with self.session.begin():
+            complaint = Complaint(
+                profile_id=profile.id,
+                question_id=question.id,
+                text=text,
+                created_at=datetime.now(),
+                solved=False,
+            )
+            self.session.add(complaint)
+            await self.session.commit()
+            return await complaint_orm_to_dto(complaint, question, profile)
 
     async def get_by_id(self, pk: int) -> ComplaintDTO: ...
 

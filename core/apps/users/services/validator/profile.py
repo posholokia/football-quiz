@@ -1,6 +1,11 @@
+import aiohttp
 from dataclasses import dataclass
+
 from core.services.constructor.validators import BaseValidator
-from core.apps.users.exceptions.profile import InvalidProfile
+from core.apps.users.exceptions.profile import InvalidProfileName
+
+
+TIMEOUT = aiohttp.ClientTimeout(total=0.2)
 
 
 @dataclass
@@ -15,4 +20,14 @@ class ProfileValidator(BaseValidator):
     @staticmethod
     async def _profile_name_validate(name: str) -> None:
         if len(name) > 50:
-            raise InvalidProfile()
+            raise InvalidProfileName()
+
+        async with aiohttp.ClientSession(timeout=TIMEOUT) as session:
+            async with session.post(
+                    f"http://profanity:8000/censor-word/{name}"
+            ) as response:
+                res = await response.text()
+                if res == "true":
+                    raise InvalidProfileName()
+
+
