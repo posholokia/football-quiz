@@ -5,13 +5,18 @@ Revises: 0914bac9c5f1
 Create Date: 2024-06-11 16:58:45.668467
 
 """
-from typing import Sequence, Union
+from typing import (
+    Sequence,
+    Union,
+)
 
 from alembic import op
+
 import sqlalchemy as sa
 from sqlalchemy.orm import sessionmaker
 
 from core.apps.game_settings.models import GameSettings
+
 
 # revision identifiers, used by Alembic.
 revision: str = 'e6a82a62ea8b'

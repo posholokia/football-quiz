@@ -1,11 +1,8 @@
 from .dto import (
     ProfileDTO,
-    UserDTO,
     StatisticDTO,
+    UserDTO,
 )
 
-__all__ = (
-    "ProfileDTO",
-    "UserDTO",
-    "StatisticDTO"
-)
+
+__all__ = ("ProfileDTO", "UserDTO", "StatisticDTO")

@@ -1,4 +1,7 @@
-from fastapi import FastAPI, Request
+from fastapi import (
+    FastAPI,
+    Request,
+)
 from fastapi.responses import JSONResponse
 
 from core.api.routers import routers
@@ -15,10 +18,13 @@ def create_app() -> FastAPI:
     )
 
     @app.exception_handler(BaseHTTPException)
-    async def custom_http_exception_handler(request: Request, exc: BaseHTTPException):
+    async def custom_http_exception_handler(
+        request: Request, exc: BaseHTTPException
+    ):
         return JSONResponse(
             status_code=exc.code,
             content={"detail": exc.detail},
         )
+
     app.include_router(routers, prefix="/api/v1")
     return app

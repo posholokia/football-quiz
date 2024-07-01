@@ -1,4 +1,7 @@
-from .actions import ProfileActions, StatisticsActions
+from .actions import (
+    ProfileActions,
+    StatisticsActions,
+)
 
 
 __all__ = (

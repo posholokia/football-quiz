@@ -1,11 +1,14 @@
 import string
-from abc import abstractmethod, ABC
 from dataclasses import dataclass
 
 from core.apps.users.services.storage.base import IProfileService
-from core.services.security.exceptions import InvalidDeviceToken, UnauthorizedDevice, NotUniqueDeviceToken
-from core.services.security.mobile_auth import MobileAuthorizationCredentials
 from core.services.constructor.validators import BaseValidator
+from core.services.security.exceptions import (
+    InvalidDeviceToken,
+    NotUniqueDeviceToken,
+    UnauthorizedDevice,
+)
+from core.services.security.mobile_auth import MobileAuthorizationCredentials
 
 
 @dataclass
@@ -21,7 +24,7 @@ class DeviceTokenValidate(BaseValidator):
 
     @staticmethod
     async def _check_token_type(token: str) -> None:
-        if type(token) is not str:
+        if isinstance(token, str):
             raise InvalidDeviceToken()
         allow_symbols = f"{string.ascii_lowercase}{string.digits}"
         if (len(token) != 32) or (

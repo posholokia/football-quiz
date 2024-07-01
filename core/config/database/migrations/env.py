@@ -7,8 +7,9 @@ from sqlalchemy import (
     pool,
 )
 
-from core.config.settings import DATABASE_URL
 from core.config.database.base import Base
+from core.config.settings import DATABASE_URL
+
 
 config = context.config
 

@@ -10,6 +10,7 @@ from sqlalchemy.orm import (
     selectinload,
 )
 from sqlalchemy.sql.functions import random
+
 #
 # from apps.quiz.models import (
 #     Complaint,
@@ -30,11 +31,21 @@ from sqlalchemy.sql.functions import random
 #     question_orm_row_to_dto,
 # )
 from core.apps.quiz.dto import QuestionDTO
-from core.apps.quiz.dto.converter import list_question_orm_to_dto, question_orm_to_dto, complaint_orm_to_dto
+from core.apps.quiz.dto.converter import (
+    complaint_orm_to_dto,
+    list_question_orm_to_dto,
+    question_orm_to_dto,
+)
 from core.apps.quiz.dto.dto import ComplaintDTO
 from core.apps.quiz.exceptions.quiz import QuestionDoesNotExists
-from core.apps.quiz.models import Question, Complaint
-from core.apps.quiz.services.storage.base import IQuestionService, IComplaintService
+from core.apps.quiz.models import (
+    Complaint,
+    Question,
+)
+from core.apps.quiz.services.storage.base import (
+    IComplaintService,
+    IQuestionService,
+)
 from core.apps.users.dto import ProfileDTO
 
 

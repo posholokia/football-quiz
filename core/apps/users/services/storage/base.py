@@ -1,7 +1,13 @@
-from abc import ABC, abstractmethod
+from abc import (
+    ABC,
+    abstractmethod,
+)
 from dataclasses import dataclass
 
-from core.apps.users.dto import StatisticDTO, ProfileDTO
+from core.apps.users.dto import (
+    ProfileDTO,
+    StatisticDTO,
+)
 
 
 @dataclass

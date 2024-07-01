@@ -8,6 +8,7 @@ from fastapi.security.base import SecurityBase
 
 from core.services.security.exceptions import UnauthorizedDevice
 
+
 api_key_scheme = {
     "name": "Device",
     "in": "header",

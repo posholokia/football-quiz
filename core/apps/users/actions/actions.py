@@ -1,14 +1,21 @@
 from copy import copy
 from dataclasses import dataclass
 
-from sqlalchemy.exc import (
-    IntegrityError,
-)
+from sqlalchemy.exc import IntegrityError
 
-from core.apps.users.dto import ProfileDTO, StatisticDTO
-from core.apps.users.exceptions.profile import DoesNotExistsProfile, AlreadyExistsProfile
+from core.apps.users.dto import (
+    ProfileDTO,
+    StatisticDTO,
+)
+from core.apps.users.exceptions.profile import (
+    AlreadyExistsProfile,
+    DoesNotExistsProfile,
+)
 from core.apps.users.schema import SetStatisticsSchema
-from core.apps.users.services.storage.base import IProfileService, IStatisticService
+from core.apps.users.services.storage.base import (
+    IProfileService,
+    IStatisticService,
+)
 from core.apps.users.services.validator.profile import ProfileValidator
 
 
@@ -22,8 +29,10 @@ class ProfileActions:
         try:
             profile = await self.profile_repository.create(device_uuid)
             profile_pk = profile.id
-            name = f'Игрок-{profile_pk}'
-            profile = await self.profile_repository.patch(profile_pk, name=name)
+            name = f"Игрок-{profile_pk}"
+            profile = await self.profile_repository.patch(
+                profile_pk, name=name
+            )
             await self.statistic_repository.create(profile_pk)
             return profile
 
@@ -81,9 +90,7 @@ class StatisticsActions:
         for stat in updated_stats:
             await self.repository.patch(stat)
         # записываем в БД текущего игрока
-        profile_stat = await self.repository.patch(
-            current_profile
-        )
+        profile_stat = await self.repository.patch(current_profile)
         return profile_stat
 
     async def get_by_id(self, pk: int) -> StatisticDTO:
@@ -113,9 +120,9 @@ class StatisticsActions:
         return stats, stat_copy
 
     async def _get_updated_statistic(
-            self,
-            current_stat: StatisticDTO,
-            game_stat: SetStatisticsSchema,
+        self,
+        current_stat: StatisticDTO,
+        game_stat: SetStatisticsSchema,
     ) -> StatisticDTO:
         return StatisticDTO(
             id=current_stat.id,

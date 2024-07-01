@@ -1,7 +1,13 @@
-from abc import ABC, abstractmethod
+from abc import (
+    ABC,
+    abstractmethod,
+)
 from dataclasses import dataclass
 
-from core.apps.quiz.dto.dto import QuestionDTO, ComplaintDTO
+from core.apps.quiz.dto.dto import (
+    ComplaintDTO,
+    QuestionDTO,
+)
 from core.apps.users.dto import ProfileDTO
 
 

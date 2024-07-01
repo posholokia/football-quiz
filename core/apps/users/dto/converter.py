@@ -1,5 +1,11 @@
-from core.apps.users.dto.dto import ProfileDTO, StatisticDTO
-from core.apps.users.models import Profile, Statistic
+from core.apps.users.dto.dto import (
+    ProfileDTO,
+    StatisticDTO,
+)
+from core.apps.users.models import (
+    Profile,
+    Statistic,
+)
 
 
 async def orm_profile_to_dto(model_obj: Profile) -> ProfileDTO:

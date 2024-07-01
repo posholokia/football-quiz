@@ -1,5 +1,8 @@
+from abc import (
+    ABC,
+    abstractmethod,
+)
 from dataclasses import dataclass
-from abc import ABC, abstractmethod
 
 from core.apps.game_settings.dto.dto import GameSettingsDTO
 

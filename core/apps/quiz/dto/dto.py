@@ -28,4 +28,3 @@ class ComplaintDTO:
     text: str
     created_at: datetime
     solved: bool
-

@@ -1,7 +1,11 @@
-from typing import TypeVar, Type, Any
+from typing import (
+    Any,
+    Type,
+    TypeVar,
+)
 
 
-T = TypeVar('T', bound='PydanticMapper')
+T = TypeVar("T", bound="PydanticMapper")
 
 
 class PydanticMapper:

@@ -1,6 +1,4 @@
 from .actions import GameSettingsActions
 
 
-__all__ = (
-    "GameSettingsActions",
-)
+__all__ = ("GameSettingsActions",)

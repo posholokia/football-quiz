@@ -1,6 +1,4 @@
-import http
 from dataclasses import dataclass
-from starlette.exceptions import HTTPException
 
 
 @dataclass(eq=False)

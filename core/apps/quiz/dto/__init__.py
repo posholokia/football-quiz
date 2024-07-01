@@ -1,7 +1,8 @@
 from .dto import (
-    QuestionDTO,
     AnswerDTO,
+    QuestionDTO,
 )
+
 
 __all__ = (
     "QuestionDTO",

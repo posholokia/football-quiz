@@ -1,10 +1,13 @@
 from datetime import datetime
-from typing import Type, Any
+from typing import (
+    Any,
+    Type,
+)
 
 from pydantic import BaseModel
 
-from core.apps.users.schema import ProfileSchema
 from core.apps.mapper import PydanticMapper
+from core.apps.users.schema import ProfileSchema
 
 
 class AnswerSchema(PydanticMapper, BaseModel):
@@ -44,8 +47,7 @@ class RetrieveComplaintSchema(PydanticMapper, BaseModel):
 
     @classmethod
     def from_dto(
-            cls: Type["RetrieveComplaintSchema"],
-            obj: Any
+        cls: Type["RetrieveComplaintSchema"], obj: Any
     ) -> "RetrieveComplaintSchema":
         mapped_fields = dict()
         for attr in cls.model_fields.keys():

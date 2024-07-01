@@ -2,7 +2,10 @@ from dataclasses import dataclass
 
 from core.apps.quiz.dto import QuestionDTO
 from core.apps.quiz.dto.dto import ComplaintDTO
-from core.apps.quiz.services.storage.base import IQuestionService, IComplaintService
+from core.apps.quiz.services.storage.base import (
+    IComplaintService,
+    IQuestionService,
+)
 from core.apps.users.services.storage.base import IProfileService
 
 
@@ -32,5 +35,7 @@ class ComplaintsActions:
         profile = await self.profile_repository.get_by_device(token)
         question = await self.question_repository.get_by_id(question_id)
         return await self.complaint_repository.create(
-            text, question, profile,
+            text,
+            question,
+            profile,
         )

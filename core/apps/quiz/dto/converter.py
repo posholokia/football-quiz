@@ -5,7 +5,10 @@ from core.apps.quiz.dto import (
     QuestionDTO,
 )
 from core.apps.quiz.dto.dto import ComplaintDTO
-from core.apps.quiz.models import Question, Complaint
+from core.apps.quiz.models import (
+    Complaint,
+    Question,
+)
 from core.apps.users.dto import ProfileDTO
 
 
@@ -41,9 +44,9 @@ async def question_orm_to_dto(orm_result: Question) -> QuestionDTO:
 
 
 async def complaint_orm_to_dto(
-        orm_result: Complaint,
-        question: QuestionDTO,
-        profile: ProfileDTO,
+    orm_result: Complaint,
+    question: QuestionDTO,
+    profile: ProfileDTO,
 ) -> ComplaintDTO:
     return ComplaintDTO(
         id=orm_result.id,

@@ -2,7 +2,9 @@ from core.apps.game_settings.dto.dto import GameSettingsDTO
 from core.apps.game_settings.models import GameSettings
 
 
-async def game_settings_orm_to_dto(orm_result: GameSettings) -> GameSettingsDTO:
+async def game_settings_orm_to_dto(
+    orm_result: GameSettings,
+) -> GameSettingsDTO:
     return GameSettingsDTO(
         time_round=orm_result.time_round,
         question_limit=orm_result.question_limit,

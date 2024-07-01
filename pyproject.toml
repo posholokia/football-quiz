@@ -39,8 +39,9 @@ exclude = [
     ".ruff_cache",
     ".venv",
     "venv",
-    "core/database/base.py",
-    "core/database/migrations",
+    "core/config/database/base.py",
+    "core/config/database/migrations",
+    "test",
     ]
 
 line-length = 79

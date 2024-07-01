@@ -1,10 +1,11 @@
 from dataclasses import dataclass
+
 from core.services.constructor.exceptions import BaseHTTPException
 
 
 @dataclass(eq=False)
 class InvalidProfile(BaseHTTPException):
-    code: int = 401,
+    code: int = (401,)
     detail: str = "Предоставлены некорректные данные авторизации"
 
 
@@ -30,3 +31,9 @@ class ProfileDoesNotMatchTheDevice(BaseHTTPException):
 class InvalidProfileName(BaseHTTPException):
     code: int = 400
     detail: str = "Некорректное имя пользователя"
+
+
+@dataclass(eq=False)
+class ProfanityServiceNotAvailable(BaseHTTPException):
+    code: int = 500
+    detail: str = "Сервис проверки нецензурной лексики недоступен"

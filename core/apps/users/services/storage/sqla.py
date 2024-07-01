@@ -9,14 +9,17 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql import func
 
 from core.apps.users.dto import (
-    StatisticDTO,
     ProfileDTO,
+    StatisticDTO,
 )
 from core.apps.users.dto.converter import (
     orm_profile_to_dto,
     orm_statistics_to_dto,
 )
-from core.apps.users.models import Profile, Statistic
+from core.apps.users.models import (
+    Profile,
+    Statistic,
+)
 from core.apps.users.services.storage.base import (
     IProfileService,
     IStatisticService,

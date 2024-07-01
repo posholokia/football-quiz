@@ -1,10 +1,12 @@
 from typing import Annotated
 
-from annotated_types import MaxLen, MinLen
+from annotated_types import (
+    MaxLen,
+    MinLen,
+)
 from pydantic import BaseModel
 
 from core.apps.mapper import PydanticMapper
-from core.apps.users.dto.dto import ProfileDTO
 
 
 class ProfileSchema(PydanticMapper, BaseModel):

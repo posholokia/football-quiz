@@ -5,15 +5,23 @@ from fastapi import (
 from starlette import status
 
 from core.api.mobile.depends import get_auth_credentials
-from core.apps.users.actions import ProfileActions, StatisticsActions
+from core.apps.users.actions import (
+    ProfileActions,
+    StatisticsActions,
+)
 from core.apps.users.dto import ProfileDTO
 from core.apps.users.permissions.profile import ProfilePermissions
-from core.apps.users.schema import ProfileSchema, ApiKeySchema, UpdateProfileSchema, SetStatisticsSchema, \
-    GetStatisticsSchema
+from core.apps.users.schema import (
+    ApiKeySchema,
+    GetStatisticsSchema,
+    ProfileSchema,
+    SetStatisticsSchema,
+    UpdateProfileSchema,
+)
+from core.config.containers import get_container
 from core.services.firebase import check_firebase_apikey
 from core.services.security.device_validator import DeviceTokenValidate
 from core.services.security.mobile_auth import MobileAuthorizationCredentials
-from core.config.containers import get_container
 
 
 router = APIRouter()

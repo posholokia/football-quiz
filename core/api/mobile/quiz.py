@@ -12,9 +12,14 @@ from core.apps.quiz.actions import QuestionsActions
 from core.apps.quiz.actions.actions import ComplaintsActions
 from core.apps.quiz.dto import QuestionDTO
 from core.apps.quiz.permissions.quiz import DevicePermissions
-from core.apps.quiz.schema import QuestionSchema, CreateComplaintSchema, RetrieveComplaintSchema
-from core.services.security.mobile_auth import MobileAuthorizationCredentials
+from core.apps.quiz.schema import (
+    CreateComplaintSchema,
+    QuestionSchema,
+    RetrieveComplaintSchema,
+)
 from core.config.containers import get_container
+from core.services.security.mobile_auth import MobileAuthorizationCredentials
+
 
 router = APIRouter()
 
