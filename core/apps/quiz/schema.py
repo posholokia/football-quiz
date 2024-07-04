@@ -35,6 +35,7 @@ class QuestionSchema(PydanticMapper, BaseModel):
 class CreateComplaintSchema(BaseModel):
     text: str
     question: int
+    category: int
 
 
 class RetrieveComplaintSchema(PydanticMapper, BaseModel):
@@ -44,6 +45,7 @@ class RetrieveComplaintSchema(PydanticMapper, BaseModel):
     text: str
     created_at: datetime
     solved: bool
+    category: "RetrieveCategorySchema"
 
     @classmethod
     def from_dto(
@@ -56,5 +58,13 @@ class RetrieveComplaintSchema(PydanticMapper, BaseModel):
                 value = ProfileSchema.from_dto(value)
             elif attr == "question":
                 value = QuestionSchema.from_dto(value)
+            elif attr == "category":
+                value = RetrieveCategorySchema.from_dto(value)
             mapped_fields.update({attr: value})
         return cls(**mapped_fields)
+
+
+class RetrieveCategorySchema(PydanticMapper, BaseModel):
+    id: int
+    name: str
+

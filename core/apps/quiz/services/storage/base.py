@@ -6,7 +6,7 @@ from dataclasses import dataclass
 
 from core.apps.quiz.dto.dto import (
     ComplaintDTO,
-    QuestionDTO,
+    QuestionDTO, CategoryComplaintDTO,
 )
 from core.apps.users.dto import ProfileDTO
 
@@ -28,6 +28,7 @@ class IComplaintService(ABC):
         text: str,
         question: QuestionDTO,
         profile: ProfileDTO,
+        category_id: CategoryComplaintDTO,
     ) -> ComplaintDTO: ...
 
     @abstractmethod
@@ -35,3 +36,12 @@ class IComplaintService(ABC):
 
     @abstractmethod
     async def list(self) -> ComplaintDTO: ...
+
+
+@dataclass
+class ICategoryComplaintService(ABC):
+    @abstractmethod
+    async def list(self) -> list[CategoryComplaintDTO]: ...
+
+    @abstractmethod
+    async def get_by_id(self, pk: int) -> CategoryComplaintDTO: ...

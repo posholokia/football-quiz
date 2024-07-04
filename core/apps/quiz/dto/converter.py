@@ -4,10 +4,10 @@ from core.apps.quiz.dto import (
     AnswerDTO,
     QuestionDTO,
 )
-from core.apps.quiz.dto.dto import ComplaintDTO
+from core.apps.quiz.dto.dto import ComplaintDTO, CategoryComplaintDTO
 from core.apps.quiz.models import (
     Complaint,
-    Question,
+    Question, CategoryComplaint,
 )
 from core.apps.users.dto import ProfileDTO
 
@@ -47,6 +47,7 @@ async def complaint_orm_to_dto(
     orm_result: Complaint,
     question: QuestionDTO,
     profile: ProfileDTO,
+    category: CategoryComplaintDTO,
 ) -> ComplaintDTO:
     return ComplaintDTO(
         id=orm_result.id,
@@ -55,4 +56,18 @@ async def complaint_orm_to_dto(
         text=orm_result.text,
         created_at=orm_result.created_at,
         solved=orm_result.solved,
+        category=category
     )
+
+
+async def category_orm_to_dto(orm_result: CategoryComplaint) -> CategoryComplaintDTO:
+    return CategoryComplaintDTO(
+        id=orm_result.id,
+        name=orm_result.name,
+    )
+
+
+async def list_category_orm_to_dto(
+        orm_result: Sequence[CategoryComplaint]
+) -> list[CategoryComplaintDTO]:
+    return [await category_orm_to_dto(cat) for cat in orm_result]
