@@ -28,3 +28,10 @@ class ComplaintDTO:
     text: str
     created_at: datetime
     solved: bool
+    category: "CategoryComplaintDTO"
+
+
+@dataclass
+class CategoryComplaintDTO:
+    id: int
+    name: str

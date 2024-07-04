@@ -9,16 +9,16 @@ from core.apps.game_settings.services.storage.base import IGameSettingsService
 from core.apps.game_settings.services.storage.sqla import ORMGameSettingsService
 from core.apps.quiz.actions.actions import (
     ComplaintsActions,
-    QuestionsActions,
+    QuestionsActions, CategoryComplaintsActions,
 )
 from core.apps.quiz.permissions.quiz import DevicePermissions
 from core.apps.quiz.services.storage.base import (
     IComplaintService,
-    IQuestionService,
+    IQuestionService, ICategoryComplaintService,
 )
 from core.apps.quiz.services.storage.sqla import (
     ORMComplaintService,
-    ORMQuestionsService,
+    ORMQuestionsService, ORMCategoryComplaintService,
 )
 from core.apps.users.actions.actions import (
     ProfileActions,
@@ -53,6 +53,7 @@ def _initialize_container() -> punq.Container:
     container.register(IGameSettingsService, ORMGameSettingsService)
     container.register(IQuestionService, ORMQuestionsService)
     container.register(IComplaintService, ORMComplaintService)
+    container.register(ICategoryComplaintService, ORMCategoryComplaintService)
     # валидаторы
     container.register(ProfileValidator)
     container.register(DeviceTokenValidate)
@@ -65,5 +66,5 @@ def _initialize_container() -> punq.Container:
     container.register(QuestionsActions)
     container.register(GameSettingsActions)
     container.register(ComplaintsActions)
-
+    container.register(CategoryComplaintsActions)
     return container

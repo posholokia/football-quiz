@@ -16,4 +16,6 @@ async def game_settings_orm_to_dto(
         energy_perfect_round=orm_result.energy_perfect_round,
         recovery_period=orm_result.recovery_period,
         recovery_value=orm_result.recovery_value,
+        right_ratio=orm_result.right_ratio,
+        wrong_ratio=orm_result.wrong_ratio,
     )

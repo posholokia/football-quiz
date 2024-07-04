@@ -69,3 +69,27 @@ class Complaint(Base):
     text = Column(Text)
     created_at = Column(DateTime)
     solved = Column(Boolean)
+    category_id = Column(
+        Integer,
+        ForeignKey("category_complaints.id"),
+        nullable=False
+    )
+    category: Mapped["CategoryComplaint"] = relationship(
+        "CategoryComplaint", back_populates="complaint"
+    )
+
+
+class CategoryComplaint(Base):
+    __tablename__ = "category_complaints"
+
+    id = Column(
+        Integer,
+        primary_key=True,
+        unique=True,
+        index=True,
+        autoincrement=True,
+    )
+    name = Column(Text)
+    complaint: Mapped[List["CategoryComplaint"]] = relationship(
+        "Complaint", back_populates="category"
+    )

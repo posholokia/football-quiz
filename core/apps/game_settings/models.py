@@ -1,6 +1,7 @@
 from sqlalchemy import (
     Column,
     Integer,
+    Float,
 )
 
 from core.config.database.db import Base
@@ -64,5 +65,15 @@ class GameSettings(Base):
     recovery_value = Column(
         Integer,
         doc="По сколько энергии восстанавливается со временем",
+        nullable=False,
+    )
+    right_ratio = Column(
+        Float,
+        doc="Коэффициент за верные ответы",
+        nullable=False,
+    )
+    wrong_ratio = Column(
+        Float,
+        doc="Коэффициент за неверные ответы",
         nullable=False,
     )
