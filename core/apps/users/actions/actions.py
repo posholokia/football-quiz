@@ -3,6 +3,7 @@ from dataclasses import dataclass
 
 from sqlalchemy.exc import IntegrityError
 
+from core.api.schema import PaginationOut
 from core.apps.users.dto import (
     ProfileDTO,
     StatisticDTO,
@@ -53,6 +54,7 @@ class ProfileActions:
 
 @dataclass
 class StatisticsActions:
+    profile_repository: IProfileService
     repository: IStatisticService
 
     async def create(self, profile_pk: int) -> None:
@@ -63,8 +65,9 @@ class StatisticsActions:
         pk: int,
         game_stat: SetStatisticsSchema,
     ) -> StatisticDTO:
+        profile = await self.profile_repository.get_by_id(pk)
         # получаем текущую статистику игрока
-        current_stat = await self.repository.get_by_id(pk)
+        current_stat = await self.repository.get_by_id(profile.id)
         # получаем обновленную статистику в виде DTO,
         # место в рейтинге не меняем
         after_game_stat = await self._get_updated_statistic(
@@ -73,7 +76,7 @@ class StatisticsActions:
         # записываем обновленную статистику в БД
         new_stat = await self.repository.patch(after_game_stat)
         # получаем новое место игрока после обновления статистики
-        new_place = await self.repository.get_user_rank(new_stat)
+        new_place = await self.repository.get_user_rank(profile.id)
         # если место не изменилось, выходим из функции
         if current_stat.place == new_place:
             return new_stat
@@ -133,3 +136,34 @@ class StatisticsActions:
             wrongs=current_stat.wrongs + game_stat.wrongs,
             profile_id=current_stat.profile_id,
         )
+
+    async def get_top_ladder(
+        self, offset: int = 0, limit: int = 60,
+    ) -> tuple[list[StatisticDTO], PaginationOut]:
+        statistics = await self.repository.get_top_gamers(
+            offset, limit
+        )
+        total = self.repository.get_count()
+        paginator = PaginationOut(
+            offset=offset,
+            limit=limit,
+            total=total,
+        )
+        return statistics, paginator
+
+    async def get_count_statistic(self) -> int:
+        return await self.repository.get_count()
+
+    async def get_user_rank(self, pk: int) -> tuple[list[StatisticDTO], PaginationOut]:
+        profile = await self.profile_repository.get_by_id(pk)
+        rank = await self.repository.get_user_rank(profile.id)
+        offset = 0 if rank <= 30 else rank - 30
+        limit = 60
+        total = await self.repository.get_count()
+        statistics = await self.repository.get_top_gamers(offset, limit)
+        paginator = PaginationOut(
+            offset=offset,
+            limit=limit,
+            total=total,
+        )
+        return statistics, paginator

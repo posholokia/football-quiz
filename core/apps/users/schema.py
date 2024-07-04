@@ -6,6 +6,7 @@ from annotated_types import (
 )
 from pydantic import BaseModel
 
+from core.api.schema import PaginationOut
 from core.apps.mapper import PydanticMapper
 
 
@@ -32,3 +33,8 @@ class GetStatisticsSchema(PydanticMapper, SetStatisticsSchema):
 
 class ApiKeySchema(BaseModel):
     api_key: str
+
+
+class PaginationStatisticSchema(BaseModel):
+    items: list[GetStatisticsSchema]
+    paginator: PaginationOut

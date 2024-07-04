@@ -39,7 +39,7 @@ class IStatisticService(ABC):
     @abstractmethod
     async def get_user_rank(
         self,
-        game_stat: StatisticDTO,
+        profile_pk: int,
     ) -> int: ...
 
     @abstractmethod
@@ -49,5 +49,10 @@ class IStatisticService(ABC):
         new_place: int,
     ) -> list[StatisticDTO]: ...
 
-    # @abstractmethod
-    # async def get_top_gamers(self): ...
+    @abstractmethod
+    async def get_top_gamers(
+            self, offset: int, limit: int,
+    ) -> list[StatisticDTO]: ...
+
+    @abstractmethod
+    async def get_count(self) -> int: ...

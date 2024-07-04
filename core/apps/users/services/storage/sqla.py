@@ -114,17 +114,16 @@ class ORMStatisticService(IStatisticService):
 
     async def get_user_rank(
         self,
-        new_stat: StatisticDTO,
+        profile_pk: int,
     ) -> int:
         async with self.session.begin():
             subquery = select(
-                Statistic.id,
-                Statistic.score,
+                Statistic,
                 func.row_number()
                 .over(order_by=[desc(Statistic.score), desc(Statistic.games)])
                 .label("rank"),
             ).subquery()
-            query = select(subquery.c.rank).where(subquery.c.id == new_stat.id)
+            query = select(subquery.c.rank).where(subquery.c.profile_id == profile_pk)
 
             result = await self.session.execute(query)
             rank = result.fetchone()[0]
@@ -163,3 +162,21 @@ class ORMStatisticService(IStatisticService):
             orm_res = result.all()
 
             return [await orm_statistics_to_dto(row[0]) for row in orm_res]
+
+    async def get_top_gamers(
+            self, offset: int, limit: int,
+    ) -> list[StatisticDTO]:
+        query = (
+            select(Statistic)
+            .order_by(Statistic.place)
+            .offset(offset)
+            .limit(limit)
+        )
+        result = await self.session.execute(query)
+        ladder = result.scalars().all()
+        return [await orm_statistics_to_dto(obj) for obj in ladder]
+
+    async def get_count(self) -> int:
+        query = select(func.count(Statistic.id))
+        result = await self.session.execute(query)
+        return result.scalar_one()

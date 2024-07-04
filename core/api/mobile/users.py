@@ -1,10 +1,15 @@
+from typing import Annotated
+
 from fastapi import (
     APIRouter,
     Depends,
+    Query,
 )
 from starlette import status
 
 from core.api.mobile.depends import get_auth_credentials
+from core.api.schema import PaginationOut
+from core.apps.quiz.permissions.quiz import DevicePermissions
 from core.apps.users.actions import (
     ProfileActions,
     StatisticsActions,
@@ -16,7 +21,7 @@ from core.apps.users.schema import (
     GetStatisticsSchema,
     ProfileSchema,
     SetStatisticsSchema,
-    UpdateProfileSchema,
+    UpdateProfileSchema, PaginationStatisticSchema,
 )
 from core.config.containers import get_container
 from core.services.firebase import check_firebase_apikey
@@ -109,3 +114,55 @@ async def get_user_statistic(
     actions: StatisticsActions = container.resolve(StatisticsActions)
     stat = await actions.get_by_id(pk)
     return GetStatisticsSchema.from_dto(stat)
+
+
+@router.get(
+    path="/top-ladder/",
+    status_code=status.HTTP_200_OK,
+    description="Топ игроков\n\nПагинация:\n\n"
+                "::  limit: Сколько записей получить\n\n"
+                "::  offset: начиная с какой записи получить данные. "
+                "offset начинается с 0 и не включается в выборку.\n\n"
+                "::  \"/?limit=0&offset=10\" покажет записи с 1 до 10 включительно\n\n"
+                "::  \"/?limit=10&offset=10\" покажет записи с 11 до 20 включительно.\n\n"
+                "В ответе paginator:\n\n"
+                "::  offset: с какой записи запрошены объекты\n\n"
+                "::  limit: сколько запрошено объектов\n\n"
+                "::  total: всего объектов"
+)
+async def get_ladder(
+    offset: Annotated[int, Query(ge=0)] = 0,
+    limit: Annotated[int, Query(ge=0, le=100)] = 30,
+    cred: MobileAuthorizationCredentials = Depends(get_auth_credentials),
+) -> PaginationStatisticSchema:
+    container = get_container()
+    permissions: DevicePermissions = container.resolve(DevicePermissions)
+    await permissions.has_permission(cred.token)
+
+    action: StatisticsActions = container.resolve(StatisticsActions)
+    statistics, paginator = await action.get_top_ladder(offset, limit)
+    return PaginationStatisticSchema(
+        items=[GetStatisticsSchema.from_dto(obj) for obj in statistics],
+        paginator=paginator
+    )
+
+
+@router.get(
+    path="/user_statistic/{pk}/ladder/",
+    status_code=status.HTTP_200_OK,
+    description="Топ игроков, текущий юзер в середине ладдера"
+)
+async def get_ladder_profile(
+    pk: int,
+    cred: MobileAuthorizationCredentials = Depends(get_auth_credentials),
+) -> PaginationStatisticSchema:
+    container = get_container()
+    permissions: ProfilePermissions = container.resolve(ProfilePermissions)
+    await permissions.has_permission(pk, cred.token)
+
+    action: StatisticsActions = container.resolve(StatisticsActions)
+    statistics, paginator = await action.get_user_rank(pk)
+    return PaginationStatisticSchema(
+        items=[GetStatisticsSchema.from_dto(obj) for obj in statistics],
+        paginator=paginator
+    )

@@ -8,22 +8,22 @@ from core.apps.users.models import (
 )
 
 
-async def orm_profile_to_dto(model_obj: Profile) -> ProfileDTO:
+async def orm_profile_to_dto(orm_result: Profile) -> ProfileDTO:
     return ProfileDTO(
-        id=model_obj.id,
-        name=model_obj.name,
-        device_uuid=model_obj.device_uuid,
-        user_id=model_obj.user_id,
+        id=orm_result.id,
+        name=orm_result.name,
+        device_uuid=orm_result.device_uuid,
+        user_id=orm_result.user_id,
     )
 
 
-async def orm_statistics_to_dto(model_obj: Statistic) -> StatisticDTO:
+async def orm_statistics_to_dto(orm_result: Statistic) -> StatisticDTO:
     return StatisticDTO(
-        id=model_obj.id,
-        games=model_obj.games,
-        score=model_obj.score,
-        place=model_obj.place,
-        rights=model_obj.rights,
-        wrongs=model_obj.wrongs,
-        profile_id=model_obj.profile_id,
+        id=orm_result.id,
+        games=orm_result.games,
+        score=orm_result.score,
+        place=orm_result.place,
+        rights=orm_result.rights,
+        wrongs=orm_result.wrongs,
+        profile_id=orm_result.profile_id,
     )

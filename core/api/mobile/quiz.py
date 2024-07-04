@@ -15,7 +15,7 @@ from core.apps.quiz.permissions.quiz import DevicePermissions
 from core.apps.quiz.schema import (
     CreateComplaintSchema,
     QuestionSchema,
-    RetrieveComplaintSchema, RetrieveCategorySchema,
+    RetrieveCategorySchema,
 )
 from core.apps.users.permissions.profile import ProfilePermissions
 from core.config.containers import get_container
