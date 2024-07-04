@@ -36,6 +36,7 @@ class CreateComplaintSchema(BaseModel):
     text: str
     question: int
     category: int
+    profile: int
 
 
 class RetrieveComplaintSchema(PydanticMapper, BaseModel):

@@ -17,6 +17,7 @@ from core.apps.quiz.schema import (
     QuestionSchema,
     RetrieveComplaintSchema, RetrieveCategorySchema,
 )
+from core.apps.users.permissions.profile import ProfilePermissions
 from core.config.containers import get_container
 from core.services.security.mobile_auth import MobileAuthorizationCredentials
 
@@ -46,14 +47,14 @@ async def create_complaint(
 ) -> None:
     """Оставить жалобу"""
     container = get_container()
-    permissions: DevicePermissions = container.resolve(DevicePermissions)
-    await permissions.has_permission(cred.token)
+    permissions: ProfilePermissions = container.resolve(ProfilePermissions)
+    await permissions.has_permission(complaint.profile, cred.token)
 
     action: ComplaintsActions = container.resolve(ComplaintsActions)
     await action.create(
         text=complaint.text,
         question_id=complaint.question,
-        token=cred.token,
+        profile_id=complaint.profile,
         category_id=complaint.category
     )
     return None

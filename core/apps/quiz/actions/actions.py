@@ -32,9 +32,9 @@ class ComplaintsActions:
         text: str,
         question_id: int,
         category_id: int,
-        token: str,
+        profile_id: int,
     ) -> ComplaintDTO:
-        profile = await self.profile_repository.get_by_device(token)
+        profile = await self.profile_repository.get_by_id(profile_id)
         question = await self.question_repository.get_by_id(question_id)
         category = await self.category_repository.get_by_id(category_id)
 

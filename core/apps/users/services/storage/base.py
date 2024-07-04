@@ -48,3 +48,6 @@ class IStatisticService(ABC):
         current_place: int,
         new_place: int,
     ) -> list[StatisticDTO]: ...
+
+    # @abstractmethod
+    # async def get_top_gamers(self): ...
