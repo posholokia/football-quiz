@@ -14,3 +14,5 @@ class GameSettingsSchema(PydanticMapper, BaseModel):
     energy_perfect_round: int
     recovery_period: int
     recovery_value: int
+    right_ratio: float
+    wrong_ratio: float
