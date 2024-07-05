@@ -24,7 +24,7 @@ class DeviceTokenValidate(BaseValidator):
 
     @staticmethod
     async def _check_token_type(token: str) -> None:
-        if isinstance(token, str):
+        if not isinstance(token, str):
             raise InvalidDeviceToken()
         allow_symbols = f"{string.ascii_lowercase}{string.digits}"
         if (len(token) != 32) or (
