@@ -117,7 +117,7 @@ async def get_user_statistic(
 
 
 @router.get(
-    path="/top-ladder/",
+    path="/user_statistic/top-ladder/",
     status_code=status.HTTP_200_OK,
     description="Топ игроков\n\nПагинация:\n\n"
                 "::  limit: Сколько записей получить\n\n"
