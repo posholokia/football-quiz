@@ -5,11 +5,16 @@ Revises: b3301ac707c7
 Create Date: 2024-07-04 12:32:10.476521
 
 """
-from typing import Sequence, Union
+from typing import (
+    Sequence,
+    Union,
+)
 
 from alembic import op
+
 import sqlalchemy as sa
 from sqlalchemy.orm import sessionmaker
+
 from core.apps.quiz.models import CategoryComplaint
 
 

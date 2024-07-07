@@ -1,6 +1,6 @@
 from .quiz import (
-    QuestionDoesNotExists,
     CategoryComplaintDoesNotExists,
+    QuestionDoesNotExists,
 )
 
 

@@ -68,4 +68,3 @@ class RetrieveComplaintSchema(PydanticMapper, BaseModel):
 class RetrieveCategorySchema(PydanticMapper, BaseModel):
     id: int
     name: str
-

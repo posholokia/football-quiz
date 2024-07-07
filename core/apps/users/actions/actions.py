@@ -152,16 +152,3 @@ class StatisticsActions:
 
     async def get_user_rank(self, pk: int) -> int:
         return await self.repository.get_user_rank(pk)
-
-    # async def get_ladder_profile(self, pk: int, offset: int, limit: int = 60) -> tuple[list[StatisticDTO], PaginationOut]:
-    #     profile = await self.profile_repository.get_by_id(pk)
-    #     rank = await self.repository.get_user_rank(profile.id)
-    #     offset = 0 if rank <= 30 else rank - 30
-    #     total = await self.repository.get_count()
-    #     statistics = await self.repository.get_top_gamers(offset, limit)
-    #     paginator = PaginationOut(
-    #         offset=offset,
-    #         limit=limit,
-    #         total=total,
-    #     )
-    #     return statistics, paginator

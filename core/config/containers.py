@@ -4,21 +4,30 @@ import punq
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from core.api.pagination import (
+    LimitOffsetPaginator,
+    LOR,
+)
 from core.apps.game_settings.actions.actions import GameSettingsActions
 from core.apps.game_settings.services.storage.base import IGameSettingsService
-from core.apps.game_settings.services.storage.sqla import ORMGameSettingsService
+from core.apps.game_settings.services.storage.sqla import (
+    ORMGameSettingsService,
+)
 from core.apps.quiz.actions.actions import (
+    CategoryComplaintsActions,
     ComplaintsActions,
-    QuestionsActions, CategoryComplaintsActions,
+    QuestionsActions,
 )
 from core.apps.quiz.permissions.quiz import DevicePermissions
 from core.apps.quiz.services.storage.base import (
+    ICategoryComplaintService,
     IComplaintService,
-    IQuestionService, ICategoryComplaintService,
+    IQuestionService,
 )
 from core.apps.quiz.services.storage.sqla import (
+    ORMCategoryComplaintService,
     ORMComplaintService,
-    ORMQuestionsService, ORMCategoryComplaintService,
+    ORMQuestionsService,
 )
 from core.apps.users.actions.actions import (
     ProfileActions,
@@ -61,8 +70,13 @@ def _initialize_container() -> punq.Container:
     container.register(ProfilePermissions)
     container.register(DevicePermissions)
     # экшены
+    # профиль
     container.register(ProfileActions)
+    # статистика
+    container.register(LOR, ORMStatisticService)
+    container.register(LimitOffsetPaginator)
     container.register(StatisticsActions)
+
     container.register(QuestionsActions)
     container.register(GameSettingsActions)
     container.register(ComplaintsActions)

@@ -70,9 +70,7 @@ class Complaint(Base):
     created_at = Column(DateTime)
     solved = Column(Boolean)
     category_id = Column(
-        Integer,
-        ForeignKey("category_complaints.id"),
-        nullable=False
+        Integer, ForeignKey("category_complaints.id"), nullable=False
     )
     category: Mapped["CategoryComplaint"] = relationship(
         "CategoryComplaint", back_populates="complaint"

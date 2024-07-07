@@ -1,4 +1,8 @@
-from typing import Annotated
+from typing import (
+    Annotated,
+    Generic,
+    TypeVar,
+)
 
 from annotated_types import (
     MaxLen,
@@ -8,6 +12,9 @@ from pydantic import BaseModel
 
 from core.api.schema import PaginationOut
 from core.apps.mapper import PydanticMapper
+
+
+T = TypeVar("T")
 
 
 class ProfileSchema(PydanticMapper, BaseModel):
@@ -37,6 +44,6 @@ class ApiKeySchema(BaseModel):
     api_key: str
 
 
-class PaginationStatisticSchema(BaseModel):
-    items: list[GetStatisticsSchema]
+class PaginationResponseSchema(BaseModel, Generic[T]):
+    items: list[T]
     paginator: PaginationOut

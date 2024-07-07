@@ -5,8 +5,9 @@ from abc import (
 from dataclasses import dataclass
 
 from core.apps.quiz.dto.dto import (
+    CategoryComplaintDTO,
     ComplaintDTO,
-    QuestionDTO, CategoryComplaintDTO,
+    QuestionDTO,
 )
 from core.apps.users.dto import ProfileDTO
 

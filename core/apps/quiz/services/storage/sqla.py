@@ -12,24 +12,29 @@ from sqlalchemy.sql.functions import random
 
 from core.apps.quiz.dto import QuestionDTO
 from core.apps.quiz.dto.converter import (
+    category_orm_to_dto,
     complaint_orm_to_dto,
+    list_category_orm_to_dto,
     list_question_orm_to_dto,
     question_orm_to_dto,
-    list_category_orm_to_dto,
-    category_orm_to_dto,
 )
-from core.apps.quiz.dto.dto import ComplaintDTO, CategoryComplaintDTO
+from core.apps.quiz.dto.dto import (
+    CategoryComplaintDTO,
+    ComplaintDTO,
+)
 from core.apps.quiz.exceptions import (
-    QuestionDoesNotExists,
     CategoryComplaintDoesNotExists,
+    QuestionDoesNotExists,
 )
 from core.apps.quiz.models import (
+    CategoryComplaint,
     Complaint,
-    Question, CategoryComplaint,
+    Question,
 )
 from core.apps.quiz.services.storage.base import (
+    ICategoryComplaintService,
     IComplaintService,
-    IQuestionService, ICategoryComplaintService,
+    IQuestionService,
 )
 from core.apps.users.dto import ProfileDTO
 
@@ -91,11 +96,13 @@ class ORMComplaintService(IComplaintService):
                 text=text,
                 created_at=datetime.now(),
                 solved=False,
-                category_id=category.id
+                category_id=category.id,
             )
             self.session.add(complaint)
             await self.session.commit()
-            return await complaint_orm_to_dto(complaint, question, profile, category)
+            return await complaint_orm_to_dto(
+                complaint, question, profile, category
+            )
 
     async def get_by_id(self, pk: int) -> ComplaintDTO: ...
 

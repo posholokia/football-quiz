@@ -1,10 +1,14 @@
 from dataclasses import dataclass
 
 from core.apps.quiz.dto import QuestionDTO
-from core.apps.quiz.dto.dto import ComplaintDTO, CategoryComplaintDTO
+from core.apps.quiz.dto.dto import (
+    CategoryComplaintDTO,
+    ComplaintDTO,
+)
 from core.apps.quiz.services.storage.base import (
+    ICategoryComplaintService,
     IComplaintService,
-    IQuestionService, ICategoryComplaintService,
+    IQuestionService,
 )
 from core.apps.users.services.storage.base import IProfileService
 

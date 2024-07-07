@@ -1,6 +1,8 @@
 import math
 from typing import Annotated
 
+from punq import Container
+
 from fastapi import (
     APIRouter,
     Depends,
@@ -8,8 +10,8 @@ from fastapi import (
 )
 from starlette import status
 
-from core.api.mobile.depends import get_auth_credentials
-from core.api.schema import PaginationOut
+from core.api.pagination import LimitOffsetPaginator
+from core.api.schema import PaginationIn
 from core.apps.quiz.permissions.quiz import DevicePermissions
 from core.apps.users.actions import (
     ProfileActions,
@@ -20,7 +22,7 @@ from core.apps.users.permissions.profile import ProfilePermissions
 from core.apps.users.schema import (
     ApiKeySchema,
     GetStatisticsSchema,
-    PaginationStatisticSchema,
+    PaginationResponseSchema,
     ProfileSchema,
     SetStatisticsSchema,
     UpdateProfileSchema,
@@ -28,7 +30,10 @@ from core.apps.users.schema import (
 from core.config.containers import get_container
 from core.services.firebase import check_firebase_apikey
 from core.services.security.device_validator import DeviceTokenValidate
-from core.services.security.mobile_auth import MobileAuthorizationCredentials
+from core.services.security.mobile_auth import (
+    http_device,
+    MobileAuthorizationCredentials,
+)
 
 
 router = APIRouter()
@@ -37,12 +42,12 @@ router = APIRouter()
 @router.post("/create_profile/", status_code=status.HTTP_201_CREATED)
 async def create_profile(
     firebase: ApiKeySchema,
-    cred: MobileAuthorizationCredentials = Depends(get_auth_credentials),
+    cred: MobileAuthorizationCredentials = Depends(http_device),
+    container: Container = Depends(get_container),
 ) -> ProfileSchema:
     """Создать профиль игрока"""
     await check_firebase_apikey(firebase.api_key)
 
-    container = get_container()
     device: DeviceTokenValidate = container.resolve(DeviceTokenValidate)
     await device.validate(cred)
 
@@ -54,10 +59,10 @@ async def create_profile(
 @router.get("/get_profile/{pk}/", status_code=status.HTTP_200_OK)
 async def get_profile(
     pk: int,
-    cred: MobileAuthorizationCredentials = Depends(get_auth_credentials),
+    cred: MobileAuthorizationCredentials = Depends(http_device),
+    container: Container = Depends(get_container),
 ) -> ProfileSchema:
     """Получить данные профиля по id"""
-    container = get_container()
     permissions: ProfilePermissions = container.resolve(ProfilePermissions)
     await permissions.has_permission(pk, cred.token)
 
@@ -70,10 +75,10 @@ async def get_profile(
 async def change_profile(
     pk: int,
     profile: UpdateProfileSchema,
-    cred: MobileAuthorizationCredentials = Depends(get_auth_credentials),
+    cred: MobileAuthorizationCredentials = Depends(http_device),
+    container: Container = Depends(get_container),
 ) -> ProfileSchema:
     """Смена имени пользователя"""
-    container = get_container()
     permissions: ProfilePermissions = container.resolve(ProfilePermissions)
     await permissions.has_permission(pk, cred.token)
 
@@ -86,7 +91,8 @@ async def change_profile(
 async def set_user_statistic(
     pk: int,
     stat: SetStatisticsSchema,
-    cred: MobileAuthorizationCredentials = Depends(get_auth_credentials),
+    cred: MobileAuthorizationCredentials = Depends(http_device),
+    container: Container = Depends(get_container),
 ) -> GetStatisticsSchema:
     """
     Записать статистику за игру у пользователя.\n\n
@@ -95,7 +101,6 @@ async def set_user_statistic(
     rights: количество верных ответов за игру\n\n
     wrongs: количество неверных ответов за игру
     """
-    container = get_container()
     permissions: ProfilePermissions = container.resolve(ProfilePermissions)
     await permissions.has_permission(pk, cred.token)
 
@@ -107,9 +112,9 @@ async def set_user_statistic(
 @router.get("/user_statistic/{pk}/", status_code=status.HTTP_200_OK)
 async def get_user_statistic(
     pk: int,
-    cred: MobileAuthorizationCredentials = Depends(get_auth_credentials),
+    cred: MobileAuthorizationCredentials = Depends(http_device),
+    container: Container = Depends(get_container),
 ) -> GetStatisticsSchema:
-    container = get_container()
     permissions: ProfilePermissions = container.resolve(ProfilePermissions)
     await permissions.has_permission(pk, cred.token)
 
@@ -126,15 +131,13 @@ async def get_user_statistic(
 async def get_ladder_profile(
     pk: int,
     limit: Annotated[int, Query(ge=0, le=200)] = 60,
-    cred: MobileAuthorizationCredentials = Depends(get_auth_credentials),
-) -> PaginationStatisticSchema:
-    container = get_container()
+    cred: MobileAuthorizationCredentials = Depends(http_device),
+    container: Container = Depends(get_container),
+) -> PaginationResponseSchema[GetStatisticsSchema]:
     permissions: ProfilePermissions = container.resolve(ProfilePermissions)
     await permissions.has_permission(pk, cred.token)
 
     action: StatisticsActions = container.resolve(StatisticsActions)
-    total = await action.get_count_statistic()
-
     # offset рассчитывается, чтобы профиль был в середине
     user_rank = await action.get_user_rank(pk)
     offset = (
@@ -142,16 +145,16 @@ async def get_ladder_profile(
         if math.ceil(limit / 2) > user_rank
         else user_rank - math.ceil(limit / 2)
     )
+    pagination_in = PaginationIn(limit=limit, offset=offset)
 
-    statistics = await action.get_top_ladder(offset=offset, limit=limit)
-    return PaginationStatisticSchema(
-        items=[GetStatisticsSchema.from_dto(obj) for obj in statistics],
-        paginator=PaginationOut(
-            offset=offset,
-            limit=limit,
-            total=total,
-        ),
+    paginator: LimitOffsetPaginator = container.resolve(
+        service_key=LimitOffsetPaginator,
+        pagination=pagination_in,
+        schema=GetStatisticsSchema,
     )
+
+    res = await paginator.paginate(action.get_top_ladder)
+    return await res(pagination_in.offset, pagination_in.limit)
 
 
 @router.get(
@@ -169,22 +172,20 @@ async def get_ladder_profile(
     "::  total: всего объектов",
 )
 async def get_ladder(
-    offset: Annotated[int, Query(ge=0)] = 0,
-    limit: Annotated[int, Query(ge=0, le=200)] = 30,
-    cred: MobileAuthorizationCredentials = Depends(get_auth_credentials),
-) -> PaginationStatisticSchema:
-    container = get_container()
+    pagination_in: PaginationIn = Depends(),
+    cred: MobileAuthorizationCredentials = Depends(http_device),
+    container: Container = Depends(get_container),
+) -> PaginationResponseSchema[GetStatisticsSchema]:
     permissions: DevicePermissions = container.resolve(DevicePermissions)
     await permissions.has_permission(cred.token)
 
     action: StatisticsActions = container.resolve(StatisticsActions)
-    statistics = await action.get_top_ladder(offset, limit)
-    total = await action.get_count_statistic()
-    return PaginationStatisticSchema(
-        items=[GetStatisticsSchema.from_dto(obj) for obj in statistics],
-        paginator=PaginationOut(
-            offset=offset,
-            limit=limit,
-            total=total,
-        ),
+    paginator: LimitOffsetPaginator = container.resolve(
+        service_key=LimitOffsetPaginator,
+        pagination=pagination_in,
+        schema=GetStatisticsSchema,
     )
+
+    res = await paginator.paginate(action.get_top_ladder)
+
+    return await res(pagination_in.offset, pagination_in.limit)

@@ -4,10 +4,13 @@ from pydantic.main import BaseModel
 
 from fastapi import Request
 from fastapi.openapi.models import APIKey
+from fastapi.security import HTTPBearer
 from fastapi.security.base import SecurityBase
 
 from core.services.security.exceptions import UnauthorizedDevice
 
+
+http_bearer_no_error = HTTPBearer(auto_error=False)
 
 api_key_scheme = {
     "name": "Device",
@@ -32,3 +35,6 @@ class HTTPDevice(SecurityBase):
         if not device_auth:
             raise UnauthorizedDevice()
         return MobileAuthorizationCredentials(type="device", token=device_auth)
+
+
+http_device = HTTPDevice()
