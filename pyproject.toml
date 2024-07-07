@@ -26,7 +26,8 @@ punq = "^0.7.0"
 
 [tool.poetry.group.dev.dependencies]
 isort = "^5.13.2"
-ruff = "^0.4.4"
+ruff = "^0.5.1"
+pre-commit = "^3.7.1"
 
 
 [build-system]

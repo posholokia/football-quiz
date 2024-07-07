@@ -25,5 +25,6 @@ async def orm_statistics_to_dto(orm_result: Statistic) -> StatisticDTO:
         place=orm_result.place,
         rights=orm_result.rights,
         wrongs=orm_result.wrongs,
+        trend=orm_result.trend,
         profile_id=orm_result.profile_id,
     )

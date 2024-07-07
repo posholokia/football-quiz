@@ -18,6 +18,7 @@ class StatisticDTO:
     place: int
     rights: int
     wrongs: int
+    trend: int
     profile_id: int
 
 

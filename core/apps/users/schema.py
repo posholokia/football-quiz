@@ -29,6 +29,8 @@ class GetStatisticsSchema(PydanticMapper, SetStatisticsSchema):
     id: int
     games: int
     place: int
+    trend: int
+    profile_id: int
 
 
 class ApiKeySchema(BaseModel):

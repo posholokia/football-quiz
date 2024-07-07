@@ -51,7 +51,9 @@ class IStatisticService(ABC):
 
     @abstractmethod
     async def get_top_gamers(
-            self, offset: int, limit: int,
+        self,
+        offset: int | None,
+        limit: int | None,
     ) -> list[StatisticDTO]: ...
 
     @abstractmethod

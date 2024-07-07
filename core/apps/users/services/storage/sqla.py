@@ -104,6 +104,7 @@ class ORMStatisticService(IStatisticService):
                     place=new_stat.place,
                     rights=new_stat.rights,
                     wrongs=new_stat.wrongs,
+                    trend=new_stat.trend,
                 )
                 .returning(Statistic)
             )
@@ -120,10 +121,18 @@ class ORMStatisticService(IStatisticService):
             subquery = select(
                 Statistic,
                 func.row_number()
-                .over(order_by=[desc(Statistic.score), desc(Statistic.games)])
+                .over(
+                    order_by=[
+                        desc(Statistic.score),
+                        desc(Statistic.games),
+                        Statistic.id,
+                    ]
+                )
                 .label("rank"),
             ).subquery()
-            query = select(subquery.c.rank).where(subquery.c.profile_id == profile_pk)
+            query = select(subquery.c.rank).where(
+                subquery.c.profile_id == profile_pk
+            )
 
             result = await self.session.execute(query)
             rank = result.fetchone()[0]
@@ -164,11 +173,13 @@ class ORMStatisticService(IStatisticService):
             return [await orm_statistics_to_dto(row[0]) for row in orm_res]
 
     async def get_top_gamers(
-            self, offset: int, limit: int,
+        self,
+        offset: int | None,
+        limit: int | None,
     ) -> list[StatisticDTO]:
         query = (
             select(Statistic)
-            .order_by(Statistic.place)
+            .order_by(Statistic.place, Statistic.games.desc(), Statistic.id)
             .offset(offset)
             .limit(limit)
         )

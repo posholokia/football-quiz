@@ -68,6 +68,7 @@ class Statistic(Base):
     place = Column(Integer, unique=True)
     rights = Column(Integer, default=0)
     wrongs = Column(Integer, default=0)
+    trend = Column(Integer, default=0)
     profile_id = Column(Integer, ForeignKey("profiles.id"), nullable=False)
     profile = relationship("Profile", back_populates="statistic")
 
