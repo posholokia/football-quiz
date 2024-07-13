@@ -6,6 +6,7 @@ from fastapi import (
 )
 from starlette import status
 
+from core.api.mapper import dataclass_to_schema
 from core.apps.game_settings.actions import GameSettingsActions
 from core.apps.game_settings.schema import GameSettingsSchema
 from core.apps.quiz.permissions.quiz import DevicePermissions
@@ -30,4 +31,4 @@ async def get_game_settings(
 
     actions: GameSettingsActions = container.resolve(GameSettingsActions)
     game_settings = await actions.get()
-    return GameSettingsSchema.from_dto(game_settings)
+    return dataclass_to_schema(GameSettingsSchema, game_settings)

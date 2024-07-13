@@ -1,9 +1,7 @@
 from pydantic import BaseModel
 
-from core.apps.mapper import PydanticMapper
 
-
-class GameSettingsSchema(PydanticMapper, BaseModel):
+class GameSettingsSchema(BaseModel):
     time_round: int
     question_limit: int
     max_energy: int

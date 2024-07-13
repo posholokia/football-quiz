@@ -11,13 +11,12 @@ from annotated_types import (
 from pydantic import BaseModel
 
 from core.api.schema import PaginationOut
-from core.apps.mapper import PydanticMapper
 
 
 T = TypeVar("T")
 
 
-class ProfileSchema(PydanticMapper, BaseModel):
+class ProfileSchema(BaseModel):
     id: int
     name: Annotated[str | None, MaxLen(50)]
 
@@ -32,7 +31,7 @@ class SetStatisticsSchema(BaseModel):
     wrongs: int
 
 
-class GetStatisticsSchema(PydanticMapper, SetStatisticsSchema):
+class GetStatisticsSchema(SetStatisticsSchema):
     id: int
     games: int
     place: int

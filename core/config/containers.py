@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.api.pagination import (
     LimitOffsetPaginator,
-    LOR,
+    R,
 )
 from core.apps.game_settings.actions.actions import GameSettingsActions
 from core.apps.game_settings.services.storage.base import IGameSettingsService
@@ -73,7 +73,7 @@ def _initialize_container() -> punq.Container:
     # профиль
     container.register(ProfileActions)
     # статистика
-    container.register(LOR, ORMStatisticService)
+    container.register(R, ORMStatisticService)
     container.register(LimitOffsetPaginator)
     container.register(StatisticsActions)
 

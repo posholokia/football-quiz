@@ -10,6 +10,7 @@ from fastapi import (
 )
 from starlette import status
 
+from core.api.mapper import dataclass_to_schema
 from core.api.pagination import LimitOffsetPaginator
 from core.api.schema import PaginationIn
 from core.apps.quiz.permissions.quiz import DevicePermissions
@@ -53,7 +54,7 @@ async def create_profile(
 
     actions: ProfileActions = container.resolve(ProfileActions)
     profile: ProfileDTO = await actions.create(cred.token)
-    return ProfileSchema.from_dto(profile)
+    return dataclass_to_schema(ProfileSchema, profile)
 
 
 @router.get("/get_profile/{pk}/", status_code=status.HTTP_200_OK)
@@ -68,7 +69,7 @@ async def get_profile(
 
     actions: ProfileActions = container.resolve(ProfileActions)
     profile: ProfileDTO = await actions.get_by_id(pk)
-    return ProfileSchema.from_dto(profile)
+    return dataclass_to_schema(ProfileSchema, profile)
 
 
 @router.patch("/change_profile/{pk}/", status_code=status.HTTP_200_OK)
@@ -84,7 +85,7 @@ async def change_profile(
 
     actions: ProfileActions = container.resolve(ProfileActions)
     profile: ProfileDTO = await actions.patch_profile(pk, profile.name)
-    return ProfileSchema.from_dto(profile)
+    return dataclass_to_schema(ProfileSchema, profile)
 
 
 @router.post("/user_statistic/{pk}/", status_code=status.HTTP_200_OK)
@@ -106,7 +107,7 @@ async def set_user_statistic(
 
     actions: StatisticsActions = container.resolve(StatisticsActions)
     stat = await actions.patch(pk, stat)
-    return GetStatisticsSchema.from_dto(stat)
+    return dataclass_to_schema(GetStatisticsSchema, stat)
 
 
 @router.get("/user_statistic/{pk}/", status_code=status.HTTP_200_OK)
@@ -120,7 +121,7 @@ async def get_user_statistic(
 
     actions: StatisticsActions = container.resolve(StatisticsActions)
     stat = await actions.get_by_id(pk)
-    return GetStatisticsSchema.from_dto(stat)
+    return dataclass_to_schema(GetStatisticsSchema, stat)
 
 
 @router.get(

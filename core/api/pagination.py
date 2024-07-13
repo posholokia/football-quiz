@@ -9,13 +9,16 @@ from typing import (
     TypeVar,
 )
 
+from core.api.mapper import (
+    dataclass_to_schema,
+    S,
+)
 from core.api.schema import PaginationOut
 from core.apps.users.schema import PaginationResponseSchema
 
 
-LOR = TypeVar("LOR")
-LOP = TypeVar("LOP")
-LOS = TypeVar("LOS")
+R = TypeVar("R")
+P = TypeVar("P")
 
 
 @dataclass
@@ -26,9 +29,9 @@ class BasePaginator(ABC):
 
 @dataclass
 class LimitOffsetPaginator(BasePaginator):
-    pagination: LOP
-    repository: LOR
-    schema: LOS
+    pagination: P
+    repository: R
+    schema: S
 
     async def paginate(
         self, func: Callable[[int, int], Coroutine]
@@ -39,7 +42,9 @@ class LimitOffsetPaginator(BasePaginator):
             res = await func(offset, limit)
 
             total = await self.repository.get_count()
-            obj_list = [self.schema.from_dto(obj) for obj in res]
+            obj_list = [
+                dataclass_to_schema(type(self.schema), obj) for obj in res
+            ]
             return PaginationResponseSchema(
                 items=obj_list,
                 paginator=PaginationOut(

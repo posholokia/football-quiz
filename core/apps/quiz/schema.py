@@ -1,35 +1,20 @@
 from datetime import datetime
-from typing import (
-    Any,
-    Type,
-)
 
 from pydantic import BaseModel
 
-from core.apps.mapper import PydanticMapper
 from core.apps.users.schema import ProfileSchema
 
 
-class AnswerSchema(PydanticMapper, BaseModel):
+class AnswerSchema(BaseModel):
     id: int
     text: str
     right: bool
 
 
-class QuestionSchema(PydanticMapper, BaseModel):
+class QuestionSchema(BaseModel):
     id: int
     text: str
     answers: list[AnswerSchema]
-
-    @classmethod
-    def from_dto(cls: Type["QuestionSchema"], obj: Any) -> "QuestionSchema":
-        mapped_fields = dict()
-        for attr in cls.model_fields.keys():
-            value = getattr(obj, attr)
-            if attr == "answers":
-                value = [AnswerSchema.from_dto(answer) for answer in value]
-            mapped_fields.update({attr: value})
-        return cls(**mapped_fields)
 
 
 class CreateComplaintSchema(BaseModel):
@@ -39,7 +24,7 @@ class CreateComplaintSchema(BaseModel):
     profile: int
 
 
-class RetrieveComplaintSchema(PydanticMapper, BaseModel):
+class RetrieveComplaintSchema(BaseModel):
     id: int
     profile: ProfileSchema
     question: QuestionSchema
@@ -48,23 +33,7 @@ class RetrieveComplaintSchema(PydanticMapper, BaseModel):
     solved: bool
     category: "RetrieveCategorySchema"
 
-    @classmethod
-    def from_dto(
-        cls: Type["RetrieveComplaintSchema"], obj: Any
-    ) -> "RetrieveComplaintSchema":
-        mapped_fields = dict()
-        for attr in cls.model_fields.keys():
-            value = getattr(obj, attr)
-            if attr == "profile":
-                value = ProfileSchema.from_dto(value)
-            elif attr == "question":
-                value = QuestionSchema.from_dto(value)
-            elif attr == "category":
-                value = RetrieveCategorySchema.from_dto(value)
-            mapped_fields.update({attr: value})
-        return cls(**mapped_fields)
 
-
-class RetrieveCategorySchema(PydanticMapper, BaseModel):
+class RetrieveCategorySchema(BaseModel):
     id: int
     name: str

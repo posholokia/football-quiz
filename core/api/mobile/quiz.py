@@ -9,6 +9,7 @@ from fastapi import (
 )
 from starlette import status
 
+from core.api.mapper import dataclass_to_schema
 from core.apps.quiz.actions import QuestionsActions
 from core.apps.quiz.actions.actions import (
     CategoryComplaintsActions,
@@ -44,7 +45,7 @@ async def get_questions(
 
     actions: QuestionsActions = container.resolve(QuestionsActions)
     questions: list[QuestionDTO] = await actions.get_random(limit)
-    return [QuestionSchema.from_dto(q) for q in questions]
+    return [dataclass_to_schema(QuestionSchema, q) for q in questions]
 
 
 @router.post("/complain/", status_code=status.HTTP_204_NO_CONTENT)
@@ -80,4 +81,7 @@ async def category_list(
         CategoryComplaintsActions
     )
     categories_list = await action.list()
-    return [RetrieveCategorySchema.from_dto(cat) for cat in categories_list]
+    return [
+        dataclass_to_schema(RetrieveCategorySchema, cat)
+        for cat in categories_list
+    ]
