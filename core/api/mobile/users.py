@@ -37,6 +37,7 @@ from core.apps.users.schema import (
 )
 from core.config.containers import get_container
 from core.config.database.db import Base
+from core.services.firebase import check_firebase_apikey
 from core.services.security.device_validator import DeviceTokenValidate
 from core.services.security.mobile_auth import (
     http_device,
@@ -54,7 +55,7 @@ async def create_profile(
     container: Container = Depends(get_container),
 ) -> ProfileSchema:
     """Создать профиль игрока"""
-    # await check_firebase_apikey(firebase.api_key)
+    await check_firebase_apikey(firebase.api_key)
 
     device: DeviceTokenValidate = container.resolve(DeviceTokenValidate)
     await device.validate(cred)
@@ -104,7 +105,7 @@ async def change_profile(
 async def set_user_statistic(
     pk: int,
     stat: SetStatisticsSchema,
-    # cred: MobileAuthorizationCredentials = Depends(http_device),
+    cred: MobileAuthorizationCredentials = Depends(http_device),
     container: Container = Depends(get_container),
 ) -> GetStatisticsSchema:
     """
@@ -114,8 +115,8 @@ async def set_user_statistic(
     rights: количество верных ответов за игру\n\n
     wrongs: количество неверных ответов за игру
     """
-    # permissions: ProfilePermissions = container.resolve(ProfilePermissions)
-    # await permissions.has_permission(pk, cred.token)
+    permissions: ProfilePermissions = container.resolve(ProfilePermissions)
+    await permissions.has_permission(pk, cred.token)
 
     composite: CompositeStatisticAction = container.resolve(
         CompositeStatisticAction
