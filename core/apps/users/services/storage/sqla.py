@@ -93,19 +93,43 @@ class ORMStatisticService(IStatisticService):
             orm_result = res.fetchone()
             return await orm_statistics_to_dto(orm_result[0])
 
-    async def patch(self, new_stat: StatisticDTO) -> StatisticDTO:
+    async def replace_profiles(self, new_place, old_place) -> None:
+        async with self.session.begin():
+            if new_place > old_place:
+                query = (
+                    update(Statistic)
+                    .where(
+                        (Statistic.place <= new_place)
+                        & (Statistic.place > old_place)
+                    )
+                    .values(
+                        place=Statistic.place - 1,
+                        trend=Statistic.trend + 1,
+                    )
+                    .returning(Statistic)
+                )
+            else:
+                query = (
+                    update(Statistic)
+                    .where(
+                        (Statistic.place >= new_place)
+                        & (Statistic.place < old_place)
+                    )
+                    .values(
+                        place=Statistic.place + 1,
+                        trend=Statistic.trend - 1,
+                    )
+                    .returning(Statistic)
+                )
+            await self.session.execute(query)
+            await self.session.commit()
+
+    async def patch(self, pk: int, **fields) -> StatisticDTO:
         async with self.session.begin():
             query = (
                 update(Statistic)
-                .where(Statistic.id == new_stat.id)
-                .values(
-                    games=new_stat.games,
-                    score=new_stat.score,
-                    place=new_stat.place,
-                    rights=new_stat.rights,
-                    wrongs=new_stat.wrongs,
-                    trend=new_stat.trend,
-                )
+                .where(Statistic.id == pk)
+                .values(**fields)
                 .returning(Statistic)
             )
             result = await self.session.execute(query)

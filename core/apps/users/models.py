@@ -65,7 +65,7 @@ class Statistic(Base):
     )
     games = Column(Integer, default=0)
     score = Column(Integer, default=0)
-    place = Column(Integer, unique=True)
+    place = Column(Integer)  # unique=True)
     rights = Column(Integer, default=0)
     wrongs = Column(Integer, default=0)
     trend = Column(Integer, default=0)

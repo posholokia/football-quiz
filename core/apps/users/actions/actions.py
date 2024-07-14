@@ -1,4 +1,3 @@
-from copy import copy
 from dataclasses import dataclass
 
 from sqlalchemy.exc import IntegrityError
@@ -33,7 +32,11 @@ class ProfileActions:
             profile = await self.profile_repository.patch(
                 profile_pk, name=name
             )
-            await self.statistic_repository.create(profile_pk)
+            stat = await self.statistic_repository.create(profile_pk)
+            new_place = await self.statistic_repository.get_user_rank(
+                profile.id
+            )
+            await self.statistic_repository.patch(stat.id, place=new_place)
             return profile
 
         except IntegrityError:
@@ -61,10 +64,10 @@ class StatisticsActions:
 
     async def patch(
         self,
-        pk: int,
+        profile_pk: int,
         game_stat: SetStatisticsSchema,
     ) -> StatisticDTO:
-        profile = await self.profile_repository.get_by_id(pk)
+        profile = await self.profile_repository.get_by_id(profile_pk)
         # получаем текущую статистику игрока
         current_stat = await self.repository.get_by_id(profile.id)
         # получаем обновленную статистику в виде DTO,
@@ -72,56 +75,31 @@ class StatisticsActions:
         after_game_stat = await self._get_updated_statistic(
             current_stat, game_stat
         )
-        # записываем обновленную статистику в БД
-        new_stat = await self.repository.patch(after_game_stat)
+        # записываем обновленную статистику в БД без изменения места
+        new_stat = await self.repository.patch(
+            pk=after_game_stat.id,
+            games=after_game_stat.games,
+            score=after_game_stat.score,
+            rights=after_game_stat.rights,
+            wrongs=after_game_stat.wrongs,
+            trend=after_game_stat.trend,
+        )
         # получаем новое место игрока после обновления статистики
         new_place = await self.get_user_rank(profile.id)
         # если место не изменилось, выходим из функции
         if current_stat.place == new_place:
             return new_stat
-        # получаем список всех игроков, которых обошли в рейтинге
-        changed_place_stats = await self.repository.get_replaced_users(
-            current_stat.place, new_place
+        # сдвигаем всех затронутых игроков и
+        # присваиваем новое место ткущему юзеру
+        await self.repository.replace_profiles(new_place, current_stat.place)
+        stat = await self.repository.patch(
+            pk=after_game_stat.id, place=new_place
         )
-        # обновляем места игроков
-        updated_stats, current_profile = await self._get_updated_places(
-            changed_place_stats,
-            new_place,
-        )
-        # записываем в БД смещенных игроков
-        for stat in updated_stats:
-            await self.repository.patch(stat)
-        # записываем в БД текущего игрока
-        profile_stat = await self.repository.patch(current_profile)
-        return profile_stat
+
+        return stat
 
     async def get_by_id(self, pk: int) -> StatisticDTO:
         return await self.repository.get_by_id(pk)
-
-    @staticmethod
-    async def _get_updated_places(
-        statistics: list[StatisticDTO],
-        new_place: int,
-    ) -> tuple[list[StatisticDTO], StatisticDTO]:
-        """
-        Обновление игровых мест в ладдере
-        """
-        stats = statistics.copy()
-        # сортируем в обратном порядке по местам, так как
-        # обновление в бд должно идти с конца на свободные места
-        stats.sort(key=lambda x: x.place, reverse=True)
-        # ставим ему временное значение места = 0, чтобы
-        # следующий профиль смог занять его место
-        stats[0].place = 0
-        # делаем копию статистики игрока и присваиваем туда новое место
-        stat_copy = copy(stats[0])
-        stat_copy.place = new_place
-        stat_copy.trend = stats[0].place - new_place
-        # смещаем всех игроков кроме поднимаемого
-        for s in stats[1:]:
-            s.place += 1
-            s.trend -= 1
-        return stats, stat_copy
 
     async def _get_updated_statistic(
         self,

@@ -92,7 +92,7 @@ async def change_profile(
 async def set_user_statistic(
     pk: int,
     stat: SetStatisticsSchema,
-    cred: MobileAuthorizationCredentials = Depends(http_device),
+    # cred: MobileAuthorizationCredentials = Depends(http_device),
     container: Container = Depends(get_container),
 ) -> GetStatisticsSchema:
     """
@@ -102,8 +102,8 @@ async def set_user_statistic(
     rights: количество верных ответов за игру\n\n
     wrongs: количество неверных ответов за игру
     """
-    permissions: ProfilePermissions = container.resolve(ProfilePermissions)
-    await permissions.has_permission(pk, cred.token)
+    # permissions: ProfilePermissions = container.resolve(ProfilePermissions)
+    # await permissions.has_permission(pk, cred.token)
 
     actions: StatisticsActions = container.resolve(StatisticsActions)
     stat = await actions.patch(pk, stat)
