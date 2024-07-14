@@ -69,8 +69,8 @@ class StatisticsActions:
     profile_repository: IProfileService
     repository: IStatisticService
 
-    async def create(self, profile_pk: int) -> None:
-        await self.repository.create(profile_pk)
+    async def create(self, profile_pk: int, place: int) -> None:
+        await self.repository.create(profile_pk, place)
 
     async def patch(
         self,
