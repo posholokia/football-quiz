@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from typing import (
     Callable,
     Coroutine,
+    Type,
     TypeVar,
 )
 
@@ -31,7 +32,7 @@ class BasePaginator(ABC):
 class LimitOffsetPaginator(BasePaginator):
     pagination: P
     repository: R
-    schema: S
+    schema: Type[S]
 
     async def paginate(
         self, func: Callable[[int, int], Coroutine]
@@ -42,9 +43,7 @@ class LimitOffsetPaginator(BasePaginator):
             res = await func(offset, limit)
 
             total = await self.repository.get_count()
-            obj_list = [
-                dataclass_to_schema(type(self.schema), obj) for obj in res
-            ]
+            obj_list = [dataclass_to_schema(self.schema, obj) for obj in res]
             return PaginationResponseSchema(
                 items=obj_list,
                 paginator=PaginationOut(

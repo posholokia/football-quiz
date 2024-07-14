@@ -1,5 +1,8 @@
 import math
-from typing import Annotated
+from typing import (
+    Annotated,
+    Type,
+)
 
 from punq import Container
 
@@ -11,14 +14,18 @@ from fastapi import (
 from starlette import status
 
 from core.api.mapper import dataclass_to_schema
+from core.api.mobile.depends import get_statistic_model
 from core.api.pagination import LimitOffsetPaginator
 from core.api.schema import PaginationIn
 from core.apps.quiz.permissions.quiz import DevicePermissions
 from core.apps.users.actions import (
+    CompositeProfileAction,
+    CompositeStatisticAction,
     ProfileActions,
     StatisticsActions,
 )
 from core.apps.users.dto import ProfileDTO
+from core.apps.users.models import Statistic
 from core.apps.users.permissions.profile import ProfilePermissions
 from core.apps.users.schema import (
     ApiKeySchema,
@@ -29,6 +36,7 @@ from core.apps.users.schema import (
     UpdateProfileSchema,
 )
 from core.config.containers import get_container
+from core.config.database.db import Base
 from core.services.security.device_validator import DeviceTokenValidate
 from core.services.security.mobile_auth import (
     http_device,
@@ -51,8 +59,13 @@ async def create_profile(
     device: DeviceTokenValidate = container.resolve(DeviceTokenValidate)
     await device.validate(cred)
 
-    actions: ProfileActions = container.resolve(ProfileActions)
-    profile: ProfileDTO = await actions.create(cred.token)
+    composite: CompositeProfileAction = container.resolve(
+        CompositeProfileAction
+    )
+    await composite.create(cred.token)
+
+    action: ProfileActions = container.resolve(ProfileActions)
+    profile: ProfileDTO = await action.get_by_device(cred.token)
     return dataclass_to_schema(ProfileSchema, profile)
 
 
@@ -104,8 +117,15 @@ async def set_user_statistic(
     # permissions: ProfilePermissions = container.resolve(ProfilePermissions)
     # await permissions.has_permission(pk, cred.token)
 
-    actions: StatisticsActions = container.resolve(StatisticsActions)
-    stat = await actions.patch(pk, stat)
+    composite: CompositeStatisticAction = container.resolve(
+        CompositeStatisticAction
+    )
+    await composite.patch(pk, stat)
+
+    action: StatisticsActions = container.resolve(
+        StatisticsActions, model=Statistic
+    )
+    stat = await action.get_by_profile(pk)
     return dataclass_to_schema(GetStatisticsSchema, stat)
 
 
@@ -113,13 +133,16 @@ async def set_user_statistic(
 async def get_user_statistic(
     pk: int,
     cred: MobileAuthorizationCredentials = Depends(http_device),
+    model: Type[Base] = Depends(get_statistic_model),
     container: Container = Depends(get_container),
 ) -> GetStatisticsSchema:
     permissions: ProfilePermissions = container.resolve(ProfilePermissions)
     await permissions.has_permission(pk, cred.token)
 
-    actions: StatisticsActions = container.resolve(StatisticsActions)
-    stat = await actions.get_by_id(pk)
+    actions: StatisticsActions = container.resolve(
+        StatisticsActions, model=model
+    )
+    stat = await actions.get_by_profile(pk)
     return dataclass_to_schema(GetStatisticsSchema, stat)
 
 
@@ -132,12 +155,15 @@ async def get_ladder_profile(
     pk: int,
     limit: Annotated[int, Query(ge=0, le=200)] = 60,
     cred: MobileAuthorizationCredentials = Depends(http_device),
+    model: Type[Base] = Depends(get_statistic_model),
     container: Container = Depends(get_container),
 ) -> PaginationResponseSchema[GetStatisticsSchema]:
     permissions: ProfilePermissions = container.resolve(ProfilePermissions)
     await permissions.has_permission(pk, cred.token)
 
-    action: StatisticsActions = container.resolve(StatisticsActions)
+    action: StatisticsActions = container.resolve(
+        StatisticsActions, model=model
+    )
     # offset рассчитывается, чтобы профиль был в середине
     user_rank = await action.get_user_rank(pk)
     offset = (
@@ -174,18 +200,21 @@ async def get_ladder_profile(
 async def get_ladder(
     pagination_in: PaginationIn = Depends(),
     cred: MobileAuthorizationCredentials = Depends(http_device),
+    model: Type[Base] = Depends(get_statistic_model),
     container: Container = Depends(get_container),
 ) -> PaginationResponseSchema[GetStatisticsSchema]:
     permissions: DevicePermissions = container.resolve(DevicePermissions)
     await permissions.has_permission(cred.token)
 
-    action: StatisticsActions = container.resolve(StatisticsActions)
+    action: StatisticsActions = container.resolve(
+        StatisticsActions, model=model
+    )
+
     paginator: LimitOffsetPaginator = container.resolve(
         service_key=LimitOffsetPaginator,
         pagination=pagination_in,
         schema=GetStatisticsSchema,
     )
-
     res = await paginator.paginate(action.get_top_ladder)
 
     return await res(pagination_in.offset, pagination_in.limit)

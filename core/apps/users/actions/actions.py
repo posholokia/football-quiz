@@ -24,13 +24,16 @@ class ProfileActions:
     async def create(self, device_uuid: str) -> ProfileDTO:
         try:
             # создаем профиль
-            profile = await self.profile_repository.create(device_uuid)
+            profile = await self.profile_repository.get_or_create(device_uuid)
             profile_pk = profile.id
-            name = f"Игрок-{profile_pk}"
-            #  присваиваем профилю новое имя
-            profile = await self.profile_repository.patch(
-                profile_pk, name=name
-            )
+
+            if profile.name == "Игрок":
+                name = f"Игрок-{profile_pk}"
+                #  присваиваем профилю новое имя
+                profile = await self.profile_repository.patch(
+                    profile_pk, name=name
+                )
+
             # вычисляем последнее место в рейтинге
             stat_count = await self.statistic_repository.get_count()
             old_place = stat_count + 1
@@ -58,6 +61,9 @@ class ProfileActions:
     async def get_by_id(self, pk: int) -> ProfileDTO:
         return await self.profile_repository.get_by_id(pk)
 
+    async def get_by_device(self, device_uuid: str) -> ProfileDTO:
+        return await self.profile_repository.get_by_device(device_uuid)
+
     async def patch_profile(self, pk: int, name: str) -> ProfileDTO:
         await self.validator.validate(name=name)
         profile = await self.profile_repository.patch(pk, name=name)
@@ -79,7 +85,7 @@ class StatisticsActions:
     ) -> StatisticDTO:
         profile = await self.profile_repository.get_by_id(profile_pk)
         # получаем текущую статистику игрока
-        current_stat = await self.repository.get_by_id(profile.id)
+        current_stat = await self.repository.get_by_profile(profile.id)
         # получаем обновленную статистику в виде DTO,
         # место в рейтинге не меняем
         after_game_stat = await self._get_updated_statistic(
@@ -108,8 +114,8 @@ class StatisticsActions:
 
         return stat
 
-    async def get_by_id(self, pk: int) -> StatisticDTO:
-        return await self.repository.get_by_id(pk)
+    async def get_by_profile(self, profile_pk: int) -> StatisticDTO:
+        return await self.repository.get_by_profile(profile_pk)
 
     async def _get_updated_statistic(
         self,
