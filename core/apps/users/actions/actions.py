@@ -6,10 +6,7 @@ from core.apps.users.dto import (
     ProfileDTO,
     StatisticDTO,
 )
-from core.apps.users.exceptions.profile import (
-    AlreadyExistsProfile,
-    DoesNotExistsProfile,
-)
+from core.apps.users.exceptions.profile import AlreadyExistsProfile
 from core.apps.users.schema import SetStatisticsSchema
 from core.apps.users.services.storage.base import (
     IProfileService,
@@ -26,27 +23,40 @@ class ProfileActions:
 
     async def create(self, device_uuid: str) -> ProfileDTO:
         try:
+            # создаем профиль
             profile = await self.profile_repository.create(device_uuid)
             profile_pk = profile.id
             name = f"Игрок-{profile_pk}"
+            #  присваиваем профилю новое имя
             profile = await self.profile_repository.patch(
                 profile_pk, name=name
             )
-            stat = await self.statistic_repository.create(profile_pk)
+            # вычисляем последнее место в рейтинге
+            stat_count = await self.statistic_repository.get_count()
+            old_place = stat_count + 1
+            # и ставим статистику юзера на последнее место
+            stat = await self.statistic_repository.create(
+                profile_pk, old_place
+            )
+            # затем вычисляем реальное место
             new_place = await self.statistic_repository.get_user_rank(
                 profile.id
             )
+            # и сдвигаем затронутых игроков
+            if new_place != stat_count:
+                await self.statistic_repository.replace_profiles(
+                    new_place, old_place
+                )
+            # ставим на реальное место в рейтинге
             await self.statistic_repository.patch(stat.id, place=new_place)
+
             return profile
 
         except IntegrityError:
             raise AlreadyExistsProfile()
 
     async def get_by_id(self, pk: int) -> ProfileDTO:
-        try:
-            return await self.profile_repository.get_by_id(pk)
-        except TypeError:
-            raise DoesNotExistsProfile()
+        return await self.profile_repository.get_by_id(pk)
 
     async def patch_profile(self, pk: int, name: str) -> ProfileDTO:
         await self.validator.validate(name=name)

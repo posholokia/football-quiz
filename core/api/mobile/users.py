@@ -29,7 +29,6 @@ from core.apps.users.schema import (
     UpdateProfileSchema,
 )
 from core.config.containers import get_container
-from core.services.firebase import check_firebase_apikey
 from core.services.security.device_validator import DeviceTokenValidate
 from core.services.security.mobile_auth import (
     http_device,
@@ -47,7 +46,7 @@ async def create_profile(
     container: Container = Depends(get_container),
 ) -> ProfileSchema:
     """Создать профиль игрока"""
-    await check_firebase_apikey(firebase.api_key)
+    # await check_firebase_apikey(firebase.api_key)
 
     device: DeviceTokenValidate = container.resolve(DeviceTokenValidate)
     await device.validate(cred)

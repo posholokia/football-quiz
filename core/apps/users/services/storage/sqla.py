@@ -16,6 +16,7 @@ from core.apps.users.dto.converter import (
     orm_profile_to_dto,
     orm_statistics_to_dto,
 )
+from core.apps.users.exceptions.profile import DoesNotExistsProfile
 from core.apps.users.models import (
     Profile,
     Statistic,
@@ -58,6 +59,10 @@ class ORMProfileService(IProfileService):
             query = select(Profile).where(Profile.id == pk)
             result = await self.session.execute(query)
             orm_result = result.fetchone()
+
+            if orm_result is None:
+                raise DoesNotExistsProfile()
+
             return await orm_profile_to_dto(orm_result[0])
 
     async def get_by_device(self, token: str) -> ProfileDTO:
@@ -72,15 +77,15 @@ class ORMProfileService(IProfileService):
 class ORMStatisticService(IStatisticService):
     session: AsyncSession
 
-    async def create(self, pk: int) -> StatisticDTO:
+    async def create(self, pk: int, place: int) -> StatisticDTO:
         async with self.session.begin():
-            query = select(func.count()).select_from(Statistic)
-            res = await self.session.execute(query)
-            last_place = res.fetchone()[0] + 1
+            # query = select(func.count()).select_from(Statistic)
+            # res = await self.session.execute(query)
+            # last_place = res.fetchone()[0] + 1
 
             profile_statistic = Statistic(
                 profile_id=pk,
-                place=last_place,
+                place=place,
             )
             self.session.add(profile_statistic)
             await self.session.commit()
@@ -201,17 +206,21 @@ class ORMStatisticService(IStatisticService):
         offset: int | None,
         limit: int | None,
     ) -> list[StatisticDTO]:
-        query = (
-            select(Statistic)
-            .order_by(Statistic.place, Statistic.games.desc(), Statistic.id)
-            .offset(offset)
-            .limit(limit)
-        )
-        result = await self.session.execute(query)
-        ladder = result.scalars().all()
-        return [await orm_statistics_to_dto(obj) for obj in ladder]
+        async with self.session.begin():
+            query = (
+                select(Statistic)
+                .order_by(
+                    Statistic.place, Statistic.games.desc(), Statistic.id
+                )
+                .offset(offset)
+                .limit(limit)
+            )
+            result = await self.session.execute(query)
+            ladder = result.scalars().all()
+            return [await orm_statistics_to_dto(obj) for obj in ladder]
 
     async def get_count(self) -> int:
-        query = select(func.count(Statistic.id))
-        result = await self.session.execute(query)
-        return result.scalar_one()
+        async with self.session.begin():
+            query = select(func.count(Statistic.id))
+            result = await self.session.execute(query)
+            return result.scalar_one()
