@@ -3,7 +3,6 @@ from dataclasses import dataclass
 
 @dataclass
 class GameSettingsDTO:
-    id: int
     time_round: int
     question_limit: int
     max_energy: int
