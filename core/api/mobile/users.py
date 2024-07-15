@@ -18,8 +18,7 @@ from core.api.mobile.depends import get_statistic_model
 from core.api.pagination import LimitOffsetPaginator
 from core.api.schema import PaginationIn
 from core.apps.quiz.permissions.quiz import DevicePermissions
-from core.apps.users.actions import (
-    CompositeProfileAction,
+from core.apps.users.actions import (  # CompositeProfileAction,
     CompositeStatisticAction,
     ProfileActions,
     StatisticsActions,
@@ -60,13 +59,8 @@ async def create_profile(
     device: DeviceTokenValidate = container.resolve(DeviceTokenValidate)
     await device.validate(cred)
 
-    composite: CompositeProfileAction = container.resolve(
-        CompositeProfileAction
-    )
-    await composite.create(cred.token)
-
     action: ProfileActions = container.resolve(ProfileActions)
-    profile: ProfileDTO = await action.get_by_device(cred.token)
+    profile: ProfileDTO = await action.create(cred.token)
     return dataclass_to_schema(ProfileSchema, profile)
 
 

@@ -1,16 +1,12 @@
 from .actions import (
+    CompositeStatisticAction,
     ProfileActions,
     StatisticsActions,
-)
-from .composite import (
-    CompositeProfileAction,
-    CompositeStatisticAction,
 )
 
 
 __all__ = (
     "ProfileActions",
     "StatisticsActions",
-    "CompositeProfileAction",
     "CompositeStatisticAction",
 )

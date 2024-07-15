@@ -1,12 +1,9 @@
 from dataclasses import dataclass
 
-from sqlalchemy.exc import IntegrityError
-
 from core.apps.users.dto import (
     ProfileDTO,
     StatisticDTO,
 )
-from core.apps.users.exceptions.profile import AlreadyExistsProfile
 from core.apps.users.schema import SetStatisticsSchema
 from core.apps.users.services.storage.base import (
     IProfileService,
@@ -18,45 +15,20 @@ from core.apps.users.services.validator.profile import ProfileValidator
 @dataclass
 class ProfileActions:
     profile_repository: IProfileService
-    statistic_repository: IStatisticService
+    statistic_repository: "CompositeStatisticAction"
     validator: ProfileValidator
 
     async def create(self, device_uuid: str) -> ProfileDTO:
-        try:
-            # создаем профиль
-            profile = await self.profile_repository.get_or_create(device_uuid)
-            profile_pk = profile.id
+        # создаем профиль
+        profile = await self.profile_repository.create(device_uuid)
+        profile_pk = profile.id
 
-            if profile.name == "Игрок":
-                name = f"Игрок-{profile_pk}"
-                #  присваиваем профилю новое имя
-                profile = await self.profile_repository.patch(
-                    profile_pk, name=name
-                )
+        name = f"Игрок-{profile_pk}"
+        #  присваиваем профилю новое имя
+        profile = await self.profile_repository.patch(profile_pk, name=name)
 
-            # вычисляем последнее место в рейтинге
-            stat_count = await self.statistic_repository.get_count()
-            old_place = stat_count + 1
-            # и ставим статистику юзера на последнее место
-            stat = await self.statistic_repository.create(
-                profile_pk, old_place
-            )
-            # затем вычисляем реальное место
-            new_place = await self.statistic_repository.get_user_rank(
-                profile.id
-            )
-            # и сдвигаем затронутых игроков
-            if new_place != stat_count:
-                await self.statistic_repository.replace_profiles(
-                    new_place, old_place
-                )
-            # ставим на реальное место в рейтинге
-            await self.statistic_repository.patch(stat.id, place=new_place)
-
-            return profile
-
-        except IntegrityError:
-            raise AlreadyExistsProfile()
+        await self.statistic_repository.create(profile_pk)
+        return profile
 
     async def get_by_id(self, pk: int) -> ProfileDTO:
         return await self.profile_repository.get_by_id(pk)
@@ -75,8 +47,11 @@ class StatisticsActions:
     profile_repository: IProfileService
     repository: IStatisticService
 
-    async def create(self, profile_pk: int, place: int) -> None:
+    async def create(self, profile_pk: int) -> None:
+        count = await self.repository.get_count_positive_score()
+        place = count + 1
         await self.repository.create(profile_pk, place)
+        await self.repository.down_place_negative_score()
 
     async def patch(
         self,
@@ -146,3 +121,20 @@ class StatisticsActions:
 
     async def get_user_rank(self, pk: int) -> int:
         return await self.repository.get_user_rank(pk)
+
+
+@dataclass
+class CompositeStatisticAction:
+    actions: list[StatisticsActions]
+
+    async def create(self, profile_pk: int) -> None:
+        for action in self.actions:
+            await action.create(profile_pk)
+
+    async def patch(
+        self,
+        profile_pk: int,
+        game_stat: SetStatisticsSchema,
+    ) -> None:
+        for action in self.actions:
+            await action.patch(profile_pk, game_stat)

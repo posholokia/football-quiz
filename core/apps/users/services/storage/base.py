@@ -46,13 +46,6 @@ class IStatisticService(ABC):
     ) -> int: ...
 
     @abstractmethod
-    async def get_replaced_users(
-        self,
-        current_place: int,
-        new_place: int,
-    ) -> list[StatisticDTO]: ...
-
-    @abstractmethod
     async def get_top_gamers(
         self,
         offset: int | None,
@@ -64,3 +57,9 @@ class IStatisticService(ABC):
 
     @abstractmethod
     async def replace_profiles(self, new_place, old_place) -> None: ...
+
+    @abstractmethod
+    async def get_count_positive_score(self) -> int: ...
+
+    @abstractmethod
+    async def down_place_negative_score(self) -> None: ...
