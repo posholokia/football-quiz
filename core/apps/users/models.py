@@ -48,6 +48,12 @@ class Profile(Base):
     statistic = relationship(
         "Statistic", uselist=False, back_populates="profile"
     )
+    month_statistic = relationship(
+        "MonthStatistic", uselist=False, back_populates="profile"
+    )
+    day_statistic = relationship(
+        "DayStatistic", uselist=False, back_populates="profile"
+    )
     complaints = relationship("Complaint", back_populates="profile")
 
     __table_args__ = (UniqueConstraint("user_id"),)
@@ -65,11 +71,55 @@ class Statistic(Base):
     )
     games = Column(Integer, default=0)
     score = Column(Integer, default=0)
-    place = Column(Integer)  # unique=True)
+    place = Column(Integer)
     rights = Column(Integer, default=0)
     wrongs = Column(Integer, default=0)
     trend = Column(Integer, default=0)
     profile_id = Column(Integer, ForeignKey("profiles.id"), nullable=False)
     profile = relationship("Profile", back_populates="statistic")
+
+    __table_args__ = (UniqueConstraint("profile_id"),)
+
+
+class MonthStatistic(Base):
+    __tablename__ = "month_statistics"
+
+    id = Column(
+        Integer,
+        primary_key=True,
+        unique=True,
+        index=True,
+        autoincrement=True,
+    )
+    games = Column(Integer, default=0)
+    score = Column(Integer, default=0)
+    place = Column(Integer)
+    rights = Column(Integer, default=0)
+    wrongs = Column(Integer, default=0)
+    trend = Column(Integer, default=0)
+    profile_id = Column(Integer, ForeignKey("profiles.id"), nullable=False)
+    profile = relationship("Profile", back_populates="month_statistic")
+
+    __table_args__ = (UniqueConstraint("profile_id"),)
+
+
+class DayStatistic(Base):
+    __tablename__ = "day_statistics"
+
+    id = Column(
+        Integer,
+        primary_key=True,
+        unique=True,
+        index=True,
+        autoincrement=True,
+    )
+    games = Column(Integer, default=0)
+    score = Column(Integer, default=0)
+    place = Column(Integer)
+    rights = Column(Integer, default=0)
+    wrongs = Column(Integer, default=0)
+    trend = Column(Integer, default=0)
+    profile_id = Column(Integer, ForeignKey("profiles.id"), nullable=False)
+    profile = relationship("Profile", back_populates="day_statistic")
 
     __table_args__ = (UniqueConstraint("profile_id"),)

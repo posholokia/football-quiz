@@ -1,10 +1,17 @@
 from dataclasses import dataclass
+from typing import (
+    Generic,
+    Type,
+    TypeVar,
+)
 
 from sqlalchemy import (
+    and_,
     desc,
     select,
     update,
 )
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql import func
 
@@ -16,6 +23,10 @@ from core.apps.users.dto.converter import (
     orm_profile_to_dto,
     orm_statistics_to_dto,
 )
+from core.apps.users.exceptions.profile import (
+    AlreadyExistsProfile,
+    DoesNotExistsProfile,
+)
 from core.apps.users.models import (
     Profile,
     Statistic,
@@ -24,6 +35,12 @@ from core.apps.users.services.storage.base import (
     IProfileService,
     IStatisticService,
 )
+from core.config.database.db import Base
+
+
+T = TypeVar("T", bound=Base)
+D = TypeVar("D", bound=Base)
+M = TypeVar("M", bound=Base)
 
 
 @dataclass
@@ -31,13 +48,34 @@ class ORMProfileService(IProfileService):
     session: AsyncSession
 
     async def create(self, device: str) -> ProfileDTO:
+        try:
+            async with self.session.begin():
+                new_profile = Profile(
+                    name="Игрок",
+                    device_uuid=device,
+                )
+                self.session.add(new_profile)
+                await self.session.commit()
+                return await orm_profile_to_dto(new_profile)
+
+        except IntegrityError:
+            raise AlreadyExistsProfile()
+
+    async def get_or_create(self, device: str) -> ProfileDTO:
         async with self.session.begin():
-            new_profile = Profile(
-                name="Игрок",
-                device_uuid=device,
-            )
-            self.session.add(new_profile)
-            await self.session.commit()
+            query = select(Profile).where(Profile.device_uuid == device)
+            result = await self.session.execute(query)
+            orm_result = result.fetchone()
+
+            if orm_result is None:
+                new_profile = Profile(
+                    name="Игрок",
+                    device_uuid=device,
+                )
+                self.session.add(new_profile)
+                await self.session.commit()
+            else:
+                new_profile = orm_result[0]
             return await orm_profile_to_dto(new_profile)
 
     async def patch(self, pk: int, **kwargs) -> ProfileDTO:
@@ -58,6 +96,10 @@ class ORMProfileService(IProfileService):
             query = select(Profile).where(Profile.id == pk)
             result = await self.session.execute(query)
             orm_result = result.fetchone()
+
+            if orm_result is None:
+                raise DoesNotExistsProfile()
+
             return await orm_profile_to_dto(orm_result[0])
 
     async def get_by_device(self, token: str) -> ProfileDTO:
@@ -69,26 +111,25 @@ class ORMProfileService(IProfileService):
 
 
 @dataclass
-class ORMStatisticService(IStatisticService):
+class ORMStatisticService(IStatisticService, Generic[T]):
     session: AsyncSession
+    model: Type[T]
 
-    async def create(self, pk: int) -> StatisticDTO:
+    async def create(self, pk: int, place: int) -> StatisticDTO:
         async with self.session.begin():
-            query = select(func.count()).select_from(Statistic)
-            res = await self.session.execute(query)
-            last_place = res.fetchone()[0] + 1
-
-            profile_statistic = Statistic(
+            profile_statistic = self.model(
                 profile_id=pk,
-                place=last_place,
+                place=place,
             )
             self.session.add(profile_statistic)
             await self.session.commit()
             return profile_statistic
 
-    async def get_by_id(self, pk: int) -> StatisticDTO:
+    async def get_by_profile(self, profile_pk: int) -> StatisticDTO:
         async with self.session.begin():
-            query = select(Statistic).where(Statistic.profile_id == pk)
+            query = select(self.model).where(
+                self.model.profile_id == profile_pk
+            )
             res = await self.session.execute(query)
             orm_result = res.fetchone()
             return await orm_statistics_to_dto(orm_result[0])
@@ -97,40 +138,54 @@ class ORMStatisticService(IStatisticService):
         async with self.session.begin():
             if new_place > old_place:
                 query = (
-                    update(Statistic)
+                    update(self.model)
                     .where(
-                        (Statistic.place <= new_place)
-                        & (Statistic.place > old_place)
+                        and_(
+                            self.model.place <= new_place,
+                            self.model.place > old_place,
+                        )
                     )
                     .values(
-                        place=Statistic.place - 1,
-                        trend=Statistic.trend + 1,
+                        place=self.model.place - 1,
+                        trend=self.model.trend + 1,
                     )
-                    .returning(Statistic)
                 )
             else:
                 query = (
-                    update(Statistic)
+                    update(self.model)
                     .where(
-                        (Statistic.place >= new_place)
-                        & (Statistic.place < old_place)
+                        and_(
+                            self.model.place >= new_place,
+                            self.model.place < old_place,
+                        )
                     )
                     .values(
-                        place=Statistic.place + 1,
-                        trend=Statistic.trend - 1,
+                        place=self.model.place + 1,
+                        trend=self.model.trend - 1,
                     )
-                    .returning(Statistic)
                 )
             await self.session.execute(query)
             await self.session.commit()
 
+    async def down_place_negative_score(self) -> None:
+        async with self.session.begin():
+            query = (
+                update(self.model)
+                .where(self.model.score < 0)
+                .values(
+                    place=self.model.place + 1,
+                    trend=self.model.trend - 1,
+                )
+            )
+            await self.session.execute(query)
+
     async def patch(self, pk: int, **fields) -> StatisticDTO:
         async with self.session.begin():
             query = (
-                update(Statistic)
-                .where(Statistic.id == pk)
+                update(self.model)
+                .where(self.model.id == pk)
                 .values(**fields)
-                .returning(Statistic)
+                .returning(self.model)
             )
             result = await self.session.execute(query)
             await self.session.commit()
@@ -143,13 +198,13 @@ class ORMStatisticService(IStatisticService):
     ) -> int:
         async with self.session.begin():
             subquery = select(
-                Statistic,
+                self.model,
                 func.row_number()
                 .over(
                     order_by=[
-                        desc(Statistic.score),
-                        desc(Statistic.games),
-                        Statistic.id,
+                        desc(self.model.score),
+                        desc(self.model.games),
+                        self.model.profile_id,
                     ]
                 )
                 .label("rank"),
@@ -163,55 +218,65 @@ class ORMStatisticService(IStatisticService):
 
             return rank
 
-    async def get_replaced_users(
-        self,
-        current_place: int,
-        new_place: int,
-    ) -> list[StatisticDTO]:
-        async with self.session.begin():
-            start, end = (
-                (current_place, new_place)
-                if current_place < new_place
-                else (new_place, current_place)
-            )
-            subquery = select(
-                Statistic,
-                func.row_number()
-                .over(
-                    order_by=[
-                        desc(Statistic.score),
-                    ]
-                )
-                .label("rank"),
-            ).subquery()
-            query = (
-                select(Statistic)
-                .join(subquery, subquery.c.id == Statistic.id)
-                .order_by(subquery.c.place)
-                .where(subquery.c.rank.between(start, end))
-            )
-
-            result = await self.session.execute(query)
-            orm_res = result.all()
-
-            return [await orm_statistics_to_dto(row[0]) for row in orm_res]
-
     async def get_top_gamers(
         self,
         offset: int | None,
         limit: int | None,
     ) -> list[StatisticDTO]:
-        query = (
-            select(Statistic)
-            .order_by(Statistic.place, Statistic.games.desc(), Statistic.id)
-            .offset(offset)
-            .limit(limit)
-        )
-        result = await self.session.execute(query)
-        ladder = result.scalars().all()
-        return [await orm_statistics_to_dto(obj) for obj in ladder]
+        async with self.session.begin():
+            query = (
+                select(self.model)
+                .order_by(self.model.place)
+                .offset(offset)
+                .limit(limit)
+            )
+            result = await self.session.execute(query)
+            ladder = result.scalars().all()
+            return [await orm_statistics_to_dto(obj) for obj in ladder]
 
     async def get_count(self) -> int:
-        query = select(func.count(Statistic.id))
-        result = await self.session.execute(query)
-        return result.scalar_one()
+        async with self.session.begin():
+            query = select(func.count(self.model.id))
+            result = await self.session.execute(query)
+            return result.scalar_one()
+
+    async def get_count_positive_score(self) -> int:
+        async with self.session.begin():
+            query = (
+                select(func.count())
+                .select_from(self.model)
+                .where(self.model.score >= 0)
+            )
+            result = await self.session.execute(query)
+            return result.scalar_one()
+
+    async def clear_statistic(self) -> None:
+        assert self.model is not Statistic, "Попытка обнулить общую статистику"
+
+        if self.model is Statistic:
+            return
+
+        async with self.session.begin():
+            query = update(self.model).values(
+                games=0,
+                score=0,
+                rights=0,
+                wrongs=0,
+                trend=0,
+            )
+            await self.session.execute(query)
+            await self.session.flush()
+
+            query = select(self.model).order_by(self.model.profile_id)
+            res = await self.session.execute(query)
+            statistics = res.scalars().all()
+
+            for idx, stat in enumerate(statistics, start=1):
+                query = (
+                    update(self.model)
+                    .where(self.model.id == stat.id)
+                    .values(place=idx)
+                )
+                await self.session.execute(query)
+
+            await self.session.commit()

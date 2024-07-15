@@ -16,11 +16,32 @@ services:
       - fqdb_data:/var/lib/postgresql/data/
       - /var/run/docker.sock:/var/run/docker.sock
 
+  rabbit_quiz:
+    container_name: rabbit_quiz
+    image: public.ecr.aws/docker/library/rabbitmq:3.13
+    environment:
+      RABBITMQ_DEFAULT_USER: "master"
+      RABBITMQ_DEFAULT_PASS: "123456"
+      RABBITMQ_DEFAULT_VHOST: "quizvhost"
+      RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS: "-rabbit log_levels [{connection,error},{default,error}] disk_free_limit 2147483648"
+    ports:
+      - "15672:15672"
+      - "5672:5672"
+    networks:
+      - dev-net
+    volumes:
+      - quiz_rabbitmq:/var/lib/rabbitmq
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 30s
+      timeout: 30s
+      retries: 3
 
 volumes:
   fqdb_data:
     name: fqdb_data
-
+  quiz_rabbitmq:
+    name: quiz_rabbitmq
 
 networks:
   dev-net:

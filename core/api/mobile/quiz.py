@@ -10,10 +10,10 @@ from fastapi import (
 from starlette import status
 
 from core.api.mapper import dataclass_to_schema
-from core.apps.quiz.actions import QuestionsActions
-from core.apps.quiz.actions.actions import (
+from core.apps.quiz.actions import (
     CategoryComplaintsActions,
     ComplaintsActions,
+    QuestionsActions,
 )
 from core.apps.quiz.dto import QuestionDTO
 from core.apps.quiz.permissions.quiz import DevicePermissions

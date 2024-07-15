@@ -10,6 +10,7 @@ S = TypeVar("S")
 
 
 def dataclass_to_schema(schema: Type[S], obj: Any) -> S:
+    """Функция маппит модели dataclass в модели BaseModel из pydantic"""
     attrs = {}
     for field in fields(obj):
         value = getattr(obj, field.name)

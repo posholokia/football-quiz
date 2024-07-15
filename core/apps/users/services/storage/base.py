@@ -16,6 +16,9 @@ class IProfileService(ABC):
     async def create(self, device: str) -> ProfileDTO: ...
 
     @abstractmethod
+    async def get_or_create(self, device: str) -> ProfileDTO: ...
+
+    @abstractmethod
     async def patch(self, pk, **kwargs) -> ProfileDTO: ...
 
     @abstractmethod
@@ -28,10 +31,10 @@ class IProfileService(ABC):
 @dataclass
 class IStatisticService(ABC):
     @abstractmethod
-    async def create(self, pk: int) -> StatisticDTO: ...
+    async def create(self, pk: int, place: int) -> StatisticDTO: ...
 
     @abstractmethod
-    async def get_by_id(self, pk: int) -> StatisticDTO: ...
+    async def get_by_profile(self, profile_pk: int) -> StatisticDTO: ...
 
     @abstractmethod
     async def patch(self, pk: int, **fields) -> StatisticDTO: ...
@@ -41,13 +44,6 @@ class IStatisticService(ABC):
         self,
         profile_pk: int,
     ) -> int: ...
-
-    @abstractmethod
-    async def get_replaced_users(
-        self,
-        current_place: int,
-        new_place: int,
-    ) -> list[StatisticDTO]: ...
 
     @abstractmethod
     async def get_top_gamers(
@@ -61,3 +57,12 @@ class IStatisticService(ABC):
 
     @abstractmethod
     async def replace_profiles(self, new_place, old_place) -> None: ...
+
+    @abstractmethod
+    async def get_count_positive_score(self) -> int: ...
+
+    @abstractmethod
+    async def down_place_negative_score(self) -> None: ...
+
+    @abstractmethod
+    async def clear_statistic(self) -> None: ...

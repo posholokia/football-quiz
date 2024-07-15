@@ -1,4 +1,5 @@
 from .actions import (
+    CompositeStatisticAction,
     ProfileActions,
     StatisticsActions,
 )
@@ -7,4 +8,5 @@ from .actions import (
 __all__ = (
     "ProfileActions",
     "StatisticsActions",
+    "CompositeStatisticAction",
 )
