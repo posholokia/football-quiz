@@ -11,7 +11,9 @@ from core.apps.users.models import (
 from core.config.database.db import Base
 
 
-async def get_statistic_model(period: Period = Query(...)) -> Type[Base]:
+async def get_statistic_model(
+    period: Period = Query(default=Period.total),
+) -> Type[Base]:
     if period == Period.total:
         return Statistic
     elif period == Period.day:
