@@ -31,7 +31,11 @@ services:
       - dev-net
     volumes:
       - quiz_rabbitmq:/var/lib/rabbitmq
-
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 30s
+      timeout: 30s
+      retries: 3
 
 volumes:
   fqdb_data:
