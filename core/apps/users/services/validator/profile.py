@@ -5,11 +5,12 @@ import aiohttp
 from core.apps.users.exceptions.profile import (
     InvalidProfileName,
     ProfanityServiceNotAvailable,
+    ProfileNameIsProfanity,
 )
 from core.services.constructor.validators import BaseValidator
 
 
-TIMEOUT = aiohttp.ClientTimeout(total=0.2)
+TIMEOUT = aiohttp.ClientTimeout(total=2)
 
 
 @dataclass
@@ -33,6 +34,6 @@ class ProfileValidator(BaseValidator):
                 ) as response:
                     res = await response.text()
                     if res == "true":
-                        raise InvalidProfileName()
+                        raise ProfileNameIsProfanity()
         except TimeoutError:
             raise ProfanityServiceNotAvailable()

@@ -104,4 +104,8 @@ app.conf.beat_schedule = {
         "task": "clear_month_statistic",
         "schedule": crontab(minute="0", hour="0", day_of_month="15"),
     },
+    "update_firebase_config": {
+        "task": "update_firebase_config",
+        "schedule": crontab(minute="0", hour="0"),
+    },
 }

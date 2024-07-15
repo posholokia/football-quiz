@@ -1,3 +1,5 @@
+from loguru import logger
+
 from core.services.firebase.exceptions import FirebaseInvalidApiKey
 from core.services.firebase.query import (
     _get_api_key,
@@ -15,6 +17,9 @@ async def check_firebase_apikey(api_key: str) -> None:
     remote_api_key = await _get_api_key(remote_config)
 
     if api_key != remote_api_key:
+        logger.debug(
+            "Получен невалидный api_key: {} != {}", api_key, remote_api_key
+        )
         raise FirebaseInvalidApiKey()
 
 
@@ -24,3 +29,9 @@ async def change_api_key() -> None:
     new_conf = await _set_api_key(config)
     etag = await _get_etag_header(header)
     await _set_new_conf(new_conf, credentials, etag)
+
+
+if __name__ == "__main__":
+    import asyncio
+
+    asyncio.run(check_firebase_apikey("qwrert1234"))
