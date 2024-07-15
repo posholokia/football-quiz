@@ -29,7 +29,7 @@ from core.apps.quiz.services.storage.sqla import (
     ORMComplaintService,
     ORMQuestionsService,
 )
-from core.apps.users.actions import (  # CompositeProfileAction,
+from core.apps.users.actions import (
     CompositeStatisticAction,
     ProfileActions,
     StatisticsActions,
@@ -70,15 +70,6 @@ def _initialize_container() -> Container:
             ]
         )
 
-    # def build_profile_actions() -> CompositeProfileAction:
-    #     return CompositeProfileAction(
-    #         actions=[
-    #             container.resolve(ProfileActions, model=Statistic),
-    #             container.resolve(ProfileActions, model=DayStatistic),
-    #             container.resolve(ProfileActions, model=MonthStatistic),
-    #         ]
-    #     )
-
     container.register(AsyncSession, factory=lambda: SessionLocal())
     # orm интерфейсы
     container.register(IProfileService, ORMProfileService)
@@ -104,7 +95,6 @@ def _initialize_container() -> Container:
     # экшены
     # профиль
     container.register(ProfileActions)
-    # container.register(CompositeProfileAction, factory=build_profile_actions)
 
     # статистика
     container.register(R, ORMStatisticService, model=Statistic)

@@ -27,7 +27,10 @@ from core.apps.users.exceptions.profile import (
     AlreadyExistsProfile,
     DoesNotExistsProfile,
 )
-from core.apps.users.models import Profile
+from core.apps.users.models import (
+    Profile,
+    Statistic,
+)
 from core.apps.users.services.storage.base import (
     IProfileService,
     IStatisticService,
@@ -146,7 +149,6 @@ class ORMStatisticService(IStatisticService, Generic[T]):
                         place=self.model.place - 1,
                         trend=self.model.trend + 1,
                     )
-                    .returning(self.model)
                 )
             else:
                 query = (
@@ -161,7 +163,6 @@ class ORMStatisticService(IStatisticService, Generic[T]):
                         place=self.model.place + 1,
                         trend=self.model.trend - 1,
                     )
-                    .returning(self.model)
                 )
             await self.session.execute(query)
             await self.session.commit()
@@ -175,7 +176,6 @@ class ORMStatisticService(IStatisticService, Generic[T]):
                     place=self.model.place + 1,
                     trend=self.model.trend - 1,
                 )
-                .returning(self.model)
             )
             await self.session.execute(query)
 
@@ -204,7 +204,7 @@ class ORMStatisticService(IStatisticService, Generic[T]):
                     order_by=[
                         desc(self.model.score),
                         desc(self.model.games),
-                        self.model.id,
+                        self.model.profile_id,
                     ]
                 )
                 .label("rank"),
@@ -226,9 +226,7 @@ class ORMStatisticService(IStatisticService, Generic[T]):
         async with self.session.begin():
             query = (
                 select(self.model)
-                .order_by(
-                    self.model.place, self.model.games.desc(), self.model.id
-                )
+                .order_by(self.model.place)
                 .offset(offset)
                 .limit(limit)
             )
@@ -251,3 +249,34 @@ class ORMStatisticService(IStatisticService, Generic[T]):
             )
             result = await self.session.execute(query)
             return result.scalar_one()
+
+    async def clear_statistic(self) -> None:
+        assert self.model is not Statistic, "Попытка обнулить общую статистику"
+
+        if self.model is Statistic:
+            return
+
+        async with self.session.begin():
+            query = update(self.model).values(
+                games=0,
+                score=0,
+                rights=0,
+                wrongs=0,
+                trend=0,
+            )
+            await self.session.execute(query)
+            await self.session.flush()
+
+            query = select(self.model).order_by(self.model.profile_id)
+            res = await self.session.execute(query)
+            statistics = res.scalars().all()
+
+            for idx, stat in enumerate(statistics, start=1):
+                query = (
+                    update(self.model)
+                    .where(self.model.id == stat.id)
+                    .values(place=idx)
+                )
+                await self.session.execute(query)
+
+            await self.session.commit()

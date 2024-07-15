@@ -63,3 +63,6 @@ class IStatisticService(ABC):
 
     @abstractmethod
     async def down_place_negative_score(self) -> None: ...
+
+    @abstractmethod
+    async def clear_statistic(self) -> None: ...
