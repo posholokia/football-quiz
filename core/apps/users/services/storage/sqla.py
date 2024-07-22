@@ -7,6 +7,7 @@ from typing import (
 
 from sqlalchemy import (
     and_,
+    delete,
     desc,
     select,
     update,
@@ -27,11 +28,12 @@ from core.apps.users.exceptions.profile import (
     AlreadyExistsProfile,
     DoesNotExistsProfile,
 )
+from core.apps.users.exceptions.statistics import StatisticDoseNotExists
 from core.apps.users.models import (
     Profile,
     Statistic,
 )
-from core.apps.users.services.storage.base import (
+from core.apps.users.services.storage import (
     IProfileService,
     IStatisticService,
 )
@@ -117,24 +119,37 @@ class ORMStatisticService(IStatisticService, Generic[T]):
 
     async def create(self, pk: int, place: int) -> StatisticDTO:
         async with self.session.begin():
-            profile_statistic = self.model(
-                profile_id=pk,
-                place=place,
-            )
-            self.session.add(profile_statistic)
-            await self.session.commit()
-            return profile_statistic
+            stat = await self._sub_create(pk, place)
+            return await orm_statistics_to_dto(stat)
 
     async def get_by_profile(self, profile_pk: int) -> StatisticDTO:
         async with self.session.begin():
-            query = select(self.model).where(
-                self.model.profile_id == profile_pk
-            )
-            res = await self.session.execute(query)
-            orm_result = res.fetchone()
-            return await orm_statistics_to_dto(orm_result[0])
+            stat = await self._sub_get_by_profile(profile_pk)
+
+            if stat is None:
+                raise StatisticDoseNotExists(
+                    detail=f"Статистика для игрока с id: {profile_pk} не найдена"
+                )
+            return await orm_statistics_to_dto(stat)
+
+    async def get_or_create_by_profile(self, profile_pk: int) -> StatisticDTO:
+        async with self.session.begin():
+            # пытаемся получить статистику
+            statistic = await self._sub_get_by_profile(profile_pk)
+
+            if statistic is None:  # если не найдена
+                # вычисляем последнее место
+                place = await self._sub_get_count()
+                # добавляем статистику на последнее место
+                statistic = await self._sub_create(profile_pk, place + 1)
+
+            return await orm_statistics_to_dto(statistic)
 
     async def replace_profiles(self, new_place, old_place) -> None:
+        """
+        Смещение игроков в ладдере,
+        когда юзер перемещается на новое место
+        """
         async with self.session.begin():
             if new_place > old_place:
                 query = (
@@ -168,6 +183,10 @@ class ORMStatisticService(IStatisticService, Generic[T]):
             await self.session.commit()
 
     async def down_place_negative_score(self) -> None:
+        """
+        Смещение на 1 позицию вниз в рейтинге
+        игроков с отрицательными очками
+        """
         async with self.session.begin():
             query = (
                 update(self.model)
@@ -196,6 +215,7 @@ class ORMStatisticService(IStatisticService, Generic[T]):
         self,
         profile_pk: int,
     ) -> int:
+        """Положение юзера в ладдере на основе его статистики"""
         async with self.session.begin():
             subquery = select(
                 self.model,
@@ -214,15 +234,18 @@ class ORMStatisticService(IStatisticService, Generic[T]):
             )
 
             result = await self.session.execute(query)
-            rank = result.fetchone()[0]
+            rank = result.fetchone()
 
-            return rank
+            if rank is None:
+                raise StatisticDoseNotExists()
+            return rank[0]
 
     async def get_top_gamers(
         self,
         offset: int | None,
         limit: int | None,
     ) -> list[StatisticDTO]:
+        """Получение топа игроков"""
         async with self.session.begin():
             query = (
                 select(self.model)
@@ -235,12 +258,12 @@ class ORMStatisticService(IStatisticService, Generic[T]):
             return [await orm_statistics_to_dto(obj) for obj in ladder]
 
     async def get_count(self) -> int:
+        """Общее количество игроков со статистикой"""
         async with self.session.begin():
-            query = select(func.count(self.model.id))
-            result = await self.session.execute(query)
-            return result.scalar_one()
+            return await self._sub_get_count()
 
     async def get_count_positive_score(self) -> int:
+        """Количество игроков с не отрицательными очками"""
         async with self.session.begin():
             query = (
                 select(func.count())
@@ -251,32 +274,76 @@ class ORMStatisticService(IStatisticService, Generic[T]):
             return result.scalar_one()
 
     async def clear_statistic(self) -> None:
-        assert self.model is not Statistic, "Попытка обнулить общую статистику"
-
-        if self.model is Statistic:
-            return
-
+        """Обнуление данных в таблице"""
         async with self.session.begin():
-            query = update(self.model).values(
-                games=0,
-                score=0,
-                rights=0,
-                wrongs=0,
-                trend=0,
-            )
-            await self.session.execute(query)
-            await self.session.flush()
+            assert (
+                self.model is not Statistic
+            ), "Попытка обнулить общую статистику"
 
-            query = select(self.model).order_by(self.model.profile_id)
-            res = await self.session.execute(query)
-            statistics = res.scalars().all()
+            if self.model is Statistic:
+                return
 
-            for idx, stat in enumerate(statistics, start=1):
-                query = (
-                    update(self.model)
-                    .where(self.model.id == stat.id)
-                    .values(place=idx)
+            async with self.session.begin():
+                query = update(self.model).values(
+                    games=0,
+                    score=0,
+                    rights=0,
+                    wrongs=0,
+                    trend=0,
                 )
                 await self.session.execute(query)
+                await self.session.flush()
 
+                query = select(self.model).order_by(self.model.profile_id)
+                res = await self.session.execute(query)
+                statistics = res.scalars().all()
+
+                for idx, stat in enumerate(statistics, start=1):
+                    query = (
+                        update(self.model)
+                        .where(self.model.id == stat.id)
+                        .values(place=idx)
+                    )
+                    await self.session.execute(query)
+
+                await self.session.commit()
+
+    async def delete_all_statistics(self) -> None:
+        """Удаление всех данных из таблицы"""
+        async with self.session.begin():
+            assert (
+                self.model is not Statistic
+            ), "Попытка удалить общую статистику"
+
+            if self.model is Statistic:
+                return
+
+            query = delete(self.model)
+            await self.session.execute(query)
             await self.session.commit()
+
+    async def _sub_create(self, pk: int, place: int) -> Statistic:
+        """Вспомогательная функция создания объекта"""
+        statistic = self.model(
+            profile_id=pk,
+            place=place,
+        )
+        self.session.add(statistic)
+        await self.session.commit()
+        return statistic
+
+    async def _sub_get_count(self) -> int:
+        """Вспомогательная функция подсчета объектов"""
+        query = select(func.count(self.model.id))
+        result = await self.session.execute(query)
+        return result.scalar_one()
+
+    async def _sub_get_by_profile(self, profile_pk: int) -> Statistic | None:
+        """Вспомогательная функция получения объекта"""
+        query = select(self.model).where(self.model.profile_id == profile_pk)
+        res = await self.session.execute(query)
+        orm_result = res.fetchone()
+
+        if orm_result is None:
+            return None
+        return orm_result[0]

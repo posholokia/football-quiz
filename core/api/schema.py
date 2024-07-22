@@ -1,7 +1,15 @@
+from typing import (
+    Generic,
+    TypeVar,
+)
+
 from pydantic import (
     BaseModel,
     Field,
 )
+
+
+T = TypeVar("T")
 
 
 class PaginationIn(BaseModel):
@@ -11,3 +19,8 @@ class PaginationIn(BaseModel):
 
 class PaginationOut(PaginationIn):
     total: int
+
+
+class PaginationResponseSchema(BaseModel, Generic[T]):
+    items: list[T]
+    paginator: PaginationOut

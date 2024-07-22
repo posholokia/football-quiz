@@ -1,19 +1,10 @@
-from typing import (
-    Annotated,
-    Generic,
-    TypeVar,
-)
+from typing import Annotated
 
 from annotated_types import (
     MaxLen,
     MinLen,
 )
 from pydantic import BaseModel
-
-from core.api.schema import PaginationOut
-
-
-T = TypeVar("T")
 
 
 class ProfileSchema(BaseModel):
@@ -41,8 +32,3 @@ class GetStatisticsSchema(SetStatisticsSchema):
 
 class ApiKeySchema(BaseModel):
     api_key: str
-
-
-class PaginationResponseSchema(BaseModel, Generic[T]):
-    items: list[T]
-    paginator: PaginationOut

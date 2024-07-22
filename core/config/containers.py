@@ -40,11 +40,9 @@ from core.apps.users.models import (
     Statistic,
 )
 from core.apps.users.permissions.profile import ProfilePermissions
-from core.apps.users.services.storage.base import (
+from core.apps.users.services.storage import (
     IProfileService,
     IStatisticService,
-)
-from core.apps.users.services.storage.sqla import (
     ORMProfileService,
     ORMStatisticService,
 )

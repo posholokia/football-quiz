@@ -1,7 +1,7 @@
 import string
 from dataclasses import dataclass
 
-from core.apps.users.services.storage.base import IProfileService
+from core.apps.users.services.storage import IProfileService
 from core.services.constructor.validators import BaseValidator
 from core.services.security.exceptions import (
     InvalidDeviceToken,

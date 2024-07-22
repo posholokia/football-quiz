@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 from core.apps.users.exceptions.profile import ProfileDoesNotMatchTheDevice
-from core.apps.users.services.storage.base import IProfileService
+from core.apps.users.services.storage import IProfileService
 from core.services.constructor.permissions import BasePermission
 from core.services.security.exceptions import UnauthorizedDevice
 

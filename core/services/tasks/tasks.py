@@ -8,8 +8,10 @@ from core.apps.users.models import (
     DayStatistic,
     MonthStatistic,
 )
-from core.apps.users.services.storage.base import IStatisticService
-from core.apps.users.services.storage.sqla import ORMStatisticService
+from core.apps.users.services.storage import (
+    IStatisticService,
+    ORMStatisticService,
+)
 from core.config.containers import get_container
 from core.services.firebase.firebase import change_api_key
 
@@ -22,7 +24,7 @@ def clear_day_statistic() -> None:
         IStatisticService, model=DayStatistic
     )
     loop = asyncio.get_event_loop()
-    loop.run_until_complete(repository.clear_statistic())
+    loop.run_until_complete(repository.delete_all_statistics())
 
 
 @shared_task(name="clear_month_statistic")
@@ -33,7 +35,7 @@ def clear_month_statistic() -> None:
         IStatisticService, model=MonthStatistic
     )
     loop = asyncio.get_event_loop()
-    loop.run_until_complete(repository.clear_statistic())
+    loop.run_until_complete(repository.delete_all_statistics())
 
 
 @shared_task(name="update_firebase_config")

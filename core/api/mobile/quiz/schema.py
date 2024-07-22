@@ -1,8 +1,4 @@
-from datetime import datetime
-
 from pydantic import BaseModel
-
-from core.apps.users.schema import ProfileSchema
 
 
 class AnswerSchema(BaseModel):
@@ -22,16 +18,6 @@ class CreateComplaintSchema(BaseModel):
     question: int
     category: int
     profile: int
-
-
-class RetrieveComplaintSchema(BaseModel):
-    id: int
-    profile: ProfileSchema
-    question: QuestionSchema
-    text: str
-    created_at: datetime
-    solved: bool
-    category: "RetrieveCategorySchema"
 
 
 class RetrieveCategorySchema(BaseModel):

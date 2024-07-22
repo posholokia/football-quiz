@@ -1,4 +1,3 @@
-import math
 from typing import (
     Annotated,
     Type,
@@ -16,9 +15,12 @@ from starlette import status
 from core.api.mapper import dataclass_to_schema
 from core.api.mobile.depends import get_statistic_model
 from core.api.pagination import LimitOffsetPaginator
-from core.api.schema import PaginationIn
+from core.api.schema import (
+    PaginationIn,
+    PaginationResponseSchema,
+)
 from core.apps.quiz.permissions.quiz import DevicePermissions
-from core.apps.users.actions import (  # CompositeProfileAction,
+from core.apps.users.actions import (
     CompositeStatisticAction,
     ProfileActions,
     StatisticsActions,
@@ -26,14 +28,6 @@ from core.apps.users.actions import (  # CompositeProfileAction,
 from core.apps.users.dto import ProfileDTO
 from core.apps.users.models import Statistic
 from core.apps.users.permissions.profile import ProfilePermissions
-from core.apps.users.schema import (
-    ApiKeySchema,
-    GetStatisticsSchema,
-    PaginationResponseSchema,
-    ProfileSchema,
-    SetStatisticsSchema,
-    UpdateProfileSchema,
-)
 from core.config.containers import get_container
 from core.config.database.db import Base
 from core.services.firebase import check_firebase_apikey
@@ -41,6 +35,15 @@ from core.services.security.device_validator import DeviceTokenValidate
 from core.services.security.mobile_auth import (
     http_device,
     MobileAuthorizationCredentials,
+)
+
+from ..utils import get_offset
+from .schema import (
+    ApiKeySchema,
+    GetStatisticsSchema,
+    ProfileSchema,
+    SetStatisticsSchema,
+    UpdateProfileSchema,
 )
 
 
@@ -115,7 +118,12 @@ async def set_user_statistic(
     composite: CompositeStatisticAction = container.resolve(
         CompositeStatisticAction
     )
-    await composite.patch(pk, stat)
+    await composite.patch(
+        profile_pk=pk,
+        score=stat.score,
+        rights=stat.rights,
+        wrongs=stat.wrongs,
+    )
 
     action: StatisticsActions = container.resolve(
         StatisticsActions, model=Statistic
@@ -160,12 +168,7 @@ async def get_ladder_profile(
         StatisticsActions, model=model
     )
     # offset рассчитывается, чтобы профиль был в середине
-    user_rank = await action.get_user_rank(pk)
-    offset = (
-        0
-        if math.ceil(limit / 2) > user_rank
-        else user_rank - math.ceil(limit / 2)
-    )
+    offset = await get_offset(action, pk, limit)
     pagination_in = PaginationIn(limit=limit, offset=offset)
 
     paginator: LimitOffsetPaginator = container.resolve(

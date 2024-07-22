@@ -4,8 +4,7 @@ from core.apps.users.dto import (
     ProfileDTO,
     StatisticDTO,
 )
-from core.apps.users.schema import SetStatisticsSchema
-from core.apps.users.services.storage.base import (
+from core.apps.users.services.storage import (
     IProfileService,
     IStatisticService,
 )
@@ -27,7 +26,7 @@ class ProfileActions:
         #  присваиваем профилю новое имя
         profile = await self.profile_repository.patch(profile_pk, name=name)
 
-        await self.statistic_repository.create(profile_pk)
+        # await self.statistic_repository.create(profile_pk)
         return profile
 
     async def get_by_id(self, pk: int) -> ProfileDTO:
@@ -56,15 +55,22 @@ class StatisticsActions:
     async def patch(
         self,
         profile_pk: int,
-        game_stat: SetStatisticsSchema,
+        score: int,
+        rights: int,
+        wrongs: int,
     ) -> StatisticDTO:
         profile = await self.profile_repository.get_by_id(profile_pk)
         # получаем текущую статистику игрока
-        current_stat = await self.repository.get_by_profile(profile.id)
+        current_stat = await self.repository.get_or_create_by_profile(
+            profile.id,
+        )
         # получаем обновленную статистику в виде DTO,
         # место в рейтинге не меняем
         after_game_stat = await self._get_updated_statistic(
-            current_stat, game_stat
+            current_stat,
+            score,
+            rights,
+            wrongs,
         )
         # записываем обновленную статистику в БД без изменения места
         new_stat = await self.repository.patch(
@@ -92,18 +98,20 @@ class StatisticsActions:
     async def get_by_profile(self, profile_pk: int) -> StatisticDTO:
         return await self.repository.get_by_profile(profile_pk)
 
+    @staticmethod
     async def _get_updated_statistic(
-        self,
         current_stat: StatisticDTO,
-        game_stat: SetStatisticsSchema,
+        score: int,
+        rights: int,
+        wrongs: int,
     ) -> StatisticDTO:
         return StatisticDTO(
             id=current_stat.id,
             games=current_stat.games + 1,
-            score=current_stat.score + game_stat.score,
+            score=current_stat.score + score,
             place=current_stat.place,
-            rights=current_stat.rights + game_stat.rights,
-            wrongs=current_stat.wrongs + game_stat.wrongs,
+            rights=current_stat.rights + rights,
+            wrongs=current_stat.wrongs + wrongs,
             trend=0,
             profile_id=current_stat.profile_id,
         )
@@ -134,7 +142,14 @@ class CompositeStatisticAction:
     async def patch(
         self,
         profile_pk: int,
-        game_stat: SetStatisticsSchema,
+        score: int,
+        rights: int,
+        wrongs: int,
     ) -> None:
         for action in self.actions:
-            await action.patch(profile_pk, game_stat)
+            await action.patch(
+                profile_pk,
+                score,
+                rights,
+                wrongs,
+            )

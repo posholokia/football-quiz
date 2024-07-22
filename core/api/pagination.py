@@ -14,8 +14,10 @@ from core.api.mapper import (
     dataclass_to_schema,
     S,
 )
-from core.api.schema import PaginationOut
-from core.apps.users.schema import PaginationResponseSchema
+from core.api.schema import (
+    PaginationOut,
+    PaginationResponseSchema,
+)
 
 
 R = TypeVar("R")

@@ -17,16 +17,17 @@ from core.apps.quiz.actions import (
 )
 from core.apps.quiz.dto import QuestionDTO
 from core.apps.quiz.permissions.quiz import DevicePermissions
-from core.apps.quiz.schema import (
-    CreateComplaintSchema,
-    QuestionSchema,
-    RetrieveCategorySchema,
-)
 from core.apps.users.permissions.profile import ProfilePermissions
 from core.config.containers import get_container
 from core.services.security.mobile_auth import (
     http_device,
     MobileAuthorizationCredentials,
+)
+
+from .schema import (
+    CreateComplaintSchema,
+    QuestionSchema,
+    RetrieveCategorySchema,
 )
 
 

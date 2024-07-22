@@ -37,6 +37,11 @@ class IStatisticService(ABC):
     async def get_by_profile(self, profile_pk: int) -> StatisticDTO: ...
 
     @abstractmethod
+    async def get_or_create_by_profile(
+        self, profile_pk: int
+    ) -> StatisticDTO: ...
+
+    @abstractmethod
     async def patch(self, pk: int, **fields) -> StatisticDTO: ...
 
     @abstractmethod
