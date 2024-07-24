@@ -42,6 +42,7 @@ from .schema import (
     ApiKeySchema,
     GetStatisticsSchema,
     ProfileSchema,
+    RetrieveLadderSchema,
     SetStatisticsSchema,
     UpdateProfileSchema,
 )
@@ -160,7 +161,7 @@ async def get_ladder_profile(
     cred: MobileAuthorizationCredentials = Depends(http_device),
     model: Type[Base] = Depends(get_statistic_model),
     container: Container = Depends(get_container),
-) -> PaginationResponseSchema[GetStatisticsSchema]:
+) -> PaginationResponseSchema[RetrieveLadderSchema]:
     permissions: ProfilePermissions = container.resolve(ProfilePermissions)
     await permissions.has_permission(pk, cred.token)
 
@@ -174,7 +175,7 @@ async def get_ladder_profile(
     paginator: LimitOffsetPaginator = container.resolve(
         service_key=LimitOffsetPaginator,
         pagination=pagination_in,
-        schema=GetStatisticsSchema,
+        schema=RetrieveLadderSchema,
     )
 
     res = await paginator.paginate(action.get_top_ladder)
@@ -200,7 +201,7 @@ async def get_ladder(
     cred: MobileAuthorizationCredentials = Depends(http_device),
     model: Type[Base] = Depends(get_statistic_model),
     container: Container = Depends(get_container),
-) -> PaginationResponseSchema[GetStatisticsSchema]:
+) -> PaginationResponseSchema[RetrieveLadderSchema]:
     permissions: DevicePermissions = container.resolve(DevicePermissions)
     await permissions.has_permission(cred.token)
 
@@ -211,7 +212,7 @@ async def get_ladder(
     paginator: LimitOffsetPaginator = container.resolve(
         service_key=LimitOffsetPaginator,
         pagination=pagination_in,
-        schema=GetStatisticsSchema,
+        schema=RetrieveLadderSchema,
     )
     res = await paginator.paginate(action.get_top_ladder)
 

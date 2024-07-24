@@ -8,6 +8,7 @@ from core.apps.users.dto import (
     ProfileDTO,
     StatisticDTO,
 )
+from core.apps.users.dto.dto import LadderStatisticDTO
 
 
 @dataclass
@@ -55,7 +56,7 @@ class IStatisticService(ABC):
         self,
         offset: int | None,
         limit: int | None,
-    ) -> list[StatisticDTO]: ...
+    ) -> list[LadderStatisticDTO]: ...
 
     @abstractmethod
     async def get_count(self) -> int: ...

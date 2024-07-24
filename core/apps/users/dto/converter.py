@@ -1,4 +1,5 @@
 from core.apps.users.dto.dto import (
+    LadderStatisticDTO,
     ProfileDTO,
     StatisticDTO,
 )
@@ -27,4 +28,18 @@ async def orm_statistics_to_dto(orm_result: Statistic) -> StatisticDTO:
         wrongs=orm_result.wrongs,
         trend=orm_result.trend,
         profile_id=orm_result.profile_id,
+    )
+
+
+async def orm_ladder_to_dto(orm_result: Statistic) -> LadderStatisticDTO:
+    profile_dto = await orm_profile_to_dto(orm_result.profile)
+    return LadderStatisticDTO(
+        id=orm_result.id,
+        games=orm_result.games,
+        score=orm_result.score,
+        place=orm_result.place,
+        rights=orm_result.rights,
+        wrongs=orm_result.wrongs,
+        trend=orm_result.trend,
+        profile=profile_dto,
     )

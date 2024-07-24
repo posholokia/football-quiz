@@ -14,6 +14,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 from sqlalchemy.sql import func
 
 from core.apps.users.dto import (
@@ -21,9 +22,11 @@ from core.apps.users.dto import (
     StatisticDTO,
 )
 from core.apps.users.dto.converter import (
+    orm_ladder_to_dto,
     orm_profile_to_dto,
     orm_statistics_to_dto,
 )
+from core.apps.users.dto.dto import LadderStatisticDTO
 from core.apps.users.exceptions.profile import (
     AlreadyExistsProfile,
     DoesNotExistsProfile,
@@ -244,7 +247,7 @@ class ORMStatisticService(IStatisticService, Generic[T]):
         self,
         offset: int | None,
         limit: int | None,
-    ) -> list[StatisticDTO]:
+    ) -> list[LadderStatisticDTO]:
         """Получение топа игроков"""
         async with self.session.begin():
             query = (
@@ -252,10 +255,11 @@ class ORMStatisticService(IStatisticService, Generic[T]):
                 .order_by(self.model.place)
                 .offset(offset)
                 .limit(limit)
+                .options(selectinload(self.model.profile))
             )
             result = await self.session.execute(query)
             ladder = result.scalars().all()
-            return [await orm_statistics_to_dto(obj) for obj in ladder]
+            return [await orm_ladder_to_dto(obj) for obj in ladder]
 
     async def get_count(self) -> int:
         """Общее количество игроков со статистикой"""

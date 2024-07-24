@@ -23,6 +23,18 @@ class StatisticDTO:
 
 
 @dataclass
+class LadderStatisticDTO:
+    id: int
+    games: int
+    score: int
+    place: int
+    rights: int
+    wrongs: int
+    trend: int
+    profile: "ProfileDTO"
+
+
+@dataclass
 class ProfileDTO:
     id: int
     name: str

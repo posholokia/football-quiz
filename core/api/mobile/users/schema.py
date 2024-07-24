@@ -32,3 +32,14 @@ class GetStatisticsSchema(SetStatisticsSchema):
 
 class ApiKeySchema(BaseModel):
     api_key: str
+
+
+class RetrieveLadderSchema(BaseModel):
+    id: int
+    score: int
+    rights: int
+    wrongs: int
+    games: int
+    place: int
+    trend: int
+    profile: ProfileSchema

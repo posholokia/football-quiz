@@ -4,6 +4,7 @@ from core.apps.users.dto import (
     ProfileDTO,
     StatisticDTO,
 )
+from core.apps.users.dto.dto import LadderStatisticDTO
 from core.apps.users.services.storage import (
     IProfileService,
     IStatisticService,
@@ -120,7 +121,7 @@ class StatisticsActions:
         self,
         offset: int | None = None,
         limit: int | None = None,
-    ) -> list[StatisticDTO]:
+    ) -> list[LadderStatisticDTO]:
         statistics = await self.repository.get_top_gamers(offset, limit)
         return statistics
 
