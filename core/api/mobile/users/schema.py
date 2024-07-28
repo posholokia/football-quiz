@@ -9,7 +9,7 @@ from pydantic import BaseModel
 
 class ProfileSchema(BaseModel):
     id: int
-    name: Annotated[str | None, MaxLen(50)]
+    name: Annotated[str | None, MinLen(3), MaxLen(25)]
 
 
 class UpdateProfileSchema(BaseModel):

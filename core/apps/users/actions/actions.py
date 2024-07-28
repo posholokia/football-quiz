@@ -91,7 +91,9 @@ class StatisticsActions:
         # присваиваем новое место ткущему юзеру
         await self.repository.replace_profiles(new_place, current_stat.place)
         stat = await self.repository.patch(
-            pk=after_game_stat.id, place=new_place
+            pk=after_game_stat.id,
+            place=new_place,
+            trend=current_stat.place - new_place,
         )
 
         return stat
