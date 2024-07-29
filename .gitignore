@@ -4,3 +4,4 @@ __pycache__
 Makefile
 .env
 .ruff_cache
+.mypy_cache
