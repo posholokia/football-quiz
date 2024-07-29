@@ -30,6 +30,7 @@ loguru = "^0.7.2"
 isort = "^5.13.2"
 ruff = "^0.5.1"
 pre-commit = "^3.7.1"
+mypy = "^1.11.0"
 
 
 [build-system]
@@ -42,8 +43,8 @@ exclude = [
     ".ruff_cache",
     ".venv",
     "venv",
-    "core/config/database/base.py",
-    "core/config/database/migrations",
+    "src/config/database/base.py",
+    "src/config/database/migrations",
     "test",
     ]
 
@@ -79,7 +80,7 @@ skip_glob=[
     ".ci",
     ".ruff_cache",
     "venv",
-    "core/database/migrations"
+    "src/config/database/migrations"
 ]
 default_section = "THIRDPARTY"
 known_fastapi=["fastapi", "starlette", "sqlalchemy"]

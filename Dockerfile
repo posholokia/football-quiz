@@ -18,15 +18,14 @@ RUN apt-get update -y && \
     curl
 
 
-RUN python3 -m pip install --no-cache-dir --no-warn-script-location --upgrade pip &&\
-    python3 -m pip install --no-cache-dir --no-warn-script-location poetry
+RUN python3 -m pip install --no-cache-dir --no-warn-script-location poetry
 
 COPY poetry.lock pyproject.toml ./
 
 RUN python3 -m poetry config virtualenvs.in-project true &&\
     python3 -m poetry install --no-cache --no-root -n --without dev
 
-COPY . .
+COPY ./src .
 
 RUN chown -R app:app /app
 

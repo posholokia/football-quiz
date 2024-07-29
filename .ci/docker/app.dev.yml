@@ -14,14 +14,14 @@ services:
     networks:
       - dev-net
     volumes:
-      - ../../core:/app/core
+      - ../../src/config:/app/config
 
   celery-beat:
     container_name: celery-beat
     build:
       context: ../../
       dockerfile: Dockerfile
-    command: [ "-m", "celery", "-A", "core.services.tasks.celery_app", "beat", "-l", "info" ]
+    command: [ "-m", "celery", "-A", "services.tasks.celery_app", "beat", "-l", "info" ]
     env_file:
       - ../../.env
     tty: true
@@ -33,7 +33,7 @@ services:
     build:
       context: ../../
       dockerfile: Dockerfile
-    command: [ "-m", "celery", "-A", "core.services.tasks.celery_app", "worker", "-l", "info" ]
+    command: [ "-m", "celery", "-A", "services.tasks.celery_app", "worker", "-l", "info" ]
     env_file:
       - ../../.env
     tty: true
