@@ -2,7 +2,6 @@ from datetime import datetime
 
 from sqlalchemy import (
     Boolean,
-    Column,
     DateTime,
     ForeignKey,
     Integer,
@@ -77,7 +76,7 @@ class Profile(Base):
 class Statistic(Base):
     __tablename__ = "statistics"
 
-    id = Column(
+    id: Mapped[int] = mapped_column(
         Integer,
         primary_key=True,
         unique=True,
