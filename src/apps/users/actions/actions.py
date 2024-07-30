@@ -6,6 +6,7 @@ from apps.users.dto import (
     ProfileDTO,
     StatisticDTO,
 )
+from apps.users.dto.dto import TitleStatisticDTO
 from apps.users.services.storage import (
     IProfileService,
     IStatisticService,
@@ -62,7 +63,8 @@ class StatisticsActions:
         score: int,
         rights: int,
         wrongs: int,
-    ) -> StatisticDTO:
+        perfect_round: bool,
+    ) -> TitleStatisticDTO:
         profile = await self.profile_repository.get_by_id(profile_pk)
         # получаем текущую статистику игрока
         current_stat = await self.repository.get_or_create_by_profile(
@@ -75,6 +77,7 @@ class StatisticsActions:
             score,
             rights,
             wrongs,
+            perfect_round,
         )
         # записываем обновленную статистику в БД без изменения места
         new_stat = await self.repository.patch(
@@ -83,6 +86,7 @@ class StatisticsActions:
             score=after_game_stat.score,
             rights=after_game_stat.rights,
             wrongs=after_game_stat.wrongs,
+            perfect_rounds=after_game_stat.perfect_rounds,
             trend=after_game_stat.trend,
         )
         # получаем новое место игрока после обновления статистики
@@ -93,15 +97,15 @@ class StatisticsActions:
         # сдвигаем всех затронутых игроков и
         # присваиваем новое место ткущему юзеру
         await self.repository.replace_profiles(new_place, current_stat.place)
-        stat = await self.repository.patch(
+        await self.repository.patch(
             pk=after_game_stat.id,
             place=new_place,
             trend=current_stat.place - new_place,
         )
-
+        stat = await self.repository.get_by_profile(profile_pk)
         return stat
 
-    async def get_by_profile(self, profile_pk: int) -> StatisticDTO:
+    async def get_by_profile(self, profile_pk: int) -> TitleStatisticDTO:
         return await self.repository.get_by_profile(profile_pk)
 
     async def delete_statistic(self, period: PeriodStatistic) -> None:
@@ -135,6 +139,7 @@ class StatisticsActions:
         score: int,
         rights: int,
         wrongs: int,
+        perfect_round: bool,
     ) -> StatisticDTO:
         return StatisticDTO(
             id=current_stat.id,
@@ -143,6 +148,7 @@ class StatisticsActions:
             place=current_stat.place,
             rights=current_stat.rights + rights,
             wrongs=current_stat.wrongs + wrongs,
+            perfect_rounds=current_stat.perfect_rounds + int(perfect_round),
             trend=0,
             profile_id=current_stat.profile_id,
         )
@@ -176,6 +182,7 @@ class CompositeStatisticAction:
         score: int,
         rights: int,
         wrongs: int,
+        perfect_round: bool,
     ) -> None:
         for action in self.actions:
             await action.patch(
@@ -183,4 +190,5 @@ class CompositeStatisticAction:
                 score,
                 rights,
                 wrongs,
+                perfect_round,
             )

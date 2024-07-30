@@ -124,6 +124,7 @@ async def set_user_statistic(
         score=stat.score,
         rights=stat.rights,
         wrongs=stat.wrongs,
+        perfect_round=stat.perfect_round,
     )
 
     action: StatisticsActions = container.resolve(

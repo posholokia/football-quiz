@@ -25,8 +25,13 @@ class StatisticDTO:
     place: int
     rights: int
     wrongs: int
+    perfect_rounds: int
     trend: int
     profile_id: int
+
+
+@dataclass
+class TitleStatisticDTO(StatisticDTO):
     title: Optional["ProfileTitleDTO"] = None
 
 
@@ -38,6 +43,7 @@ class LadderStatisticDTO:
     place: int
     rights: int
     wrongs: int
+    perfect_rounds: int
     trend: int
     profile: "ProfileDTO"
     title: Optional["ProfileTitleDTO"] = None

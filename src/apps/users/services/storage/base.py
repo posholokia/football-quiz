@@ -11,6 +11,7 @@ from apps.users.dto import (
 from apps.users.dto.dto import (
     LadderStatisticDTO,
     ProfileTitleDTO,
+    TitleStatisticDTO,
 )
 
 
@@ -38,7 +39,7 @@ class IStatisticService(ABC):
     async def create(self, pk: int, place: int) -> StatisticDTO: ...
 
     @abstractmethod
-    async def get_by_profile(self, profile_pk: int) -> StatisticDTO: ...
+    async def get_by_profile(self, profile_pk: int) -> TitleStatisticDTO: ...
 
     @abstractmethod
     async def get_by_place(self, place: int) -> StatisticDTO | None: ...
@@ -49,7 +50,7 @@ class IStatisticService(ABC):
     ) -> StatisticDTO: ...
 
     @abstractmethod
-    async def patch(self, pk: int, **fields) -> StatisticDTO: ...
+    async def patch(self, pk: int, **fields) -> TitleStatisticDTO: ...
 
     @abstractmethod
     async def get_user_rank(

@@ -26,10 +26,12 @@ from apps.users.dto.converter import (
     orm_profile_title_to_dto,
     orm_profile_to_dto,
     orm_statistics_to_dto,
+    orm_title_statistics_to_dto,
 )
 from apps.users.dto.dto import (
     LadderStatisticDTO,
     ProfileTitleDTO,
+    TitleStatisticDTO,
 )
 from apps.users.exceptions.profile import (
     AlreadyExistsProfile,
@@ -131,7 +133,7 @@ class ORMStatisticService(IStatisticService, Generic[T]):
             stat = await self._sub_create(pk, place)
             return await orm_statistics_to_dto(stat)
 
-    async def get_by_profile(self, profile_pk: int) -> StatisticDTO:
+    async def get_by_profile(self, profile_pk: int) -> TitleStatisticDTO:
         async with self.session.begin():
             stat = await self._sub_get_by_profile(profile_pk)
 
@@ -139,7 +141,7 @@ class ORMStatisticService(IStatisticService, Generic[T]):
                 raise StatisticDoseNotExists(
                     detail=f"Статистика для игрока с id: {profile_pk} не найдена"
                 )
-            return await orm_statistics_to_dto(stat)
+            return await orm_title_statistics_to_dto(stat)
 
     async def get_by_place(self, place: int) -> StatisticDTO | None:
         async with self.session.begin():

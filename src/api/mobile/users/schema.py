@@ -19,10 +19,14 @@ class UpdateProfileSchema(BaseModel):
     name: Annotated[str, MinLen(5), MaxLen(50)]
 
 
-class StatisticsUpdateSchema(BaseModel):
+class BaseStatistic(BaseModel):
     score: int
     rights: int
     wrongs: int
+
+
+class StatisticsUpdateSchema(BaseStatistic):
+    perfect_round: bool
 
 
 class ApiKeySchema(BaseModel):
@@ -34,21 +38,14 @@ class ProfileTitleRetrieveSchema(BaseModel):
     best_of_the_month: int
 
 
-class StatisticsRetrieveSchema(StatisticsUpdateSchema):
+class StatisticsRetrieveSchema(BaseStatistic):
     id: int
     games: int
     place: int
+    perfect_rounds: int
     trend: int
     title: Optional[ProfileTitleRetrieveSchema] = None
 
 
-class LadderStatisticRetrieveSchema(BaseModel):
-    id: int
-    games: int
-    score: int
-    rights: int
-    wrongs: int
-    place: int
-    trend: int
+class LadderStatisticRetrieveSchema(StatisticsRetrieveSchema):
     profile: ProfileSchema
-    title: Optional[ProfileTitleRetrieveSchema] = None

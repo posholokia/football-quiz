@@ -3,6 +3,7 @@ from apps.users.dto.dto import (
     ProfileDTO,
     ProfileTitleDTO,
     StatisticDTO,
+    TitleStatisticDTO,
 )
 from apps.users.models import (
     BestPlayerTitle,
@@ -21,7 +22,6 @@ async def orm_profile_to_dto(orm_result: Profile) -> ProfileDTO:
 
 
 async def orm_statistics_to_dto(orm_result: Statistic) -> StatisticDTO:
-    title_dto = await orm_profile_title_to_dto(orm_result.profile.title)
     return StatisticDTO(
         id=orm_result.id,
         games=orm_result.games,
@@ -29,6 +29,24 @@ async def orm_statistics_to_dto(orm_result: Statistic) -> StatisticDTO:
         place=orm_result.place,
         rights=orm_result.rights,
         wrongs=orm_result.wrongs,
+        perfect_rounds=orm_result.perfect_rounds,
+        trend=orm_result.trend,
+        profile_id=orm_result.profile_id,
+    )
+
+
+async def orm_title_statistics_to_dto(
+    orm_result: Statistic,
+) -> TitleStatisticDTO:
+    title_dto = await orm_profile_title_to_dto(orm_result.profile.title)
+    return TitleStatisticDTO(
+        id=orm_result.id,
+        games=orm_result.games,
+        score=orm_result.score,
+        place=orm_result.place,
+        rights=orm_result.rights,
+        wrongs=orm_result.wrongs,
+        perfect_rounds=orm_result.perfect_rounds,
         trend=orm_result.trend,
         profile_id=orm_result.profile_id,
         title=title_dto,
@@ -45,6 +63,7 @@ async def orm_ladder_to_dto(orm_result: Statistic) -> LadderStatisticDTO:
         place=orm_result.place,
         rights=orm_result.rights,
         wrongs=orm_result.wrongs,
+        perfect_rounds=orm_result.perfect_rounds,
         trend=orm_result.trend,
         profile=profile_dto,
         title=title_dto,
@@ -53,7 +72,7 @@ async def orm_ladder_to_dto(orm_result: Statistic) -> LadderStatisticDTO:
 
 async def orm_profile_title_to_dto(
     orm_result: BestPlayerTitle,
-) -> ProfileTitleDTO | None:
+) -> ProfileTitleDTO:
     if orm_result is None:
         return ProfileTitleDTO(
             best_of_the_day=0,
