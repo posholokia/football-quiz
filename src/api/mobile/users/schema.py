@@ -16,7 +16,7 @@ class ProfileSchema(BaseModel):
 
 
 class UpdateProfileSchema(BaseModel):
-    name: Annotated[str, MinLen(5), MaxLen(50)]
+    name: Annotated[str, MinLen(3), MaxLen(25)]
 
 
 class BaseStatistic(BaseModel):
