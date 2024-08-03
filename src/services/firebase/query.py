@@ -7,11 +7,7 @@ from google.auth.transport.requests import Request
 from google.oauth2.service_account import Credentials
 from loguru import logger
 
-from services.firebase.conf import (
-    JSON_CONF,
-    REMOTE_CONFIG_URL,
-    SCOPES,
-)
+from config import settings
 from services.firebase.exceptions import (
     FirebaseGetConfigError,
     FirebaseGetEtagHeaderError,
@@ -21,7 +17,8 @@ from services.firebase.exceptions import (
 
 async def _get_credentials() -> Credentials:
     credentials = Credentials.from_service_account_file(
-        JSON_CONF, scopes=SCOPES
+        settings.firebase_json_conf,
+        scopes=settings.scopes,
     )
     credentials.refresh(Request())
     return credentials
@@ -31,7 +28,7 @@ async def _get_remote_config(cred: Credentials) -> tuple[Any, dict]:
     headers = {"Authorization": "Bearer " + cred.token}
     async with aiohttp.ClientSession() as session:
         async with session.get(
-            REMOTE_CONFIG_URL,
+            settings.remote_config_url,
             headers=headers,
         ) as response:
             if response.status != 200:
@@ -85,7 +82,7 @@ async def _set_new_conf(conf: str, cred: Credentials, etag: str) -> None:
     }
     async with aiohttp.ClientSession() as session:
         async with session.put(
-            REMOTE_CONFIG_URL,
+            settings.remote_config_url,
             headers=headers,
             data=conf,
         ) as response:
