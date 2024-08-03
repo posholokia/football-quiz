@@ -48,6 +48,14 @@ class RefreshToken(Token):
 
 @dataclass
 class BlacklistRefreshToken(RefreshToken):
+    """
+    Refresh токен добавляется в черный список.
+    Черный список хранится в хранилище, при выдаче нового access
+    токена проверяем что его нет в черном списке, тогда
+    выдаем токен. Бан осуществляется по подписи токена jti - uuid4.
+    :: storage: хранилище забаненных токенов.
+    """
+
     def __init__(self, storage: ITokenStorage):
         super().__init__()
         self.storage = storage
