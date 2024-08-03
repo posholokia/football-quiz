@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from services.constructor.exceptions import BaseHTTPException
+from core.constructor.exceptions import BaseHTTPException
 
 
 @dataclass(eq=False)

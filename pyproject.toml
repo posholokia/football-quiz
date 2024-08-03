@@ -24,6 +24,9 @@ aiohttp = "^3.9.5"
 punq = "^0.7.0"
 celery = "^5.4.0"
 loguru = "^0.7.2"
+bcrypt = "^4.2.0"
+redis = "^5.0.8"
+pyjwt = "^2.9.0"
 
 
 [tool.poetry.group.dev.dependencies]
@@ -43,8 +46,8 @@ exclude = [
     ".ruff_cache",
     ".venv",
     "venv",
-    "src/config/database/base.py",
-    "src/config/database/migrations",
+    "src/core/database/base.py",
+    "src/core/database/migrations",
     "test",
     ]
 
@@ -80,7 +83,7 @@ skip_glob=[
     ".ci",
     ".ruff_cache",
     "venv",
-    "src/config/database/migrations"
+    "src/core/database/migrations"
 ]
 default_section = "THIRDPARTY"
 known_fastapi=["fastapi", "starlette", "sqlalchemy"]

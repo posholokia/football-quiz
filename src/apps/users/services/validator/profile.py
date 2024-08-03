@@ -7,7 +7,7 @@ from apps.users.exceptions.profile import (
     ProfanityServiceNotAvailable,
     ProfileNameIsProfanity,
 )
-from services.constructor.validators import BaseValidator
+from core.constructor.validators import BaseValidator
 
 
 TIMEOUT = aiohttp.ClientTimeout(total=2)

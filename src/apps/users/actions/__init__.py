@@ -1,6 +1,6 @@
-from .actions import (
+from .profile import ProfileActions
+from .statistic import (
     CompositeStatisticAction,
-    ProfileActions,
     StatisticsActions,
 )
 

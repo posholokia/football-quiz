@@ -3,7 +3,6 @@ from dataclasses import dataclass
 from datetime import datetime
 
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import (
     aliased,
     selectinload,
@@ -37,14 +36,15 @@ from apps.quiz.services.storage.base import (
     IQuestionService,
 )
 from apps.users.dto import ProfileDTO
+from core.database.db import Database
 
 
 @dataclass
 class ORMQuestionsService(IQuestionService):
-    session: AsyncSession
+    db: Database
 
     async def get_random(self, limit: int) -> list[QuestionDTO]:
-        async with self.session.begin():
+        async with self.db.get_session() as session:
             q = aliased(Question)
             query = (
                 select(
@@ -55,7 +55,7 @@ class ORMQuestionsService(IQuestionService):
                 .limit(limit)
                 .options(selectinload(q.answers))
             )
-            result = await self.session.execute(query)
+            result = await session.execute(query)
             questions = result.scalars().all()
             for question in questions:
                 question.answers = sorted(
@@ -64,13 +64,13 @@ class ORMQuestionsService(IQuestionService):
             return await list_question_orm_to_dto(questions)
 
     async def get_by_id(self, pk: int) -> QuestionDTO:
-        async with self.session.begin():
+        async with self.db.get_session() as session:
             query = (
                 select(Question)
                 .where(Question.id == pk)
                 .options(selectinload(Question.answers))
             )
-            result = await self.session.execute(query)
+            result = await session.execute(query)
             orm_result = result.fetchone()
 
             if orm_result is None:
@@ -80,7 +80,7 @@ class ORMQuestionsService(IQuestionService):
 
 @dataclass
 class ORMComplaintService(IComplaintService):
-    session: AsyncSession
+    db: Database
 
     async def create(
         self,
@@ -89,7 +89,7 @@ class ORMComplaintService(IComplaintService):
         profile: ProfileDTO,
         category: CategoryComplaintDTO,
     ) -> ComplaintDTO:
-        async with self.session.begin():
+        async with self.db.get_session() as session:
             complaint = Complaint(
                 profile_id=profile.id,
                 question_id=question.id,
@@ -98,8 +98,8 @@ class ORMComplaintService(IComplaintService):
                 solved=False,
                 category_id=category.id,
             )
-            self.session.add(complaint)
-            await self.session.commit()
+            session.add(complaint)
+            await session.commit()
             return await complaint_orm_to_dto(
                 complaint, question, profile, category
             )
@@ -111,20 +111,20 @@ class ORMComplaintService(IComplaintService):
 
 @dataclass
 class ORMCategoryComplaintService(ICategoryComplaintService):
-    session: AsyncSession
+    db: Database
 
     async def list(self) -> list[CategoryComplaintDTO]:
-        async with self.session.begin():
+        async with self.db.get_session() as session:
             query = select(CategoryComplaint)
-            result = await self.session.execute(query)
+            result = await session.execute(query)
             orm_result = result.scalars().all()
 
             return await list_category_orm_to_dto(orm_result)
 
     async def get_by_id(self, pk: int) -> CategoryComplaintDTO:
-        async with self.session.begin():
+        async with self.db.get_session() as session:
             query = select(CategoryComplaint)
-            result = await self.session.execute(query)
+            result = await session.execute(query)
             orm_result = result.fetchone()
 
             if orm_result is None:

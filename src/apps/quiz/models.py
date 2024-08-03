@@ -13,7 +13,7 @@ from sqlalchemy.orm import (
     relationship,
 )
 
-from config.database.db import Base
+from core.database.db import Base
 
 
 class Question(Base):

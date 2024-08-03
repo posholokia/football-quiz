@@ -6,8 +6,8 @@ from fastapi import (
 )
 from fastapi.responses import JSONResponse
 
-from config.settings import DEBUG
-from services.constructor.exceptions import BaseHTTPException
+from config import settings
+from core.constructor.exceptions import BaseHTTPException
 
 
 def create_app() -> FastAPI:
@@ -15,7 +15,7 @@ def create_app() -> FastAPI:
         title="Football Quiz",
         docs_url="/api/docs",
         description="Mobile application",
-        debug=DEBUG,
+        debug=settings.debug,
     )
 
     @app.exception_handler(BaseHTTPException)

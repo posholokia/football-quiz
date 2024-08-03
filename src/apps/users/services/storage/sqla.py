@@ -48,36 +48,37 @@ from apps.users.services.storage import (
     IStatisticService,
 )
 from apps.users.services.storage.base import IProfileTitleService
-from config.database.db import Base
+from core.database.db import (
+    Base,
+    Database,
+)
 
 
 T = TypeVar("T", bound=Base)
-D = TypeVar("D", bound=Base)
-M = TypeVar("M", bound=Base)
 
 
 @dataclass
 class ORMProfileService(IProfileService):
-    session: AsyncSession
+    db: Database
 
     async def create(self, device: str) -> ProfileDTO:
         try:
-            async with self.session.begin():
+            async with self.db.get_session() as session:
                 new_profile = Profile(
                     name="Игрок",
                     device_uuid=device,
                 )
-                self.session.add(new_profile)
-                await self.session.commit()
+                session.add(new_profile)
+                await session.commit()
                 return await orm_profile_to_dto(new_profile)
 
         except IntegrityError:
             raise AlreadyExistsProfile()
 
     async def get_or_create(self, device: str) -> ProfileDTO:
-        async with self.session.begin():
+        async with self.db.get_session() as session:
             query = select(Profile).where(Profile.device_uuid == device)
-            result = await self.session.execute(query)
+            result = await session.execute(query)
             orm_result = result.fetchone()
 
             if orm_result is None:
@@ -85,29 +86,29 @@ class ORMProfileService(IProfileService):
                     name="Игрок",
                     device_uuid=device,
                 )
-                self.session.add(new_profile)
-                await self.session.commit()
+                session.add(new_profile)
+                await session.commit()
             else:
                 new_profile = orm_result[0]
             return await orm_profile_to_dto(new_profile)
 
     async def patch(self, pk: int, **kwargs) -> ProfileDTO:
-        async with self.session.begin():
+        async with self.db.get_session() as session:
             query = (
                 update(Profile)
                 .where(Profile.id == pk)
                 .values(**kwargs)
                 .returning(Profile)
             )
-            result = await self.session.execute(query)
-            await self.session.commit()
+            result = await session.execute(query)
+            await session.commit()
             orm_result = result.fetchone()
             return await orm_profile_to_dto(orm_result[0])
 
     async def get_by_id(self, pk: int) -> ProfileDTO:
-        async with self.session.begin():
+        async with self.db.get_session() as session:
             query = select(Profile).where(Profile.id == pk)
-            result = await self.session.execute(query)
+            result = await session.execute(query)
             orm_result = result.fetchone()
 
             if orm_result is None:
@@ -116,26 +117,26 @@ class ORMProfileService(IProfileService):
             return await orm_profile_to_dto(orm_result[0])
 
     async def get_by_device(self, token: str) -> ProfileDTO:
-        async with self.session.begin():
+        async with self.db.get_session() as session:
             query = select(Profile).where(Profile.device_uuid == token)
-            result = await self.session.execute(query)
+            result = await session.execute(query)
             orm_result = result.fetchone()
             return await orm_profile_to_dto(orm_result[0])
 
 
 @dataclass
 class ORMStatisticService(IStatisticService, Generic[T]):
-    session: AsyncSession
+    db: Database
     model: Type[T]
 
     async def create(self, pk: int, place: int) -> StatisticDTO:
-        async with self.session.begin():
-            stat = await self._sub_create(pk, place)
+        async with self.db.get_session() as session:
+            stat = await self._sub_create(session, pk, place)
             return await orm_statistics_to_dto(stat)
 
     async def get_by_profile(self, profile_pk: int) -> TitleStatisticDTO:
-        async with self.session.begin():
-            stat = await self._sub_get_by_profile(profile_pk)
+        async with self.db.get_session() as session:
+            stat = await self._sub_get_by_profile(session, profile_pk)
 
             if stat is None:
                 raise StatisticDoseNotExists(
@@ -144,9 +145,9 @@ class ORMStatisticService(IStatisticService, Generic[T]):
             return await orm_title_statistics_to_dto(stat)
 
     async def get_by_place(self, place: int) -> StatisticDTO | None:
-        async with self.session.begin():
+        async with self.db.get_session() as session:
             query = select(self.model).where(self.model.place == place)
-            res = await self.session.execute(query)
+            res = await session.execute(query)
             orm_result = res.fetchone()
 
             if orm_result is None:
@@ -154,15 +155,17 @@ class ORMStatisticService(IStatisticService, Generic[T]):
             return await orm_statistics_to_dto(orm_result[0])
 
     async def get_or_create_by_profile(self, profile_pk: int) -> StatisticDTO:
-        async with self.session.begin():
+        async with self.db.get_session() as session:
             # пытаемся получить статистику
-            statistic = await self._sub_get_by_profile(profile_pk)
+            statistic = await self._sub_get_by_profile(session, profile_pk)
 
             if statistic is None:  # если не найдена
                 # вычисляем последнее место
-                place = await self._sub_get_count()
+                place = await self._sub_get_count(session)
                 # добавляем статистику на последнее место
-                statistic = await self._sub_create(profile_pk, place + 1)
+                statistic = await self._sub_create(
+                    session, profile_pk, place + 1
+                )
 
             return await orm_statistics_to_dto(statistic)
 
@@ -171,7 +174,7 @@ class ORMStatisticService(IStatisticService, Generic[T]):
         Смещение игроков в ладдере,
         когда юзер перемещается на новое место
         """
-        async with self.session.begin():
+        async with self.db.get_session() as session:
             if new_place > old_place:
                 query = (
                     update(self.model)
@@ -200,15 +203,15 @@ class ORMStatisticService(IStatisticService, Generic[T]):
                         trend=self.model.trend - 1,
                     )
                 )
-            await self.session.execute(query)
-            await self.session.commit()
+            await session.execute(query)
+            await session.commit()
 
     async def down_place_negative_score(self) -> None:
         """
         Смещение на 1 позицию вниз в рейтинге
         игроков с отрицательными очками
         """
-        async with self.session.begin():
+        async with self.db.get_session() as session:
             query = (
                 update(self.model)
                 .where(self.model.score < 0)
@@ -217,18 +220,18 @@ class ORMStatisticService(IStatisticService, Generic[T]):
                     trend=self.model.trend - 1,
                 )
             )
-            await self.session.execute(query)
+            await session.execute(query)
 
     async def patch(self, pk: int, **fields) -> StatisticDTO:
-        async with self.session.begin():
+        async with self.db.get_session() as session:
             query = (
                 update(self.model)
                 .where(self.model.id == pk)
                 .values(**fields)
                 .returning(self.model)
             )
-            result = await self.session.execute(query)
-            await self.session.commit()
+            result = await session.execute(query)
+            await session.commit()
             orm_result = result.fetchone()
             return await orm_statistics_to_dto(orm_result[0])
 
@@ -237,7 +240,7 @@ class ORMStatisticService(IStatisticService, Generic[T]):
         profile_pk: int,
     ) -> int:
         """Положение юзера в ладдере на основе его статистики"""
-        async with self.session.begin():
+        async with self.db.get_session() as session:
             subquery = select(
                 self.model,
                 func.row_number()
@@ -254,7 +257,7 @@ class ORMStatisticService(IStatisticService, Generic[T]):
                 subquery.c.profile_id == profile_pk
             )
 
-            result = await self.session.execute(query)
+            result = await session.execute(query)
             rank = result.fetchone()
 
             if rank is None:
@@ -285,7 +288,7 @@ class ORMStatisticService(IStatisticService, Generic[T]):
         limit: int | None,
     ) -> list[LadderStatisticDTO]:
         """Получение топа игроков"""
-        async with self.session.begin():
+        async with self.db.get_session() as session:
             query = (
                 select(self.model)
                 .order_by(self.model.place)
@@ -297,29 +300,29 @@ class ORMStatisticService(IStatisticService, Generic[T]):
                 .offset(offset)
                 .limit(limit)
             )
-            result = await self.session.execute(query)
+            result = await session.execute(query)
             ladder = result.scalars().all()
             return [await orm_ladder_to_dto(obj) for obj in ladder]
 
     async def get_count(self) -> int:
         """Общее количество игроков со статистикой"""
-        async with self.session.begin():
-            return await self._sub_get_count()
+        async with self.db.get_session() as session:
+            return await self._sub_get_count(session)
 
     async def get_count_positive_score(self) -> int:
         """Количество игроков с не отрицательными очками"""
-        async with self.session.begin():
+        async with self.db.get_session() as session:
             query = (
                 select(func.count())
                 .select_from(self.model)
                 .where(self.model.score >= 0)
             )
-            result = await self.session.execute(query)
+            result = await session.execute(query)
             return result.scalar_one()
 
     async def clear_statistic(self) -> None:
         """Обнуление данных в таблице"""
-        async with self.session.begin():
+        async with self.db.get_session() as session:
             assert (
                 self.model is not Statistic
             ), "Попытка обнулить общую статистику"
@@ -334,11 +337,11 @@ class ORMStatisticService(IStatisticService, Generic[T]):
                 wrongs=0,
                 trend=0,
             )
-            await self.session.execute(query)
-            await self.session.flush()
+            await session.execute(query)
+            await session.flush()
 
             query = select(self.model).order_by(self.model.profile_id)
-            res = await self.session.execute(query)
+            res = await session.execute(query)
             statistics = res.scalars().all()
 
             for idx, stat in enumerate(statistics, start=1):
@@ -347,13 +350,13 @@ class ORMStatisticService(IStatisticService, Generic[T]):
                     .where(self.model.id == stat.id)
                     .values(place=idx)
                 )
-                await self.session.execute(query)
+                await session.execute(query)
 
-            await self.session.commit()
+            await session.commit()
 
     async def delete_all_statistics(self) -> None:
         """Удаление всех данных из таблицы"""
-        async with self.session.begin():
+        async with self.db.get_session() as session:
             assert (
                 self.model is not Statistic
             ), "Попытка удалить общую статистику"
@@ -362,26 +365,35 @@ class ORMStatisticService(IStatisticService, Generic[T]):
                 return
 
             query = delete(self.model)
-            await self.session.execute(query)
-            await self.session.commit()
+            await session.execute(query)
+            await session.commit()
 
-    async def _sub_create(self, pk: int, place: int) -> Statistic:
+    async def _sub_create(
+        self,
+        session: AsyncSession,
+        pk: int,
+        place: int,
+    ) -> Statistic:
         """Вспомогательная функция создания объекта"""
         statistic = self.model(
             profile_id=pk,
             place=place,
         )
-        self.session.add(statistic)
-        await self.session.commit()
+        session.add(statistic)
+        await session.commit()
         return statistic
 
-    async def _sub_get_count(self) -> int:
+    async def _sub_get_count(self, session: AsyncSession) -> int:
         """Вспомогательная функция подсчета объектов"""
         query = select(func.count(self.model.id))
-        result = await self.session.execute(query)
+        result = await session.execute(query)
         return result.scalar_one()
 
-    async def _sub_get_by_profile(self, profile_pk: int) -> Statistic | None:
+    async def _sub_get_by_profile(
+        self,
+        session: AsyncSession,
+        profile_pk: int,
+    ) -> Statistic | None:
         """Вспомогательная функция получения объекта"""
         query = (
             select(self.model)
@@ -390,7 +402,7 @@ class ORMStatisticService(IStatisticService, Generic[T]):
             .options(joinedload(self.model.profile).joinedload(Profile.title))
             .where(self.model.profile_id == profile_pk)
         )
-        res = await self.session.execute(query)
+        res = await session.execute(query)
         orm_result = res.fetchone()
 
         if orm_result is None:
@@ -401,18 +413,18 @@ class ORMStatisticService(IStatisticService, Generic[T]):
 
 @dataclass
 class ORMProfileTitleService(IProfileTitleService):
-    session: AsyncSession
+    db: Database
 
     async def get_or_create_by_profile(
         self,
         profile_pk: int,
     ) -> ProfileTitleDTO:
         """Вызывается внутри другой сессии, не напрямую"""
-        async with self.session.begin():
+        async with self.db.get_session() as session:
             query = select(BestPlayerTitle).where(
                 BestPlayerTitle.profile_id == profile_pk
             )
-            res = await self.session.execute(query)
+            res = await session.execute(query)
             title = res.fetchone()
 
             if title is None:  # если не найдена
@@ -421,19 +433,19 @@ class ORMProfileTitleService(IProfileTitleService):
                     best_of_the_month=0,
                     profile_id=profile_pk,
                 )
-                self.session.add(title)
+                session.add(title)
                 return await orm_profile_title_to_dto(title)
             return await orm_profile_title_to_dto(title[0])
 
     async def patch(self, profile_pk: int, **fields) -> ProfileTitleDTO:
         """Вызывается внутри другой сессии, не напрямую"""
-        async with self.session.begin():
+        async with self.db.get_session() as session:
             query = (
                 update(BestPlayerTitle)
                 .where(BestPlayerTitle.profile_id == profile_pk)
                 .values(**fields)
                 .returning(BestPlayerTitle)
             )
-            result = await self.session.execute(query)
+            result = await session.execute(query)
             orm_result = result.fetchone()
             return await orm_profile_title_to_dto(orm_result[0])

@@ -9,7 +9,7 @@ from apps.users.models import (
     MonthStatistic,
     Statistic,
 )
-from config.database.db import Base
+from core.database.db import Base
 
 
 async def get_statistic_model(

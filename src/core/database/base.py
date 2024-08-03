@@ -8,4 +8,4 @@ from apps.users.models import (
     Profile,
     User,
 )
-from config.database.db import Base
+from core.database.db import Base

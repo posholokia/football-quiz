@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 
 from apps.users.services.storage import IProfileService
-from services.constructor.permissions import BasePermission
-from services.security.exceptions import UnauthorizedDevice
+from core.constructor.permissions import BasePermission
+from core.security.fingerprint_auth.exceptions import UnauthorizedDevice
 
 
 @dataclass(frozen=True, eq=False)

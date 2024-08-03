@@ -4,7 +4,7 @@ from sqlalchemy import (
     Integer,
 )
 
-from config.database.db import Base
+from core.database.db import Base
 
 
 class GameSettings(Base):

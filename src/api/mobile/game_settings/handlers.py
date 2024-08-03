@@ -9,11 +9,11 @@ from starlette import status
 from apps.game_settings.actions import GameSettingsActions
 from apps.quiz.permissions.quiz import DevicePermissions
 from config.containers import get_container
-from services.mapper import Mapper
-from services.security.mobile_auth import (
+from core.security.fingerprint_auth.mobile_auth import (
     http_device,
     MobileAuthorizationCredentials,
 )
+from services.mapper import Mapper
 
 from .schema import GameSettingsSchema
 

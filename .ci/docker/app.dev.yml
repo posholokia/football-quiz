@@ -14,7 +14,9 @@ services:
     networks:
       - dev-net
     volumes:
-      - ../../src/config:/app/config
+      - ../../src/core:/app/core
+      - ../../q.json:/app/q.json
+#      - ../../database.log:/app/database.log
 
   celery-beat:
     container_name: celery-beat

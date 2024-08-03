@@ -28,14 +28,14 @@ from apps.users.dto import ProfileDTO
 from apps.users.models import Statistic
 from apps.users.permissions.profile import ProfilePermissions
 from config.containers import get_container
-from config.database.db import Base
-from services.firebase import check_firebase_apikey
-from services.mapper import Mapper
-from services.security.device_validator import DeviceTokenValidate
-from services.security.mobile_auth import (
+from core.database.db import Base
+from core.security.fingerprint_auth.device_validator import DeviceTokenValidate
+from core.security.fingerprint_auth.mobile_auth import (
     http_device,
     MobileAuthorizationCredentials,
 )
+from services.firebase import check_firebase_apikey
+from services.mapper import Mapper
 
 from ..utils import get_offset
 from .schema import (

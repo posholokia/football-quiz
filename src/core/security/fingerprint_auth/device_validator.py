@@ -2,13 +2,15 @@ import string
 from dataclasses import dataclass
 
 from apps.users.services.storage import IProfileService
-from services.constructor.validators import BaseValidator
-from services.security.exceptions import (
+from core.constructor.validators import BaseValidator
+from core.security.fingerprint_auth.exceptions import (
     InvalidDeviceToken,
     NotUniqueDeviceToken,
     UnauthorizedDevice,
 )
-from services.security.mobile_auth import MobileAuthorizationCredentials
+from core.security.fingerprint_auth.mobile_auth import (
+    MobileAuthorizationCredentials,
+)
 
 
 @dataclass

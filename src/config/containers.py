@@ -4,9 +4,10 @@ from api.pagination import (
     LimitOffsetPaginator,
     R,
 )
-from punq import Container
-
-from sqlalchemy.ext.asyncio import AsyncSession
+from punq import (
+    Container,
+    Scope,
+)
 
 from apps.game_settings.actions.actions import GameSettingsActions
 from apps.game_settings.services.storage.base import IGameSettingsService
@@ -38,6 +39,9 @@ from apps.users.models import (
     Statistic,
 )
 from apps.users.permissions.profile import ProfilePermissions
+from apps.users.services.auth.jwt_auth.models import BlacklistRefreshToken
+from apps.users.services.auth.jwt_auth.storage.base import ITokenStorage
+from apps.users.services.auth.jwt_auth.storage.cache import RedisTokenStorage
 from apps.users.services.storage import (
     IProfileService,
     IProfileTitleService,
@@ -47,8 +51,9 @@ from apps.users.services.storage import (
     ORMStatisticService,
 )
 from apps.users.services.validator.profile import ProfileValidator
-from config.database.db import SessionLocal
-from services.security.device_validator import DeviceTokenValidate
+from core.database.db import Database
+from core.security.fingerprint_auth.device_validator import DeviceTokenValidate
+from services.redis_pool import RedisPool
 
 
 @lru_cache(1)
@@ -68,8 +73,9 @@ def _initialize_container() -> Container:
             ]
         )
 
-    container.register(AsyncSession, factory=lambda: SessionLocal())
-    # orm интерфейсы
+    # обязательно синглтон, иначе пробьет лимит по подключениям
+    container.register(Database, scope=Scope.singleton)
+    """------------------------------orm интерфейсы------------------------------"""
     container.register(IProfileService, ORMProfileService)
     container.register(IProfileTitleService, ORMProfileTitleService)
     container.register(IStatisticService, ORMStatisticService, model=Statistic)
@@ -84,30 +90,38 @@ def _initialize_container() -> Container:
     container.register(IQuestionService, ORMQuestionsService)
     container.register(IComplaintService, ORMComplaintService)
     container.register(ICategoryComplaintService, ORMCategoryComplaintService)
-    # валидаторы
-    container.register(ProfileValidator)
-    container.register(DeviceTokenValidate)
-    # разрешения
-    container.register(ProfilePermissions)
-    container.register(DevicePermissions)
-    # экшены
-    # профиль
-    container.register(ProfileActions)
-
-    # статистика
     container.register(R, ORMStatisticService, model=Statistic)
     container.register(R, ORMStatisticService, model=DayStatistic)
     container.register(R, ORMStatisticService, model=MonthStatistic)
 
-    container.register(LimitOffsetPaginator)
+    """------------------------------валидаторы------------------------------"""
+    container.register(ProfileValidator)
+    container.register(DeviceTokenValidate)
 
+    """------------------------------разрешения------------------------------"""
+    container.register(ProfilePermissions)
+    container.register(DevicePermissions)
+
+    """------------------------------экшены------------------------------"""
+    # пагинаторы
+    container.register(LimitOffsetPaginator)
+    # профиль
+    container.register(ProfileActions)
+    # статистика
     container.register(StatisticsActions)
     container.register(
         CompositeStatisticAction, factory=build_statistic_actions
     )
-
+    # викторина
     container.register(QuestionsActions)
-    container.register(GameSettingsActions)
     container.register(ComplaintsActions)
     container.register(CategoryComplaintsActions)
+
+    # настройки
+    container.register(GameSettingsActions)
+
+    """------------------------------сервисы------------------------------"""
+    container.register(RedisPool)
+    container.register(ITokenStorage, RedisTokenStorage)
+    container.register(BlacklistRefreshToken)
     return container

@@ -4,13 +4,10 @@ from pydantic.main import BaseModel
 
 from fastapi import Request
 from fastapi.openapi.models import APIKey
-from fastapi.security import HTTPBearer
 from fastapi.security.base import SecurityBase
 
-from services.security.exceptions import UnauthorizedDevice
+from core.security.fingerprint_auth.exceptions import UnauthorizedDevice
 
-
-http_bearer_no_error = HTTPBearer(auto_error=False)
 
 api_key_scheme = {
     "name": "Device",
