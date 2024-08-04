@@ -15,12 +15,8 @@ class AdminAuthAction:
     async def login(self, username: str, password: str) -> UserEntity:
         user = await self.repository.get_by_username(username)
 
-        if any(
-            (
-                user is None,
-                not check_password(password, user.password),
-            )
-        ):
+        if user is None or not check_password(password, user.password):
             raise InvalidAuthCredentials()
+
         await self.permission.has_permission(user)
         return user

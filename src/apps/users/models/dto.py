@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from enum import Enum
 
-from apps.users.models import (
+from .entity import (
     BestPlayerTitleEntity,
     ProfileEntity,
     StatisticEntity,
