@@ -27,6 +27,7 @@ from apps.users.dto.converter import (
     orm_profile_to_dto,
     orm_statistics_to_dto,
     orm_title_statistics_to_dto,
+    orm_user_to_entity,
 )
 from apps.users.dto.dto import (
     LadderStatisticDTO,
@@ -42,12 +43,17 @@ from apps.users.models import (
     BestPlayerTitle,
     Profile,
     Statistic,
+    User,
+    UserEntity,
 )
 from apps.users.services.storage import (
     IProfileService,
     IStatisticService,
 )
-from apps.users.services.storage.base import IProfileTitleService
+from apps.users.services.storage.base import (
+    IProfileTitleService,
+    IUserService,
+)
 from core.database.db import (
     Base,
     Database,
@@ -449,3 +455,17 @@ class ORMProfileTitleService(IProfileTitleService):
             result = await session.execute(query)
             orm_result = result.fetchone()
             return await orm_profile_title_to_dto(orm_result[0])
+
+
+@dataclass
+class ORMUserService(IUserService):
+    db: Database
+
+    async def get_by_username(self, username: str) -> UserEntity | None:
+        async with self.db.get_session() as session:
+            query = select(User).where(User.username == username)
+            res = await session.execute(query)
+            user_orm = res.fetchone()
+            if user_orm is None:
+                return None
+            return await orm_user_to_entity(user_orm[0])

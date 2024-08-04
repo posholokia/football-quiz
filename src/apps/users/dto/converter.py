@@ -9,6 +9,8 @@ from apps.users.models import (
     BestPlayerTitle,
     Profile,
     Statistic,
+    User,
+    UserEntity,
 )
 
 
@@ -82,4 +84,14 @@ async def orm_profile_title_to_dto(
     return ProfileTitleDTO(
         best_of_the_day=orm_result.best_of_the_day,
         best_of_the_month=orm_result.best_of_the_month,
+    )
+
+
+async def orm_user_to_entity(orm_result: User) -> UserEntity:
+    return UserEntity(
+        id=orm_result.id,
+        password=orm_result.password,
+        is_superuser=orm_result.is_superuser,
+        is_active=orm_result.is_active,
+        username=orm_result.username,
     )

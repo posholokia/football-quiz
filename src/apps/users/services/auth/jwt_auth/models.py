@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from datetime import timedelta
 
-from apps.users.dto import UserDTO
+from apps.users.models import UserEntity
 from apps.users.services.auth.jwt_auth.storage.base import ITokenStorage
 from services.jwt_token.exceptions import (
     InvalidTokenType,
@@ -39,7 +39,7 @@ class RefreshToken(Token):
         access = access_token_cls.encode()
         return access
 
-    async def for_user(self, user: UserDTO) -> str:
+    async def for_user(self, user: UserEntity) -> str:
         """Выдаем refresh токен юзеру"""
         self.set_payload()
         self[self.sub_claim] = user.id
@@ -69,7 +69,7 @@ class BlacklistRefreshToken(RefreshToken):
         """Записываем токен в хранилище в черный список"""
         payload = self.decode(token)
         key = payload["jti"]
-        timestamp_exp = round(payload["exp"])
+        timestamp_exp = payload["exp"]
         await self.storage.set_token(
             key=key,
             value=token,

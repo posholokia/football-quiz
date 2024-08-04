@@ -13,6 +13,7 @@ from apps.users.dto.dto import (
     ProfileTitleDTO,
     TitleStatisticDTO,
 )
+from apps.users.models import UserEntity
 
 
 @dataclass
@@ -94,3 +95,9 @@ class IProfileTitleService(ABC):
 
     @abstractmethod
     async def patch(self, profile_pk: int, **fields) -> ProfileTitleDTO: ...
+
+
+@dataclass
+class IUserService(ABC):
+    @abstractmethod
+    async def get_by_username(self, username: str) -> UserEntity: ...

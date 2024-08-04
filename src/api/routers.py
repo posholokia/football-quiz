@@ -8,9 +8,9 @@ from .mobile.users import router as users_routers
 
 routers = APIRouter()
 
-routers.include_router(users_routers, tags=["Users"])
-routers.include_router(quiz_router, tags=["Quiz"])
-routers.include_router(game_router, tags=["Settings"])
+routers.include_router(users_routers, tags=["Mobile"])
+routers.include_router(quiz_router, tags=["Mobile"])
+routers.include_router(game_router, tags=["Mobile"])
 
 
 @routers.get("/healthcheck/", status_code=status.HTTP_200_OK)
