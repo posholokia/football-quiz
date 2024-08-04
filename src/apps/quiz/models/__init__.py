@@ -1,3 +1,9 @@
+from .entity import (
+    AnswerEntity,
+    CategoryComplaintEntity,
+    ComplaintEntity,
+    QuestionEntity,
+)
 from .sqla import (
     Answer,
     CategoryComplaint,
@@ -11,4 +17,8 @@ __all__ = (
     "Answer",
     "Complaint",
     "CategoryComplaint",
+    "ComplaintEntity",
+    "AnswerEntity",
+    "QuestionEntity",
+    "CategoryComplaintEntity",
 )

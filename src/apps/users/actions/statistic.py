@@ -1,11 +1,11 @@
 from dataclasses import dataclass
 
-from apps.users.dto import (
+from apps.users.models import (
     LadderStatisticDTO,
     PeriodStatistic,
-    StatisticDTO,
+    StatisticEntity,
 )
-from apps.users.dto.dto import TitleStatisticDTO
+from apps.users.models.dto import TitleStatisticDTO
 from apps.users.services.storage import (
     IProfileService,
     IStatisticService,
@@ -103,13 +103,13 @@ class StatisticsActions:
 
     @staticmethod
     async def _get_updated_statistic(
-        current_stat: StatisticDTO,
+        current_stat: StatisticEntity,
         score: int,
         rights: int,
         wrongs: int,
         perfect_round: bool,
-    ) -> StatisticDTO:
-        return StatisticDTO(
+    ) -> StatisticEntity:
+        return StatisticEntity(
             id=current_stat.id,
             games=current_stat.games + 1,
             score=current_stat.score + score,
@@ -118,7 +118,6 @@ class StatisticsActions:
             wrongs=current_stat.wrongs + wrongs,
             perfect_rounds=current_stat.perfect_rounds + int(perfect_round),
             trend=0,
-            profile_id=current_stat.profile_id,
         )
 
     async def get_top_ladder(

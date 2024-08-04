@@ -14,7 +14,6 @@ from apps.quiz.actions import (
     ComplaintsActions,
     QuestionsActions,
 )
-from apps.quiz.dto import QuestionDTO
 from apps.quiz.permissions.quiz import DevicePermissions
 from apps.users.permissions.profile import ProfilePermissions
 from config.containers import get_container
@@ -45,7 +44,7 @@ async def get_questions(
     await permissions.has_permission(cred.token)
 
     actions: QuestionsActions = container.resolve(QuestionsActions)
-    questions: list[QuestionDTO] = await actions.get_random(limit)
+    questions = await actions.get_random(limit)
     return [Mapper.dataclass_to_schema(QuestionSchema, q) for q in questions]
 
 

@@ -4,10 +4,10 @@ from abc import (
 )
 from dataclasses import dataclass
 
-from apps.game_settings.dto.dto import GameSettingsDTO
+from apps.game_settings.models import GameSettingsEntity
 
 
 @dataclass
 class IGameSettingsService(ABC):
     @abstractmethod
-    async def get(self) -> GameSettingsDTO: ...
+    async def get(self) -> GameSettingsEntity: ...

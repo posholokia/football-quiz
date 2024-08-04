@@ -1,11 +1,14 @@
-from apps.game_settings.dto.dto import GameSettingsDTO
-from apps.game_settings.models import GameSettings
+from apps.game_settings.models import (
+    GameSettings,
+    GameSettingsEntity,
+)
 
 
-async def game_settings_orm_to_dto(
+async def orm_game_settings_to_entity(
     orm_result: GameSettings,
-) -> GameSettingsDTO:
-    return GameSettingsDTO(
+) -> GameSettingsEntity:
+    return GameSettingsEntity(
+        id=orm_result.id,
         time_round=orm_result.time_round,
         question_limit=orm_result.question_limit,
         max_energy=orm_result.max_energy,

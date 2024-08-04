@@ -6,7 +6,6 @@ from dataclasses import (
 )
 from datetime import timedelta
 from enum import Enum
-from types import NoneType
 
 import jwt
 
@@ -20,7 +19,7 @@ from services.jwt_token.exceptions import (
 class TokenType(Enum):
     access: str = "access"
     refresh: str = "refresh"
-    undefined: NoneType = None
+    undefined: None = None
 
 
 @dataclass
@@ -75,7 +74,9 @@ class Token:
         payload = jwt.decode(
             jwt=token,
             key=self.secret_key,
-            algorithms=self.algorithm,
+            algorithms=[
+                self.algorithm,
+            ],
             verify=True,
         )
         if payload.get("typ") is None:

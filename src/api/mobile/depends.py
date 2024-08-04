@@ -15,9 +15,9 @@ from core.database.db import Base
 async def get_statistic_model(
     period: Period = Query(default=Period.total),
 ) -> Type[Base]:
-    if period == Period.total:
-        return Statistic
-    elif period == Period.day:
+    if period == Period.day:
         return DayStatistic
     elif period == Period.month:
         return MonthStatistic
+    else:
+        return Statistic

@@ -1,30 +1,29 @@
-from apps.users.dto.dto import (
-    LadderStatisticDTO,
-    ProfileDTO,
-    ProfileTitleDTO,
-    StatisticDTO,
-    TitleStatisticDTO,
-)
 from apps.users.models import (
     BestPlayerTitle,
+    BestPlayerTitleEntity,
     Profile,
+    ProfileEntity,
     Statistic,
+    StatisticEntity,
     User,
     UserEntity,
 )
+from apps.users.models.dto import (
+    LadderStatisticDTO,
+    TitleStatisticDTO,
+)
 
 
-async def orm_profile_to_dto(orm_result: Profile) -> ProfileDTO:
-    return ProfileDTO(
+async def orm_profile_to_dto(orm_result: Profile) -> ProfileEntity:
+    return ProfileEntity(
         id=orm_result.id,
         name=orm_result.name,
         device_uuid=orm_result.device_uuid,
-        user_id=orm_result.user_id,
     )
 
 
-async def orm_statistics_to_dto(orm_result: Statistic) -> StatisticDTO:
-    return StatisticDTO(
+async def orm_statistics_to_entity(orm_result: Statistic) -> StatisticEntity:
+    return StatisticEntity(
         id=orm_result.id,
         games=orm_result.games,
         score=orm_result.score,
@@ -33,14 +32,13 @@ async def orm_statistics_to_dto(orm_result: Statistic) -> StatisticDTO:
         wrongs=orm_result.wrongs,
         perfect_rounds=orm_result.perfect_rounds,
         trend=orm_result.trend,
-        profile_id=orm_result.profile_id,
     )
 
 
 async def orm_title_statistics_to_dto(
     orm_result: Statistic,
 ) -> TitleStatisticDTO:
-    title_dto = await orm_profile_title_to_dto(orm_result.profile.title)
+    title_dto = await orm_profile_title_to_entity(orm_result.profile.title)
     return TitleStatisticDTO(
         id=orm_result.id,
         games=orm_result.games,
@@ -50,14 +48,13 @@ async def orm_title_statistics_to_dto(
         wrongs=orm_result.wrongs,
         perfect_rounds=orm_result.perfect_rounds,
         trend=orm_result.trend,
-        profile_id=orm_result.profile_id,
         title=title_dto,
     )
 
 
 async def orm_ladder_to_dto(orm_result: Statistic) -> LadderStatisticDTO:
     profile_dto = await orm_profile_to_dto(orm_result.profile)
-    title_dto = await orm_profile_title_to_dto(orm_result.profile.title)
+    title_dto = await orm_profile_title_to_entity(orm_result.profile.title)
     return LadderStatisticDTO(
         id=orm_result.id,
         games=orm_result.games,
@@ -72,16 +69,16 @@ async def orm_ladder_to_dto(orm_result: Statistic) -> LadderStatisticDTO:
     )
 
 
-async def orm_profile_title_to_dto(
+async def orm_profile_title_to_entity(
     orm_result: BestPlayerTitle,
-) -> ProfileTitleDTO:
+) -> BestPlayerTitleEntity:
     if orm_result is None:
-        return ProfileTitleDTO(
+        return BestPlayerTitleEntity(
             best_of_the_day=0,
             best_of_the_month=0,
         )
 
-    return ProfileTitleDTO(
+    return BestPlayerTitleEntity(
         best_of_the_day=orm_result.best_of_the_day,
         best_of_the_month=orm_result.best_of_the_month,
     )

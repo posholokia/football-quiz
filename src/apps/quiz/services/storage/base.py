@@ -4,21 +4,21 @@ from abc import (
 )
 from dataclasses import dataclass
 
-from apps.quiz.dto.dto import (
-    CategoryComplaintDTO,
-    ComplaintDTO,
-    QuestionDTO,
+from apps.quiz.models import (
+    CategoryComplaintEntity,
+    ComplaintEntity,
+    QuestionEntity,
 )
-from apps.users.dto import ProfileDTO
+from apps.users.models import ProfileEntity
 
 
 @dataclass
 class IQuestionService(ABC):
     @abstractmethod
-    async def get_random(self, limit: int) -> list[QuestionDTO]: ...
+    async def get_random(self, limit: int) -> list[QuestionEntity]: ...
 
     @abstractmethod
-    async def get_by_id(self, pk: int) -> QuestionDTO: ...
+    async def get_by_id(self, pk: int) -> QuestionEntity: ...
 
 
 @dataclass
@@ -27,22 +27,22 @@ class IComplaintService(ABC):
     async def create(
         self,
         text: str,
-        question: QuestionDTO,
-        profile: ProfileDTO,
-        category_id: CategoryComplaintDTO,
-    ) -> ComplaintDTO: ...
+        question: QuestionEntity,
+        profile: ProfileEntity,
+        category_id: CategoryComplaintEntity,
+    ) -> ComplaintEntity: ...
 
     @abstractmethod
-    async def get_by_id(self, pk: int) -> ComplaintDTO: ...
+    async def get_by_id(self, pk: int) -> ComplaintEntity: ...
 
     @abstractmethod
-    async def list(self) -> ComplaintDTO: ...
+    async def list(self) -> ComplaintEntity: ...
 
 
 @dataclass
 class ICategoryComplaintService(ABC):
     @abstractmethod
-    async def list(self) -> list[CategoryComplaintDTO]: ...
+    async def list(self) -> list[CategoryComplaintEntity]: ...
 
     @abstractmethod
-    async def get_by_id(self, pk: int) -> CategoryComplaintDTO: ...
+    async def get_by_id(self, pk: int) -> CategoryComplaintEntity: ...

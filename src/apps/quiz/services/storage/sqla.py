@@ -9,17 +9,12 @@ from sqlalchemy.orm import (
 )
 from sqlalchemy.sql.functions import random
 
-from apps.quiz.dto import QuestionDTO
-from apps.quiz.dto.converter import (
-    category_orm_to_dto,
-    complaint_orm_to_dto,
-    list_category_orm_to_dto,
-    list_question_orm_to_dto,
-    question_orm_to_dto,
-)
-from apps.quiz.dto.dto import (
-    CategoryComplaintDTO,
-    ComplaintDTO,
+from apps.quiz.converter import (
+    category_orm_to_entity,
+    complaint_orm_to_entity,
+    list_category_orm_to_entity,
+    list_orm_question_to_entity,
+    question_orm_to_entity,
 )
 from apps.quiz.exceptions import (
     CategoryComplaintDoesNotExists,
@@ -27,15 +22,18 @@ from apps.quiz.exceptions import (
 )
 from apps.quiz.models import (
     CategoryComplaint,
+    CategoryComplaintEntity,
     Complaint,
+    ComplaintEntity,
     Question,
+    QuestionEntity,
 )
 from apps.quiz.services.storage.base import (
     ICategoryComplaintService,
     IComplaintService,
     IQuestionService,
 )
-from apps.users.dto import ProfileDTO
+from apps.users.models import ProfileEntity
 from core.database.db import Database
 
 
@@ -43,7 +41,7 @@ from core.database.db import Database
 class ORMQuestionsService(IQuestionService):
     db: Database
 
-    async def get_random(self, limit: int) -> list[QuestionDTO]:
+    async def get_random(self, limit: int) -> list[QuestionEntity]:
         async with self.db.get_session() as session:
             q = aliased(Question)
             query = (
@@ -61,9 +59,9 @@ class ORMQuestionsService(IQuestionService):
                 question.answers = sorted(
                     question.answers, key=lambda x: python_random.random()
                 )
-            return await list_question_orm_to_dto(questions)
+            return await list_orm_question_to_entity(questions)
 
-    async def get_by_id(self, pk: int) -> QuestionDTO:
+    async def get_by_id(self, pk: int) -> QuestionEntity:
         async with self.db.get_session() as session:
             query = (
                 select(Question)
@@ -75,7 +73,7 @@ class ORMQuestionsService(IQuestionService):
 
             if orm_result is None:
                 raise QuestionDoesNotExists()
-            return await question_orm_to_dto(orm_result[0])
+            return await question_orm_to_entity(orm_result[0])
 
 
 @dataclass
@@ -85,10 +83,10 @@ class ORMComplaintService(IComplaintService):
     async def create(
         self,
         text: str,
-        question: QuestionDTO,
-        profile: ProfileDTO,
-        category: CategoryComplaintDTO,
-    ) -> ComplaintDTO:
+        question: QuestionEntity,
+        profile: ProfileEntity,
+        category: CategoryComplaintEntity,
+    ) -> ComplaintEntity:
         async with self.db.get_session() as session:
             complaint = Complaint(
                 profile_id=profile.id,
@@ -100,28 +98,28 @@ class ORMComplaintService(IComplaintService):
             )
             session.add(complaint)
             await session.commit()
-            return await complaint_orm_to_dto(
+            return await complaint_orm_to_entity(
                 complaint, question, profile, category
             )
 
-    async def get_by_id(self, pk: int) -> ComplaintDTO: ...
+    async def get_by_id(self, pk: int) -> ComplaintEntity: ...
 
-    async def list(self) -> ComplaintDTO: ...
+    async def list(self) -> ComplaintEntity: ...
 
 
 @dataclass
 class ORMCategoryComplaintService(ICategoryComplaintService):
     db: Database
 
-    async def list(self) -> list[CategoryComplaintDTO]:
+    async def list(self) -> list[CategoryComplaintEntity]:
         async with self.db.get_session() as session:
             query = select(CategoryComplaint)
             result = await session.execute(query)
             orm_result = result.scalars().all()
 
-            return await list_category_orm_to_dto(orm_result)
+            return await list_category_orm_to_entity(orm_result)
 
-    async def get_by_id(self, pk: int) -> CategoryComplaintDTO:
+    async def get_by_id(self, pk: int) -> CategoryComplaintEntity:
         async with self.db.get_session() as session:
             query = select(CategoryComplaint)
             result = await session.execute(query)
@@ -129,4 +127,4 @@ class ORMCategoryComplaintService(ICategoryComplaintService):
 
             if orm_result is None:
                 raise CategoryComplaintDoesNotExists()
-            return await category_orm_to_dto(orm_result[0])
+            return await category_orm_to_entity(orm_result[0])

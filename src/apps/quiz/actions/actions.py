@@ -1,9 +1,9 @@
 from dataclasses import dataclass
 
-from apps.quiz.dto import QuestionDTO
-from apps.quiz.dto.dto import (
-    CategoryComplaintDTO,
-    ComplaintDTO,
+from apps.quiz.models import (
+    CategoryComplaintEntity,
+    ComplaintEntity,
+    QuestionEntity,
 )
 from apps.quiz.services.storage.base import (
     ICategoryComplaintService,
@@ -17,10 +17,10 @@ from apps.users.services.storage.base import IProfileService
 class QuestionsActions:
     repository: IQuestionService
 
-    async def get_random(self, limit: int) -> list[QuestionDTO]:
+    async def get_random(self, limit: int) -> list[QuestionEntity]:
         return await self.repository.get_random(limit)
 
-    async def get(self, pk: int) -> QuestionDTO:
+    async def get(self, pk: int) -> QuestionEntity:
         return await self.repository.get_by_id(pk)
 
 
@@ -37,7 +37,7 @@ class ComplaintsActions:
         question_id: int,
         category_id: int,
         profile_id: int,
-    ) -> ComplaintDTO:
+    ) -> ComplaintEntity:
         profile = await self.profile_repository.get_by_id(profile_id)
         question = await self.question_repository.get_by_id(question_id)
         category = await self.category_repository.get_by_id(category_id)
@@ -54,5 +54,5 @@ class ComplaintsActions:
 class CategoryComplaintsActions:
     category_repository: ICategoryComplaintService
 
-    async def list(self) -> list[CategoryComplaintDTO]:
+    async def list(self) -> list[CategoryComplaintEntity]:
         return await self.category_repository.list()

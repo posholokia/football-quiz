@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from apps.game_settings.dto.dto import GameSettingsDTO
+from apps.game_settings.models import GameSettingsEntity
 from apps.game_settings.services.storage.base import IGameSettingsService
 
 
@@ -8,5 +8,5 @@ from apps.game_settings.services.storage.base import IGameSettingsService
 class GameSettingsActions:
     repository: IGameSettingsService
 
-    async def get(self) -> GameSettingsDTO:
+    async def get(self) -> GameSettingsEntity:
         return await self.repository.get()

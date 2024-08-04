@@ -4,51 +4,51 @@ from abc import (
 )
 from dataclasses import dataclass
 
-from apps.users.dto import (
-    ProfileDTO,
-    StatisticDTO,
+from apps.users.models import (
+    BestPlayerTitleEntity,
+    ProfileEntity,
+    StatisticEntity,
+    UserEntity,
 )
-from apps.users.dto.dto import (
+from apps.users.models.dto import (
     LadderStatisticDTO,
-    ProfileTitleDTO,
     TitleStatisticDTO,
 )
-from apps.users.models import UserEntity
 
 
 @dataclass
 class IProfileService(ABC):
     @abstractmethod
-    async def create(self, device: str) -> ProfileDTO: ...
+    async def create(self, device: str) -> ProfileEntity: ...
 
     @abstractmethod
-    async def get_or_create(self, device: str) -> ProfileDTO: ...
+    async def get_or_create(self, device: str) -> ProfileEntity: ...
 
     @abstractmethod
-    async def patch(self, pk, **kwargs) -> ProfileDTO: ...
+    async def patch(self, pk, **kwargs) -> ProfileEntity: ...
 
     @abstractmethod
-    async def get_by_id(self, pk: int) -> ProfileDTO: ...
+    async def get_by_id(self, pk: int) -> ProfileEntity: ...
 
     @abstractmethod
-    async def get_by_device(self, token: str) -> ProfileDTO: ...
+    async def get_by_device(self, token: str) -> ProfileEntity: ...
 
 
 @dataclass
 class IStatisticService(ABC):
     @abstractmethod
-    async def create(self, pk: int, place: int) -> StatisticDTO: ...
+    async def create(self, pk: int, place: int) -> StatisticEntity: ...
 
     @abstractmethod
     async def get_by_profile(self, profile_pk: int) -> TitleStatisticDTO: ...
 
     @abstractmethod
-    async def get_by_place(self, place: int) -> StatisticDTO | None: ...
+    async def get_by_place(self, place: int) -> StatisticEntity | None: ...
 
     @abstractmethod
     async def get_or_create_by_profile(
         self, profile_pk: int
-    ) -> StatisticDTO: ...
+    ) -> StatisticEntity: ...
 
     @abstractmethod
     async def patch(self, pk: int, **fields) -> TitleStatisticDTO: ...
@@ -91,10 +91,12 @@ class IProfileTitleService(ABC):
     async def get_or_create_by_profile(
         self,
         profile_pk: int,
-    ) -> ProfileTitleDTO: ...
+    ) -> BestPlayerTitleEntity: ...
 
     @abstractmethod
-    async def patch(self, profile_pk: int, **fields) -> ProfileTitleDTO: ...
+    async def patch(
+        self, profile_pk: int, **fields
+    ) -> BestPlayerTitleEntity: ...
 
 
 @dataclass

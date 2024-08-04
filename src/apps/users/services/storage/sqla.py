@@ -17,22 +17,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 from sqlalchemy.sql import func
 
-from apps.users.dto import (
-    ProfileDTO,
-    StatisticDTO,
-)
-from apps.users.dto.converter import (
+from apps.users.converter import (
     orm_ladder_to_dto,
-    orm_profile_title_to_dto,
+    orm_profile_title_to_entity,
     orm_profile_to_dto,
-    orm_statistics_to_dto,
+    orm_statistics_to_entity,
     orm_title_statistics_to_dto,
     orm_user_to_entity,
-)
-from apps.users.dto.dto import (
-    LadderStatisticDTO,
-    ProfileTitleDTO,
-    TitleStatisticDTO,
 )
 from apps.users.exceptions.profile import (
     AlreadyExistsProfile,
@@ -41,10 +32,17 @@ from apps.users.exceptions.profile import (
 from apps.users.exceptions.statistics import StatisticDoseNotExists
 from apps.users.models import (
     BestPlayerTitle,
+    BestPlayerTitleEntity,
     Profile,
+    ProfileEntity,
     Statistic,
+    StatisticEntity,
     User,
     UserEntity,
+)
+from apps.users.models.dto import (
+    LadderStatisticDTO,
+    TitleStatisticDTO,
 )
 from apps.users.services.storage import (
     IProfileService,
@@ -67,7 +65,7 @@ T = TypeVar("T", bound=Base)
 class ORMProfileService(IProfileService):
     db: Database
 
-    async def create(self, device: str) -> ProfileDTO:
+    async def create(self, device: str) -> ProfileEntity:
         try:
             async with self.db.get_session() as session:
                 new_profile = Profile(
@@ -81,7 +79,7 @@ class ORMProfileService(IProfileService):
         except IntegrityError:
             raise AlreadyExistsProfile()
 
-    async def get_or_create(self, device: str) -> ProfileDTO:
+    async def get_or_create(self, device: str) -> ProfileEntity:
         async with self.db.get_session() as session:
             query = select(Profile).where(Profile.device_uuid == device)
             result = await session.execute(query)
@@ -98,7 +96,7 @@ class ORMProfileService(IProfileService):
                 new_profile = orm_result[0]
             return await orm_profile_to_dto(new_profile)
 
-    async def patch(self, pk: int, **kwargs) -> ProfileDTO:
+    async def patch(self, pk: int, **kwargs) -> ProfileEntity:
         async with self.db.get_session() as session:
             query = (
                 update(Profile)
@@ -111,7 +109,7 @@ class ORMProfileService(IProfileService):
             orm_result = result.fetchone()
             return await orm_profile_to_dto(orm_result[0])
 
-    async def get_by_id(self, pk: int) -> ProfileDTO:
+    async def get_by_id(self, pk: int) -> ProfileEntity:
         async with self.db.get_session() as session:
             query = select(Profile).where(Profile.id == pk)
             result = await session.execute(query)
@@ -122,7 +120,7 @@ class ORMProfileService(IProfileService):
 
             return await orm_profile_to_dto(orm_result[0])
 
-    async def get_by_device(self, token: str) -> ProfileDTO:
+    async def get_by_device(self, token: str) -> ProfileEntity:
         async with self.db.get_session() as session:
             query = select(Profile).where(Profile.device_uuid == token)
             result = await session.execute(query)
@@ -135,10 +133,10 @@ class ORMStatisticService(IStatisticService, Generic[T]):
     db: Database
     model: Type[T]
 
-    async def create(self, pk: int, place: int) -> StatisticDTO:
+    async def create(self, pk: int, place: int) -> StatisticEntity:
         async with self.db.get_session() as session:
             stat = await self._sub_create(session, pk, place)
-            return await orm_statistics_to_dto(stat)
+            return await orm_statistics_to_entity(stat)
 
     async def get_by_profile(self, profile_pk: int) -> TitleStatisticDTO:
         async with self.db.get_session() as session:
@@ -150,7 +148,7 @@ class ORMStatisticService(IStatisticService, Generic[T]):
                 )
             return await orm_title_statistics_to_dto(stat)
 
-    async def get_by_place(self, place: int) -> StatisticDTO | None:
+    async def get_by_place(self, place: int) -> StatisticEntity | None:
         async with self.db.get_session() as session:
             query = select(self.model).where(self.model.place == place)
             res = await session.execute(query)
@@ -158,9 +156,11 @@ class ORMStatisticService(IStatisticService, Generic[T]):
 
             if orm_result is None:
                 return None
-            return await orm_statistics_to_dto(orm_result[0])
+            return await orm_statistics_to_entity(orm_result[0])
 
-    async def get_or_create_by_profile(self, profile_pk: int) -> StatisticDTO:
+    async def get_or_create_by_profile(
+        self, profile_pk: int
+    ) -> StatisticEntity:
         async with self.db.get_session() as session:
             # пытаемся получить статистику
             statistic = await self._sub_get_by_profile(session, profile_pk)
@@ -173,7 +173,7 @@ class ORMStatisticService(IStatisticService, Generic[T]):
                     session, profile_pk, place + 1
                 )
 
-            return await orm_statistics_to_dto(statistic)
+            return await orm_statistics_to_entity(statistic)
 
     async def replace_profiles(self, new_place, old_place) -> None:
         """
@@ -228,7 +228,7 @@ class ORMStatisticService(IStatisticService, Generic[T]):
             )
             await session.execute(query)
 
-    async def patch(self, pk: int, **fields) -> StatisticDTO:
+    async def patch(self, pk: int, **fields) -> StatisticEntity:
         async with self.db.get_session() as session:
             query = (
                 update(self.model)
@@ -239,7 +239,7 @@ class ORMStatisticService(IStatisticService, Generic[T]):
             result = await session.execute(query)
             await session.commit()
             orm_result = result.fetchone()
-            return await orm_statistics_to_dto(orm_result[0])
+            return await orm_statistics_to_entity(orm_result[0])
 
     async def get_user_rank(
         self,
@@ -269,24 +269,6 @@ class ORMStatisticService(IStatisticService, Generic[T]):
             if rank is None:
                 raise StatisticDoseNotExists()
             return rank[0]
-
-    # async def get_top_gamers(
-    #     self,
-    #     offset: int | None,
-    #     limit: int | None,
-    # ) -> list[LadderStatisticDTO]:
-    #     """Получение топа игроков"""
-    #     async with self.session.begin():
-    #         query = (
-    #             select(self.model)
-    #             .order_by(self.model.place)
-    #             .offset(offset)
-    #             .limit(limit)
-    #             .options(selectinload(self.model.profile))
-    #         )
-    #         result = await self.session.execute(query)
-    #         ladder = result.scalars().all()
-    #         return [await orm_ladder_to_dto(obj) for obj in ladder]
 
     async def get_top_gamers(
         self,
@@ -424,7 +406,7 @@ class ORMProfileTitleService(IProfileTitleService):
     async def get_or_create_by_profile(
         self,
         profile_pk: int,
-    ) -> ProfileTitleDTO:
+    ) -> BestPlayerTitleEntity:
         """Вызывается внутри другой сессии, не напрямую"""
         async with self.db.get_session() as session:
             query = select(BestPlayerTitle).where(
@@ -440,10 +422,10 @@ class ORMProfileTitleService(IProfileTitleService):
                     profile_id=profile_pk,
                 )
                 session.add(title)
-                return await orm_profile_title_to_dto(title)
-            return await orm_profile_title_to_dto(title[0])
+                return await orm_profile_title_to_entity(title)
+            return await orm_profile_title_to_entity(title[0])
 
-    async def patch(self, profile_pk: int, **fields) -> ProfileTitleDTO:
+    async def patch(self, profile_pk: int, **fields) -> BestPlayerTitleEntity:
         """Вызывается внутри другой сессии, не напрямую"""
         async with self.db.get_session() as session:
             query = (
@@ -454,7 +436,7 @@ class ORMProfileTitleService(IProfileTitleService):
             )
             result = await session.execute(query)
             orm_result = result.fetchone()
-            return await orm_profile_title_to_dto(orm_result[0])
+            return await orm_profile_title_to_entity(orm_result[0])
 
 
 @dataclass

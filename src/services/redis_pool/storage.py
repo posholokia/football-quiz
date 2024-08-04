@@ -34,7 +34,7 @@ class RedisStorage:
             )
 
     async def get_value(self, key: str) -> str | None:
-        redis = await self.connect()
+        redis = await self.connection.connect()
         value: bytes = await redis.get(key)
 
         if value is None:

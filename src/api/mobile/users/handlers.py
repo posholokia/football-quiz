@@ -24,7 +24,6 @@ from apps.users.actions import (
     ProfileActions,
     StatisticsActions,
 )
-from apps.users.dto import ProfileDTO
 from apps.users.models import Statistic
 from apps.users.permissions.profile import ProfilePermissions
 from config.containers import get_container
@@ -64,7 +63,7 @@ async def create_profile(
     await device.validate(cred)
 
     action: ProfileActions = container.resolve(ProfileActions)
-    profile: ProfileDTO = await action.create(cred.token)
+    profile = await action.create(cred.token)
     return Mapper.dataclass_to_schema(ProfileSchema, profile)
 
 
@@ -79,7 +78,7 @@ async def get_profile(
     await permissions.has_permission(pk, cred.token)
 
     actions: ProfileActions = container.resolve(ProfileActions)
-    profile: ProfileDTO = await actions.get_by_id(pk)
+    profile = await actions.get_by_id(pk)
     return Mapper.dataclass_to_schema(ProfileSchema, profile)
 
 
@@ -95,7 +94,7 @@ async def change_profile(
     await permissions.has_permission(pk, cred.token)
 
     actions: ProfileActions = container.resolve(ProfileActions)
-    profile: ProfileDTO = await actions.patch_profile(pk, profile.name)
+    profile = await actions.patch_profile(pk, profile.name)
     return Mapper.dataclass_to_schema(ProfileSchema, profile)
 
 
