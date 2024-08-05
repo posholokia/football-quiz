@@ -5,10 +5,10 @@ from loguru import logger
 from punq import Container
 
 from apps.users.actions import StatisticsActions
-from apps.users.dto import PeriodStatistic
 from apps.users.models import (
     DayStatistic,
     MonthStatistic,
+    PeriodStatistic,
 )
 from config.containers import get_container
 from services.firebase.firebase import change_api_key
