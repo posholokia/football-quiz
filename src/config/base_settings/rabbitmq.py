@@ -18,6 +18,6 @@ class RabbitMQConf(BaseSettings):
     @property
     def result_backend(self):
         return (
-            f"amqp://{self.rabbit_user}:{self.rabbit_pass}"
+            f"rpc://{self.rabbit_user}:{self.rabbit_pass}"
             f"@{self.rabbit_host}:{self.rabbit_port}/{self.rabbit_vhost}"
         )
