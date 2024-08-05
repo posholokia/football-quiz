@@ -11,3 +11,6 @@ from apps.game_settings.models import GameSettingsEntity
 class IGameSettingsService(ABC):
     @abstractmethod
     async def get(self) -> GameSettingsEntity: ...
+
+    @abstractmethod
+    async def patch(self, **fields) -> GameSettingsEntity: ...

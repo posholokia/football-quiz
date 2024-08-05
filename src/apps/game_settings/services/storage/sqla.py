@@ -1,6 +1,9 @@
 from dataclasses import dataclass
 
-from sqlalchemy import select
+from sqlalchemy import (
+    select,
+    update,
+)
 
 from apps.game_settings.converter import orm_game_settings_to_entity
 from apps.game_settings.models import (
@@ -21,3 +24,16 @@ class ORMGameSettingsService(IGameSettingsService):
             result = await session.execute(query)
             orm_result = result.scalars().first()
             return await orm_game_settings_to_entity(orm_result)
+
+    async def patch(self, **fields) -> GameSettingsEntity:
+        """
+        В БД может быть только одна запись с настройками,
+        поэтому запрос без указания какой объект обновить.
+        """
+        async with self.db.get_session() as session:
+            query = (
+                update(GameSettings).values(**fields).returning(GameSettings)
+            )
+            result = await session.execute(query)
+            orm_result = result.fetchone()
+            return await orm_game_settings_to_entity(orm_result[0])

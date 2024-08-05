@@ -9,7 +9,10 @@ from punq import (
     Scope,
 )
 
-from apps.game_settings.actions.actions import GameSettingsActions
+from apps.game_settings.actions import (
+    AdminGameSettingsActions,
+    GameSettingsActions,
+)
 from apps.game_settings.services.storage.base import IGameSettingsService
 from apps.game_settings.services.storage.sqla import ORMGameSettingsService
 from apps.quiz.actions.actions import (
@@ -146,6 +149,7 @@ class DiContainer:
         self.container.register(CategoryComplaintsActions)
         self.container.register(GameSettingsActions)
         self.container.register(AdminAuthAction)
+        self.container.register(AdminGameSettingsActions)
 
     def __build_statistic_actions(self) -> CompositeStatisticAction:
         return CompositeStatisticAction(

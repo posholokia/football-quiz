@@ -8,6 +8,10 @@ from datetime import timedelta
 from enum import Enum
 
 import jwt
+from jwt.exceptions import (
+    DecodeError,
+    ExpiredSignatureError,
+)
 
 from config import settings
 from services.jwt_token.exceptions import (
@@ -71,14 +75,18 @@ class Token:
         )
 
     def decode(self, token) -> dict:
-        payload = jwt.decode(
-            jwt=token,
-            key=self.secret_key,
-            algorithms=[
-                self.algorithm,
-            ],
-            verify=True,
-        )
+        try:
+            payload = jwt.decode(
+                jwt=token,
+                key=self.secret_key,
+                algorithms=[
+                    self.algorithm,
+                ],
+                verify=True,
+            )
+        except (ExpiredSignatureError, DecodeError) as e:
+            raise DecodeJWTError(f"Ошибка при декодировании токена: {e}")
+
         if payload.get("typ") is None:
             raise DecodeJWTError("Декодирован токен без указания его типа")
 

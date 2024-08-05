@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from apps.users.exceptions.auth import InvalidAuthCredentials
+from apps.users.exceptions.auth import UserIsNotAdminError
 from apps.users.models import UserEntity
 from apps.users.services.storage.base import IUserService
 from core.constructor.permissions import BasePermission
@@ -12,4 +12,4 @@ class IsAdminUser(BasePermission):
 
     async def has_permission(self, user: UserEntity) -> None:
         if not user.is_superuser:
-            raise InvalidAuthCredentials()
+            raise UserIsNotAdminError()

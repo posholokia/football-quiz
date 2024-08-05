@@ -10,5 +10,9 @@ class AccessTokenSchema(BaseModel):
     access: str
 
 
-class TokenObtainPairSchema(AccessTokenSchema):
+class RefreshTokenSchema(BaseModel):
     refresh: str
+
+
+class TokenObtainPairSchemaSchema(AccessTokenSchema, RefreshTokenSchema):
+    pass

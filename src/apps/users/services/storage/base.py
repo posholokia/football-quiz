@@ -103,3 +103,6 @@ class IProfileTitleService(ABC):
 class IUserService(ABC):
     @abstractmethod
     async def get_by_username(self, username: str) -> UserEntity: ...
+
+    @abstractmethod
+    async def get_by_id(self, pk: int) -> UserEntity: ...
