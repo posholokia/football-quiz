@@ -5,7 +5,7 @@ from apps.game_settings.services.storage.base import IGameSettingsService
 
 
 @dataclass
-class AdminGameSettingsActions:
+class GameSettingsActions:
     repository: IGameSettingsService
 
     async def get(self) -> GameSettingsEntity:
