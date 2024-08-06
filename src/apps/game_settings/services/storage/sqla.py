@@ -19,7 +19,7 @@ class ORMGameSettingsService(IGameSettingsService):
     db: Database
 
     async def get(self) -> GameSettingsEntity:
-        async with self.db.get_session() as session:
+        async with self.db.get_ro_session() as session:
             query = select(GameSettings).limit(1)
             result = await session.execute(query)
             orm_result = result.scalars().first()

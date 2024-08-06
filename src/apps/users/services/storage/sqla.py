@@ -114,7 +114,7 @@ class ORMProfileService(IProfileService):
             return await orm_profile_to_dto(orm_result[0])
 
     async def get_by_id(self, pk: int) -> ProfileEntity:
-        async with self.db.get_session() as session:
+        async with self.db.get_ro_session() as session:
             query = select(Profile).where(Profile.id == pk)
             result = await session.execute(query)
             orm_result = result.fetchone()
@@ -125,7 +125,7 @@ class ORMProfileService(IProfileService):
             return await orm_profile_to_dto(orm_result[0])
 
     async def get_by_device(self, token: str) -> ProfileEntity:
-        async with self.db.get_session() as session:
+        async with self.db.get_ro_session() as session:
             query = select(Profile).where(Profile.device_uuid == token)
             result = await session.execute(query)
             orm_result = result.fetchone()
@@ -143,7 +143,7 @@ class ORMStatisticService(IStatisticService, Generic[T]):
             return await orm_statistics_to_entity(stat)
 
     async def get_by_profile(self, profile_pk: int) -> TitleStatisticDTO:
-        async with self.db.get_session() as session:
+        async with self.db.get_ro_session() as session:
             stat = await self._sub_get_by_profile(session, profile_pk)
 
             if stat is None:
@@ -153,7 +153,7 @@ class ORMStatisticService(IStatisticService, Generic[T]):
             return await orm_title_statistics_to_dto(stat)
 
     async def get_by_place(self, place: int) -> StatisticEntity | None:
-        async with self.db.get_session() as session:
+        async with self.db.get_ro_session() as session:
             query = select(self.model).where(self.model.place == place)
             res = await session.execute(query)
             orm_result = res.fetchone()
@@ -250,7 +250,7 @@ class ORMStatisticService(IStatisticService, Generic[T]):
         profile_pk: int,
     ) -> int:
         """Положение юзера в ладдере на основе его статистики"""
-        async with self.db.get_session() as session:
+        async with self.db.get_ro_session() as session:
             subquery = select(
                 self.model,
                 func.row_number()
@@ -280,7 +280,7 @@ class ORMStatisticService(IStatisticService, Generic[T]):
         limit: int | None,
     ) -> list[LadderStatisticDTO]:
         """Получение топа игроков"""
-        async with self.db.get_session() as session:
+        async with self.db.get_ro_session() as session:
             query = (
                 select(self.model)
                 .order_by(self.model.place)
@@ -298,12 +298,12 @@ class ORMStatisticService(IStatisticService, Generic[T]):
 
     async def get_count(self) -> int:
         """Общее количество игроков со статистикой"""
-        async with self.db.get_session() as session:
+        async with self.db.get_ro_session() as session:
             return await self._sub_get_count(session)
 
     async def get_count_positive_score(self) -> int:
         """Количество игроков с не отрицательными очками"""
-        async with self.db.get_session() as session:
+        async with self.db.get_ro_session() as session:
             query = (
                 select(func.count())
                 .select_from(self.model)
@@ -448,7 +448,7 @@ class ORMUserService(IUserService):
     db: Database
 
     async def get_by_username(self, username: str) -> UserEntity | None:
-        async with self.db.get_session() as session:
+        async with self.db.get_ro_session() as session:
             query = select(User).where(User.username == username)
             res = await session.execute(query)
             user_orm = res.fetchone()
@@ -457,7 +457,7 @@ class ORMUserService(IUserService):
             return await orm_user_to_entity(user_orm[0])
 
     async def get_by_id(self, pk: int) -> UserEntity:
-        async with self.db.get_session() as session:
+        async with self.db.get_ro_session() as session:
             query = select(User).where(
                 and_(User.id == pk, User.is_active == true())
             )

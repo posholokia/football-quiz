@@ -24,11 +24,25 @@ class Database:
     def __init__(self):
         db_engine = create_async_engine(
             settings.database_url,
-            pool_size=25,
-            echo=True,
+            pool_size=20,
+            max_overflow=10,
+            pool_pre_ping=False,
+            isolation_level="READ COMMITTED",
         )
         self._session = async_sessionmaker(
             bind=db_engine,
+            expire_on_commit=False,
+            class_=AsyncSession,
+        )
+        read_only_db_engine = create_async_engine(
+            settings.database_url,
+            pool_size=20,
+            max_overflow=10,
+            pool_pre_ping=False,
+            isolation_level="AUTOCOMMIT",
+        )
+        self._read_only_session = async_sessionmaker(
+            bind=read_only_db_engine,
             expire_on_commit=False,
             class_=AsyncSession,
         )
@@ -46,3 +60,13 @@ class Database:
             await session.commit()
             await session.close()
             logger.debug("Соединение с БД закрылось")
+
+    @asynccontextmanager
+    async def get_ro_session(self) -> AsyncGenerator[AsyncSession, Any]:
+        session: AsyncSession = self._read_only_session()
+        try:
+            yield session
+        except SQLAlchemyError:
+            raise
+        finally:
+            await session.close()

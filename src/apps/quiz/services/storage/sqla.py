@@ -4,6 +4,7 @@ from datetime import datetime
 
 from sqlalchemy import (
     select,
+    tablesample,
     true,
 )
 from sqlalchemy.orm import (
@@ -48,8 +49,8 @@ class ORMQuestionsService(IQuestionService):
     db: Database
 
     async def get_random(self, limit: int) -> list[QuestionEntity]:
-        async with self.db.get_session() as session:
-            q = aliased(Question)
+        async with self.db.get_ro_session() as session:
+            q = aliased(Question, tablesample(Question, func.bernoulli(0.2)))
             query = (
                 select(
                     q,
@@ -68,7 +69,7 @@ class ORMQuestionsService(IQuestionService):
             return await list_orm_question_to_entity(questions)
 
     async def get_by_id(self, pk: int) -> QuestionEntity:
-        async with self.db.get_session() as session:
+        async with self.db.get_ro_session() as session:
             query = (
                 select(Question)
                 .where(Question.id == pk)
@@ -82,7 +83,7 @@ class ORMQuestionsService(IQuestionService):
             return await question_orm_to_entity(orm_result[0])
 
     async def get_list(self, offset: int, limit: int) -> list[QuestionEntity]:
-        async with self.db.get_session() as session:
+        async with self.db.get_ro_session() as session:
             query = (
                 select(Question)
                 .offset(offset)
@@ -94,7 +95,7 @@ class ORMQuestionsService(IQuestionService):
             return [await question_orm_to_entity(q) for q in questions]
 
     async def get_count(self) -> int:
-        async with self.db.get_session() as session:
+        async with self.db.get_ro_session() as session:
             query = select(func.count(Question.id))
             result = await session.execute(query)
             return result.scalar_one()
@@ -136,7 +137,7 @@ class ORMCategoryComplaintService(ICategoryComplaintService):
     db: Database
 
     async def list(self) -> list[CategoryComplaintEntity]:
-        async with self.db.get_session() as session:
+        async with self.db.get_ro_session() as session:
             query = select(CategoryComplaint)
             result = await session.execute(query)
             orm_result = result.scalars().all()
@@ -144,7 +145,7 @@ class ORMCategoryComplaintService(ICategoryComplaintService):
             return await list_category_orm_to_entity(orm_result)
 
     async def get_by_id(self, pk: int) -> CategoryComplaintEntity:
-        async with self.db.get_session() as session:
+        async with self.db.get_ro_session() as session:
             query = select(CategoryComplaint)
             result = await session.execute(query)
             orm_result = result.fetchone()
