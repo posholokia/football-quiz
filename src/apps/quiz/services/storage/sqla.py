@@ -2,12 +2,18 @@ import random as python_random
 from dataclasses import dataclass
 from datetime import datetime
 
-from sqlalchemy import select
+from sqlalchemy import (
+    select,
+    true,
+)
 from sqlalchemy.orm import (
     aliased,
     selectinload,
 )
-from sqlalchemy.sql.functions import random
+from sqlalchemy.sql.functions import (
+    func,
+    random,
+)
 
 from apps.quiz.converter import (
     category_orm_to_entity,
@@ -48,7 +54,7 @@ class ORMQuestionsService(IQuestionService):
                 select(
                     q,
                 )
-                .filter(q.published == True)
+                .filter(q.published == true())
                 .order_by(random())
                 .limit(limit)
                 .options(selectinload(q.answers))
@@ -74,6 +80,24 @@ class ORMQuestionsService(IQuestionService):
             if orm_result is None:
                 raise QuestionDoesNotExists()
             return await question_orm_to_entity(orm_result[0])
+
+    async def get_list(self, offset: int, limit: int) -> list[QuestionEntity]:
+        async with self.db.get_session() as session:
+            query = (
+                select(Question)
+                .offset(offset)
+                .limit(limit)
+                .options(selectinload(Question.answers))
+            )
+            result = await session.execute(query)
+            questions = result.scalars().all()
+            return [await question_orm_to_entity(q) for q in questions]
+
+    async def get_count(self) -> int:
+        async with self.db.get_session() as session:
+            query = select(func.count(Question.id))
+            result = await session.execute(query)
+            return result.scalar_one()
 
 
 @dataclass

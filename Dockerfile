@@ -32,4 +32,4 @@ RUN chown -R app:app /app
 USER app
 
 ENTRYPOINT [ "python3" ]
-CMD [ "-m", "gunicorn", "-b", "0.0.0.0:8000", "--workers", "2", "--access-logfile", "-",  "main:create_app", "--reload", "-k", "uvicorn.workers.UvicornWorker" ]
+CMD [ "-m", "gunicorn", "-b", "0.0.0.0:8000", "--workers", "2", "--access-logfile", "-", "main:create_app", "--reload", "-k", "uvicorn.workers.UvicornWorker" ]

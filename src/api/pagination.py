@@ -1,3 +1,4 @@
+import math
 from abc import (
     ABC,
     abstractmethod,
@@ -11,18 +12,22 @@ from typing import (
 )
 
 from api.schema import (
+    PagePaginationIn,
+    PagePaginationOut,
+    PagePaginationResponseSchema,
+    PaginationIn,
     PaginationOut,
     PaginationResponseSchema,
 )
+from loguru import logger
 
 from services.mapper import (
     Mapper,
-    S,
+    TSchema,
 )
 
 
-R = TypeVar("R")
-P = TypeVar("P")
+TAction = TypeVar("TAction")
 
 
 @dataclass
@@ -33,9 +38,9 @@ class BasePaginator(ABC):
 
 @dataclass
 class LimitOffsetPaginator(BasePaginator):
-    pagination: P
-    repository: R
-    schema: Type[S]
+    pagination: PaginationIn
+    action: TAction
+    schema: Type[TSchema]
 
     async def paginate(
         self, func: Callable[[int, int], Coroutine]
@@ -45,7 +50,7 @@ class LimitOffsetPaginator(BasePaginator):
         ) -> PaginationResponseSchema:
             res = await func(offset, limit)
 
-            total = await self.repository.get_count()
+            total = await self.action.get_count_statistic()
             obj_list = [
                 Mapper.dataclass_to_schema(self.schema, obj) for obj in res
             ]
@@ -53,6 +58,44 @@ class LimitOffsetPaginator(BasePaginator):
                 items=obj_list,
                 paginator=PaginationOut(
                     offset=self.pagination.offset,
+                    limit=self.pagination.limit,
+                    total=total,
+                ),
+            )
+
+        return wrapper
+
+
+@dataclass
+class PagePaginator(BasePaginator):
+    pagination: PagePaginationIn
+    action: TAction
+    schema: Type[TSchema]
+
+    async def paginate(
+        self, func: Callable[[int, int], Coroutine]
+    ) -> Callable[[int, int], Coroutine]:
+        async def wrapper(
+            page: int | None, limit: int
+        ) -> PagePaginationResponseSchema:
+            res = await func(page, limit)
+
+            count = await self.action.get_count()
+            total = math.ceil(count / limit)
+            logger.info(
+                "Всего записей: {}, лимит на страницу: {}, всего страниц: {}",
+                count,
+                limit,
+                total,
+            )
+
+            obj_list = [
+                Mapper.dataclass_to_schema(self.schema, obj) for obj in res
+            ]
+            return PagePaginationResponseSchema(
+                items=obj_list,
+                paginator=PagePaginationOut(
+                    page=self.pagination.page,
                     limit=self.pagination.limit,
                     total=total,
                 ),

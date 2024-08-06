@@ -23,6 +23,13 @@ class QuestionsActions:
     async def get(self, pk: int) -> QuestionEntity:
         return await self.repository.get_by_id(pk)
 
+    async def get_list(self, page: int, limit: int) -> list[QuestionEntity]:
+        offset = (page - 1) * limit
+        return await self.repository.get_list(offset, limit)
+
+    async def get_count(self) -> int:
+        return await self.repository.get_count()
+
 
 @dataclass
 class ComplaintsActions:

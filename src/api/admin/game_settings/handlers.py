@@ -12,7 +12,7 @@ from fastapi import (
 from fastapi.security import HTTPBearer
 from starlette import status
 
-from apps.game_settings.actions.admin import AdminGameSettingsActions
+from apps.game_settings.actions import GameSettingsActions
 from apps.users.models import UserEntity
 from apps.users.permissions.admin import IsAdminUser
 from config.containers import get_container
@@ -35,9 +35,7 @@ async def get_game_settings(
     permission: IsAdminUser = container.resolve(IsAdminUser)
     await permission.has_permission(user)
 
-    action: AdminGameSettingsActions = container.resolve(
-        AdminGameSettingsActions
-    )
+    action: GameSettingsActions = container.resolve(GameSettingsActions)
     settings = await action.get()
     return Mapper.dataclass_to_schema(GameSettingsAdminSchema, settings)
 
@@ -55,9 +53,7 @@ async def patch_game_settings(
     permission: IsAdminUser = container.resolve(IsAdminUser)
     await permission.has_permission(user)
 
-    action: AdminGameSettingsActions = container.resolve(
-        AdminGameSettingsActions
-    )
+    action: GameSettingsActions = container.resolve(GameSettingsActions)
     settings = await action.patch(
         **{
             field: getattr(settings, field)

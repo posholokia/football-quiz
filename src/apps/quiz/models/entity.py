@@ -19,7 +19,7 @@ class QuestionEntity:
 class AnswerEntity:
     id: int
     text: str
-    right: str
+    right: bool
 
 
 @dataclass

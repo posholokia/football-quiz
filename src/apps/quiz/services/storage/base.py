@@ -20,6 +20,14 @@ class IQuestionService(ABC):
     @abstractmethod
     async def get_by_id(self, pk: int) -> QuestionEntity: ...
 
+    @abstractmethod
+    async def get_list(
+        self, offset: int, limit: int
+    ) -> list[QuestionEntity]: ...
+
+    @abstractmethod
+    async def get_count(self) -> int: ...
+
 
 @dataclass
 class IComplaintService(ABC):

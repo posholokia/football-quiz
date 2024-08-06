@@ -176,6 +176,7 @@ async def get_ladder_profile(
         service_key=LimitOffsetPaginator,
         pagination=pagination_in,
         schema=LadderStatisticRetrieveSchema,
+        action=action,
     )
 
     res = await paginator.paginate(action.get_top_ladder)
@@ -213,6 +214,7 @@ async def get_ladder(
         service_key=LimitOffsetPaginator,
         pagination=pagination_in,
         schema=LadderStatisticRetrieveSchema,
+        action=action,
     )
     res = await paginator.paginate(action.get_top_ladder)
 

@@ -6,8 +6,10 @@ from typing import (
     Union,
 )
 
+from pydantic import BaseModel
 
-S = TypeVar("S")
+
+TSchema = TypeVar("TSchema", bound=BaseModel)
 
 
 class Mapper:
@@ -27,7 +29,7 @@ class Mapper:
         return field_type
 
     @classmethod
-    def dataclass_to_schema(cls, schema: Type[S], obj: Any) -> S:
+    def dataclass_to_schema(cls, schema: Type[TSchema], obj: Any) -> TSchema:
         """
         Функция конвертирует объекты dataclass в pydantic схему.
         Правила:

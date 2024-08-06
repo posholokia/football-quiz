@@ -1,18 +1,15 @@
 from functools import lru_cache
 
-from api.pagination import (
+from api.pagination import (  # R,
     LimitOffsetPaginator,
-    R,
+    PagePaginator,
 )
 from punq import (
     Container,
     Scope,
 )
 
-from apps.game_settings.actions import (
-    AdminGameSettingsActions,
-    GameSettingsActions,
-)
+from apps.game_settings.actions import GameSettingsActions
 from apps.game_settings.services.storage.base import IGameSettingsService
 from apps.game_settings.services.storage.sqla import ORMGameSettingsService
 from apps.quiz.actions.actions import (
@@ -98,9 +95,6 @@ class DiContainer:
         self.container.register(
             IStatisticService, ORMStatisticService, model=MonthStatistic
         )
-        self.container.register(R, ORMStatisticService, model=Statistic)
-        self.container.register(R, ORMStatisticService, model=DayStatistic)
-        self.container.register(R, ORMStatisticService, model=MonthStatistic)
         self.container.register(IUserService, ORMUserService)
 
         # game_settings app
@@ -137,6 +131,7 @@ class DiContainer:
 
     def __init_pagination_containers(self):
         self.container.register(LimitOffsetPaginator)
+        self.container.register(PagePaginator)
 
     def __init_action_containers(self):
         self.container.register(ProfileActions)
@@ -149,7 +144,6 @@ class DiContainer:
         self.container.register(CategoryComplaintsActions)
         self.container.register(GameSettingsActions)
         self.container.register(AdminAuthAction)
-        self.container.register(AdminGameSettingsActions)
 
     def __build_statistic_actions(self) -> CompositeStatisticAction:
         return CompositeStatisticAction(

@@ -1,8 +1,4 @@
-from .admin import AdminGameSettingsActions
-from .mobile import GameSettingsActions
+from .actions import GameSettingsActions
 
 
-__all__ = (
-    "GameSettingsActions",
-    "AdminGameSettingsActions",
-)
+__all__ = ("GameSettingsActions",)

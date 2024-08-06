@@ -24,3 +24,17 @@ class PaginationOut(PaginationIn):
 class PaginationResponseSchema(BaseModel, Generic[T]):
     items: list[T]
     paginator: PaginationOut
+
+
+class PagePaginationIn(BaseModel):
+    page: int = Field(default=1, ge=1)
+    limit: int = Field(default=100, ge=1, le=300)
+
+
+class PagePaginationOut(PagePaginationIn):
+    total: int
+
+
+class PagePaginationResponseSchema(BaseModel, Generic[T]):
+    items: list[T]
+    paginator: PagePaginationOut
