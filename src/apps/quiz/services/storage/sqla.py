@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from datetime import datetime
 
 from sqlalchemy import (
+    delete,
     select,
     tablesample,
     true,
@@ -113,7 +114,7 @@ class ORMQuestionsService(IQuestionService):
                 query = query.filter(Question.text.ilike(f"%{search}%"))
 
             result = await session.execute(query)
-            questions = result.all()
+            questions = result.fetchall()
             return [await question_orm_to_admin_dto(q) for q in questions]
 
     async def get_count(self, search: str | None = None) -> int:
@@ -125,6 +126,11 @@ class ORMQuestionsService(IQuestionService):
 
             result = await session.execute(query)
             return result.scalar_one()
+
+    async def delete(self, pk: int) -> None:
+        async with self.db.get_session() as session:
+            query = delete(Question).where(Question.id == pk)
+            await session.execute(query)
 
 
 @dataclass

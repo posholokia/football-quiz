@@ -32,6 +32,9 @@ class IQuestionService(ABC):
     @abstractmethod
     async def get_count(self, search: str | None = None) -> int: ...
 
+    @abstractmethod
+    async def delete(self, pk: int) -> None: ...
+
 
 @dataclass
 class IComplaintService(ABC):

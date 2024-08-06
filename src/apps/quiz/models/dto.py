@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from apps.quiz.models import QuestionEntity
+from .entity import QuestionEntity
 
 
 @dataclass

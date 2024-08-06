@@ -30,10 +30,16 @@ class Question(Base):
     text: Mapped[str] = mapped_column(Text)
     published: Mapped[bool] = mapped_column(Boolean)
     answers: Mapped[List["Answer"]] = relationship(
-        "Answer", back_populates="question"
+        "Answer",
+        back_populates="question",
+        cascade="all, delete",
+        passive_deletes=True,
     )
     complaints: Mapped[List["Complaint"]] = relationship(
-        "Complaint", back_populates="question"
+        "Complaint",
+        back_populates="question",
+        cascade="all, delete",
+        passive_deletes=True,
     )
 
 
@@ -50,9 +56,15 @@ class Answer(Base):
     text: Mapped[str] = mapped_column(Text)
     right: Mapped[bool] = mapped_column(Boolean)
     question_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("questions.id"), nullable=False
+        Integer,
+        ForeignKey("questions.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
-    question = relationship("Question", back_populates="answers")
+    question = relationship(
+        "Question",
+        back_populates="answers",
+    )
 
 
 class Complaint(Base):
@@ -70,9 +82,15 @@ class Complaint(Base):
     )
     profile = relationship("Profile", back_populates="complaints")
     question_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("questions.id"), nullable=False
+        Integer,
+        ForeignKey("questions.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
-    question = relationship("Question", back_populates="complaints")
+    question = relationship(
+        "Question",
+        back_populates="complaints",
+    )
     text: Mapped[str] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(DateTime)
     solved: Mapped[bool] = mapped_column(Boolean)

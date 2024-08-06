@@ -31,6 +31,9 @@ class QuestionsActions:
     async def get_count(self, search: str | None = None) -> int:
         return await self.repository.get_count(search)
 
+    async def delete_question(self, pk: int) -> None:
+        await self.repository.delete(pk)
+
     async def patch_with_answers(
         self, pk: int, **fields
     ) -> QuestionEntity: ...

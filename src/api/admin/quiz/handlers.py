@@ -51,3 +51,21 @@ async def get_list_question(
     res = await paginator.paginate(action.get_list)
 
     return await res(pagination_in.page, pagination_in.limit, search)
+
+
+@router.delete(
+    "/admin/question/{question_id}/",
+    status_code=status.HTTP_204_NO_CONTENT,
+    description="Удаление вопроса",
+)
+async def delete_question(
+    question_id: int,
+    user: UserEntity = Depends(get_user_from_token),
+    container: Container = Depends(get_container),
+) -> None:
+    permission: IsAdminUser = container.resolve(IsAdminUser)
+    await permission.has_permission(user)
+
+    action: QuestionsActions = container.resolve(QuestionsActions)
+    await action.delete_question(question_id)
+    return None
