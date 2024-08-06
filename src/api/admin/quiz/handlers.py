@@ -30,9 +30,10 @@ http_bearer = HTTPBearer()
     description="Получить список вопросов\n\nПагинация:\n\n"
     ":: page - номер запрошенной страницы\n\n"
     ":: limit - кол-во записей на странице\n\n"
-    ":: total - всего страницы для заданного limit",
+    ":: pages - всего страницы для заданного limit",
 )
 async def get_list_question(
+    search: str | None = None,
     pagination_in: PagePaginationIn = Depends(),
     user: UserEntity = Depends(get_user_from_token),
     container: Container = Depends(get_container),
@@ -49,4 +50,4 @@ async def get_list_question(
     )
     res = await paginator.paginate(action.get_list)
 
-    return await res(pagination_in.page, pagination_in.limit)
+    return await res(pagination_in.page, pagination_in.limit, search)

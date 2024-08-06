@@ -22,11 +22,14 @@ class IQuestionService(ABC):
 
     @abstractmethod
     async def get_list(
-        self, offset: int, limit: int
+        self,
+        offset: int,
+        limit: int,
+        search: str | None = None,
     ) -> list[QuestionEntity]: ...
 
     @abstractmethod
-    async def get_count(self) -> int: ...
+    async def get_count(self, search: str | None = None) -> int: ...
 
 
 @dataclass

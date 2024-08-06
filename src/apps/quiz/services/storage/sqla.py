@@ -82,7 +82,12 @@ class ORMQuestionsService(IQuestionService):
                 raise QuestionDoesNotExists()
             return await question_orm_to_entity(orm_result[0])
 
-    async def get_list(self, offset: int, limit: int) -> list[QuestionEntity]:
+    async def get_list(
+        self,
+        offset: int,
+        limit: int,
+        search: str | None = None,
+    ) -> list[QuestionEntity]:
         async with self.db.get_ro_session() as session:
             query = (
                 select(Question)
@@ -90,13 +95,21 @@ class ORMQuestionsService(IQuestionService):
                 .limit(limit)
                 .options(selectinload(Question.answers))
             )
+
+            if search is not None:
+                query = query.filter(Question.text.ilike(f"%{search}%"))
+
             result = await session.execute(query)
             questions = result.scalars().all()
             return [await question_orm_to_entity(q) for q in questions]
 
-    async def get_count(self) -> int:
+    async def get_count(self, search: str | None = None) -> int:
         async with self.db.get_ro_session() as session:
-            query = select(func.count(Question.id))
+            query = select(func.count(Question.text))
+
+            if search is not None:
+                query = query.filter(Question.text.ilike(f"%{search}%"))
+
             result = await session.execute(query)
             return result.scalar_one()
 

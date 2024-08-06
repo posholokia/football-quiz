@@ -1,8 +1,8 @@
+from datetime import datetime
 from typing import List
 
 from sqlalchemy import (
     Boolean,
-    Column,
     DateTime,
     ForeignKey,
     Integer,
@@ -10,6 +10,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import (
     Mapped,
+    mapped_column,
     relationship,
 )
 
@@ -19,15 +20,15 @@ from core.database.db import Base
 class Question(Base):
     __tablename__ = "questions"
 
-    id = Column(
+    id: Mapped[int] = mapped_column(
         Integer,
         primary_key=True,
         unique=True,
         index=True,
         autoincrement=True,
     )
-    text = Column(Text)
-    published = Column(Boolean)
+    text: Mapped[str] = mapped_column(Text)
+    published: Mapped[bool] = mapped_column(Boolean)
     answers: Mapped[List["Answer"]] = relationship(
         "Answer", back_populates="question"
     )
@@ -39,37 +40,43 @@ class Question(Base):
 class Answer(Base):
     __tablename__ = "answers"
 
-    id = Column(
+    id: Mapped[int] = mapped_column(
         Integer,
         primary_key=True,
         unique=True,
         index=True,
         autoincrement=True,
     )
-    text = Column(Text())
-    right = Column(Boolean)
-    question_id = Column(Integer, ForeignKey("questions.id"), nullable=False)
+    text: Mapped[str] = mapped_column(Text)
+    right: Mapped[bool] = mapped_column(Boolean)
+    question_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("questions.id"), nullable=False
+    )
     question = relationship("Question", back_populates="answers")
 
 
 class Complaint(Base):
     __tablename__ = "complaints"
 
-    id = Column(
+    id: Mapped[int] = mapped_column(
         Integer,
         primary_key=True,
         unique=True,
         index=True,
         autoincrement=True,
     )
-    profile_id = Column(Integer, ForeignKey("profiles.id"), nullable=True)
+    profile_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("profiles.id"), nullable=True
+    )
     profile = relationship("Profile", back_populates="complaints")
-    question_id = Column(Integer, ForeignKey("questions.id"), nullable=False)
+    question_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("questions.id"), nullable=False
+    )
     question = relationship("Question", back_populates="complaints")
-    text = Column(Text)
-    created_at = Column(DateTime)
-    solved = Column(Boolean)
-    category_id = Column(
+    text: Mapped[str] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime)
+    solved: Mapped[bool] = mapped_column(Boolean)
+    category_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("category_complaints.id"), nullable=False
     )
     category: Mapped["CategoryComplaint"] = relationship(
@@ -80,14 +87,14 @@ class Complaint(Base):
 class CategoryComplaint(Base):
     __tablename__ = "category_complaints"
 
-    id = Column(
+    id: Mapped[int] = mapped_column(
         Integer,
         primary_key=True,
         unique=True,
         index=True,
         autoincrement=True,
     )
-    name = Column(Text)
+    name: Mapped[str] = mapped_column(Text)
     complaint: Mapped[List["CategoryComplaint"]] = relationship(
         "Complaint", back_populates="category"
     )

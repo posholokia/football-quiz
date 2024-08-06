@@ -32,7 +32,7 @@ class PagePaginationIn(BaseModel):
 
 
 class PagePaginationOut(PagePaginationIn):
-    total: int
+    pages: int
 
 
 class PagePaginationResponseSchema(BaseModel, Generic[T]):

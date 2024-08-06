@@ -19,7 +19,6 @@ from api.schema import (
     PaginationOut,
     PaginationResponseSchema,
 )
-from loguru import logger
 
 from services.mapper import (
     Mapper,
@@ -46,7 +45,8 @@ class LimitOffsetPaginator(BasePaginator):
         self, func: Callable[[int, int], Coroutine]
     ) -> Callable[[int, int], Coroutine]:
         async def wrapper(
-            offset: int | None, limit: int
+            offset: int,
+            limit: int,
         ) -> PaginationResponseSchema:
             res = await func(offset, limit)
 
@@ -73,21 +73,17 @@ class PagePaginator(BasePaginator):
     schema: Type[TSchema]
 
     async def paginate(
-        self, func: Callable[[int, int], Coroutine]
-    ) -> Callable[[int, int], Coroutine]:
+        self, func: Callable[[int, int, str | None], Coroutine]
+    ) -> Callable[[int, int, str | None], Coroutine]:
         async def wrapper(
-            page: int | None, limit: int
+            page: int,
+            limit: int,
+            search: str | None = None,
         ) -> PagePaginationResponseSchema:
-            res = await func(page, limit)
+            res = await func(page, limit, search)
 
-            count = await self.action.get_count()
+            count = await self.action.get_count(search)
             total = math.ceil(count / limit)
-            logger.info(
-                "Всего записей: {}, лимит на страницу: {}, всего страниц: {}",
-                count,
-                limit,
-                total,
-            )
 
             obj_list = [
                 Mapper.dataclass_to_schema(self.schema, obj) for obj in res
@@ -97,7 +93,7 @@ class PagePaginator(BasePaginator):
                 paginator=PagePaginationOut(
                     page=self.pagination.page,
                     limit=self.pagination.limit,
-                    total=total,
+                    pages=total,
                 ),
             )
 
