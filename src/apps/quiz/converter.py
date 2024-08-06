@@ -1,12 +1,16 @@
 from typing import Sequence
 
+from sqlalchemy.engine.row import Row
+
 from apps.quiz.models import (
+    Answer,
     AnswerEntity,
     CategoryComplaint,
     CategoryComplaintEntity,
     Complaint,
     ComplaintEntity,
     Question,
+    QuestionAdminDTO,
     QuestionEntity,
 )
 from apps.users.models import ProfileEntity
@@ -40,6 +44,28 @@ async def question_orm_to_entity(orm_result: Question) -> QuestionEntity:
         answers=answer_list,
     )
     return question
+
+
+async def question_orm_to_admin_dto(orm_result: Row) -> QuestionAdminDTO:
+    question, complaints_count = orm_result
+    answer_list = [await answer_orm_to_entity(a) for a in question.answers]
+
+    question = QuestionAdminDTO(
+        id=question.id,
+        text=question.text,
+        published=question.published,
+        answers=answer_list,
+        complaints=complaints_count,
+    )
+    return question
+
+
+async def answer_orm_to_entity(orm_result: Answer) -> AnswerEntity:
+    return AnswerEntity(
+        id=orm_result.id,
+        text=orm_result.text,
+        right=orm_result.right,
+    )
 
 
 async def complaint_orm_to_entity(

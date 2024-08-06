@@ -1,6 +1,6 @@
 from functools import lru_cache
 
-from api.pagination import (  # R,
+from api.pagination import (
     LimitOffsetPaginator,
     PagePaginator,
 )
@@ -12,7 +12,7 @@ from punq import (
 from apps.game_settings.actions import GameSettingsActions
 from apps.game_settings.services.storage.base import IGameSettingsService
 from apps.game_settings.services.storage.sqla import ORMGameSettingsService
-from apps.quiz.actions.actions import (
+from apps.quiz.actions import (
     CategoryComplaintsActions,
     ComplaintsActions,
     QuestionsActions,

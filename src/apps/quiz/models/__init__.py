@@ -1,3 +1,4 @@
+from .dto import QuestionAdminDTO
 from .entity import (
     AnswerEntity,
     CategoryComplaintEntity,
@@ -21,4 +22,5 @@ __all__ = (
     "AnswerEntity",
     "QuestionEntity",
     "CategoryComplaintEntity",
+    "QuestionAdminDTO",
 )

@@ -14,4 +14,5 @@ class QuestionAdminRetrieveSchema(BaseModel):
     id: int
     text: str
     published: bool
+    complaints: int
     answers: list["AnswerAdminRetrieveSchema"] = Field(default_factory=list)

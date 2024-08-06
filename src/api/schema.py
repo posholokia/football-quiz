@@ -28,7 +28,7 @@ class PaginationResponseSchema(BaseModel, Generic[T]):
 
 class PagePaginationIn(BaseModel):
     page: int = Field(default=1, ge=1)
-    limit: int = Field(default=100, ge=1, le=300)
+    limit: int = Field(default=100, ge=1, le=200)
 
 
 class PagePaginationOut(PagePaginationIn):

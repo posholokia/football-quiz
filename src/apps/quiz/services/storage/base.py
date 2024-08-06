@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from apps.quiz.models import (
     CategoryComplaintEntity,
     ComplaintEntity,
+    QuestionAdminDTO,
     QuestionEntity,
 )
 from apps.users.models import ProfileEntity
@@ -21,12 +22,12 @@ class IQuestionService(ABC):
     async def get_by_id(self, pk: int) -> QuestionEntity: ...
 
     @abstractmethod
-    async def get_list(
+    async def get_list_with_complaints_count(
         self,
         offset: int,
         limit: int,
         search: str | None = None,
-    ) -> list[QuestionEntity]: ...
+    ) -> list[QuestionAdminDTO]: ...
 
     @abstractmethod
     async def get_count(self, search: str | None = None) -> int: ...
@@ -44,7 +45,7 @@ class IComplaintService(ABC):
     ) -> ComplaintEntity: ...
 
     @abstractmethod
-    async def get_by_id(self, pk: int) -> ComplaintEntity: ...
+    async def get_by_id(self, question_id: int) -> ComplaintEntity: ...
 
     @abstractmethod
     async def list(self) -> ComplaintEntity: ...
