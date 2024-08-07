@@ -57,7 +57,7 @@ from apps.users.services.storage import (
 )
 from apps.users.services.storage.base import IUserService
 from apps.users.services.storage.sqla import ORMUserService
-from apps.users.services.validator.profile import ProfileValidator
+from apps.users.validator.profile import ProfileValidator
 from config import settings
 from core.database.db import Database
 from core.security.fingerprint_auth.device_validator import DeviceTokenValidate

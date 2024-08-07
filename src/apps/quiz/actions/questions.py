@@ -1,18 +1,21 @@
 from dataclasses import dataclass
-
-from api.admin.quiz.schema import QuestionFullCreateSchema
+from typing import Any
 
 from apps.quiz.models import (
     QuestionAdminDTO,
     QuestionEntity,
 )
-from apps.quiz.services.storage.base import IQuestionService
+from apps.quiz.services.storage.base import (
+    IAnswerService,
+    IQuestionService,
+)
 from apps.quiz.validator.answers import AnswerListValidator
 
 
 @dataclass
 class QuestionsActions:
     repository: IQuestionService
+    answer_repository: IAnswerService
     answer_validator: AnswerListValidator
 
     async def get_random(self, limit: int) -> list[QuestionEntity]:
@@ -40,7 +43,26 @@ class QuestionsActions:
 
     async def create_question_with_answers(
         self,
-        question: QuestionFullCreateSchema,
+        question: dict[str, str | bool | list[dict[str, str | bool]]],
     ) -> QuestionAdminDTO:
-        await self.answer_validator.validate(question.answers)
-        return await self.repository.create_from_json(question)
+        answers = question["answers"]
+        await self.answer_validator.validate(answers)
+        return await self.repository.create_from_json(
+            question_text=question["text"],
+            question_published=question["published"],
+            answers=answers,
+        )
+
+    async def update_question_with_answers(
+        self,
+        question: dict[str, Any],
+    ) -> QuestionAdminDTO:
+        answers = question["answers"]
+        await self.answer_validator.validate(answers)
+        return await self.repository.update_from_json(
+            question_id=question["id"],
+            question_text=question["text"],
+            question_complaints=question["complaints"],
+            question_published=question["published"],
+            answers=answers,
+        )

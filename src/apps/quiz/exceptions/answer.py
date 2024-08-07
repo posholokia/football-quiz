@@ -19,3 +19,9 @@ class AnswerNotUniqueError(BaseHTTPException):
 class AnswerNotEnoughError(BaseHTTPException):
     code: int = 400
     detail: str = "Должно быть 4 варианта ответа"
+
+
+@dataclass(eq=False)
+class AnswerDoesNotExists(BaseHTTPException):
+    code: int = 400
+    detail: str = "Такой ответ не существует"

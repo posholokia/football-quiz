@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from apps.users.actions.statistic import CompositeStatisticAction
 from apps.users.models import ProfileEntity
 from apps.users.services.storage import IProfileService
-from apps.users.services.validator.profile import ProfileValidator
+from apps.users.validator.profile import ProfileValidator
 
 
 @dataclass

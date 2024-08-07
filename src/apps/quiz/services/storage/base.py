@@ -4,8 +4,6 @@ from abc import (
 )
 from dataclasses import dataclass
 
-from api.admin.quiz.schema import QuestionFullCreateSchema
-
 from apps.quiz.models import (
     AnswerEntity,
     CategoryComplaintEntity,
@@ -50,8 +48,23 @@ class IQuestionService(ABC):
     @abstractmethod
     async def create_from_json(
         self,
-        question: QuestionFullCreateSchema,
+        question_text: str,
+        question_published: bool,
+        answers: list[dict[str, str | bool]],
     ) -> QuestionAdminDTO: ...
+
+    @abstractmethod
+    async def update_from_json(
+        self,
+        question_id: int,
+        question_text: str,
+        question_published: bool,
+        question_complaints: int,
+        answers: list[dict[str, str | bool | int]],
+    ) -> QuestionAdminDTO: ...
+
+    @abstractmethod
+    async def exists_by_id(self, pk: int) -> bool: ...
 
 
 @dataclass
@@ -70,6 +83,9 @@ class IAnswerService(ABC):
         pk: int,
         **fields,
     ) -> AnswerEntity: ...
+
+    @abstractmethod
+    async def exists_by_id(self, pk: int) -> bool: ...
 
 
 @dataclass

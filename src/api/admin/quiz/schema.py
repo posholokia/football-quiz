@@ -29,5 +29,5 @@ class QuestionFullCreateSchema(BaseModel):
     answers: list["AnswerAdminBaseSchema"]
 
 
-class QuestionFullUpdateSchema(QuestionFullCreateSchema):
-    id: int
+class QuestionFullUpdateSchema(QuestionAdminRetrieveSchema):
+    pass

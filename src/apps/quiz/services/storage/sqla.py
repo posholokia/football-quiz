@@ -2,10 +2,9 @@ import random as python_random
 from dataclasses import dataclass
 from datetime import datetime
 
-from api.admin.quiz.schema import QuestionFullCreateSchema
-
 from sqlalchemy import (
     delete,
+    exists,
     select,
     tablesample,
     true,
@@ -25,9 +24,9 @@ from apps.quiz.converter import (
     answer_orm_to_entity,
     category_orm_to_entity,
     complaint_orm_to_entity,
-    created_from_json_question_to_dto,
     list_category_orm_to_entity,
     list_orm_question_to_entity,
+    question_from_json_to_dto,
     question_orm_to_admin_dto,
     question_orm_to_entity,
 )
@@ -35,6 +34,7 @@ from apps.quiz.exceptions import (
     CategoryComplaintDoesNotExists,
     QuestionDoesNotExists,
 )
+from apps.quiz.exceptions.answer import AnswerDoesNotExists
 from apps.quiz.models import (
     Answer,
     AnswerEntity,
@@ -152,30 +152,88 @@ class ORMQuestionsService(IQuestionService):
 
     async def create_from_json(
         self,
-        question: QuestionFullCreateSchema,
+        question_text: str,
+        question_published: bool,
+        answers: list[dict[str, str | bool]],
     ) -> QuestionAdminDTO:
         async with self.db.get_session() as session:
             q = Question(
-                text=question.text,
-                published=question.published,
+                text=question_text,
+                published=question_published,
             )
             session.add(q)
             await session.flush()
 
-            answers = []
-            for answer in question.answers:
+            answer_models = []
+            for answer in answers:
                 answer = Answer(
-                    text=answer.text,
-                    right=answer.right,
+                    text=answer["text"],
+                    right=answer["right"],
                     question_id=q.id,
                 )
                 session.add(answer)
-                answers.append(answer)
-            await session.flush(answers)
+                answer_models.append(answer)
+            await session.flush(answer_models)
 
-            return await created_from_json_question_to_dto(
-                question=q, answers=answers
+            return await question_from_json_to_dto(
+                question=q, answers=answer_models
             )
+
+    async def update_from_json(
+        self,
+        question_id: int,
+        question_text: str,
+        question_published: bool,
+        question_complaints: int,
+        answers: list[dict[str, str | bool | int]],
+    ) -> QuestionAdminDTO:
+        async with self.db.get_session() as session:
+            query_questions = (
+                update(Question)
+                .where(Question.id == question_id)
+                .values(
+                    text=question_text,
+                    published=question_published,
+                )
+                .returning(Question)
+            )
+            result = await session.execute(query_questions)
+            question = result.fetchone()
+
+            if question is None:
+                await session.rollback()
+                raise QuestionDoesNotExists(
+                    detail=f"Вопрос с id={question_id} не существует"
+                )
+
+            answer_models = []
+            for answer in answers:
+                query_answer = (
+                    update(Answer)
+                    .where(Answer.id == answer["id"])
+                    .values(text=answer["text"], right=answer["right"])
+                    .returning(Answer)
+                )
+                result = await session.execute(query_answer)
+                a = result.fetchone()
+
+                if a is None:
+                    await session.rollback()
+                    raise AnswerDoesNotExists(
+                        detail=f"Ответ с id={answer['id']} не существует"
+                    )
+
+                answer_models.append(a[0])
+            return await question_from_json_to_dto(
+                question=question[0],
+                answers=answer_models,
+                complaints=question_complaints,
+            )
+
+    async def exists_by_id(self, pk: int) -> bool:
+        async with self.db.get_ro_session() as session:
+            query = select(exists().where(Question.id == pk))
+            return session.scalar(query)
 
     def _sub_question_with_complaints_count(self) -> Select:
         subquery = (
@@ -225,6 +283,11 @@ class ORMAnswerService(IAnswerService):
             res = await session.execute(query)
             orm_result = res.fetchone()
             return await answer_orm_to_entity(orm_result[0])
+
+    async def exists_by_id(self, pk: int) -> bool:
+        async with self.db.get_ro_session() as session:
+            query = select(exists().where(Answer.id == pk))
+            return session.scalar(query)
 
 
 @dataclass

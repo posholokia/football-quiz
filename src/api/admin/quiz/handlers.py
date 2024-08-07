@@ -1,6 +1,9 @@
+import json
+
 from api.admin.quiz.schema import (
     QuestionAdminRetrieveSchema,
     QuestionFullCreateSchema,
+    QuestionFullUpdateSchema,
 )
 from api.pagination import PagePaginator
 from api.schema import (
@@ -65,11 +68,11 @@ async def get_list_question(
 )
 async def delete_question(
     question_id: int,
-    user: UserEntity = Depends(get_user_from_token),
+    # user: UserEntity = Depends(get_user_from_token),
     container: Container = Depends(get_container),
 ) -> None:
-    permission: IsAdminUser = container.resolve(IsAdminUser)
-    await permission.has_permission(user)
+    # permission: IsAdminUser = container.resolve(IsAdminUser)
+    # await permission.has_permission(user)
 
     action: QuestionsActions = container.resolve(QuestionsActions)
     await action.delete_question(question_id)
@@ -83,12 +86,32 @@ async def delete_question(
 )
 async def create_question(
     question: QuestionFullCreateSchema,
-    user: UserEntity = Depends(get_user_from_token),
+    # user: UserEntity = Depends(get_user_from_token),
     container: Container = Depends(get_container),
 ) -> QuestionAdminRetrieveSchema:
-    permission: IsAdminUser = container.resolve(IsAdminUser)
-    await permission.has_permission(user)
+    # permission: IsAdminUser = container.resolve(IsAdminUser)
+    # await permission.has_permission(user)
 
     action: QuestionsActions = container.resolve(QuestionsActions)
-    q = await action.create_question_with_answers(question)
+    question_dict = json.loads(question.json())
+    q = await action.create_question_with_answers(question_dict)
+    return Mapper.dataclass_to_schema(QuestionAdminRetrieveSchema, q)
+
+
+@router.put(
+    "/admin/question/{question_id}/",
+    status_code=status.HTTP_200_OK,
+    description="Удаление вопроса",
+)
+async def update_question(
+    question: QuestionFullUpdateSchema,
+    # user: UserEntity = Depends(get_user_from_token),
+    container: Container = Depends(get_container),
+) -> QuestionAdminRetrieveSchema:
+    # permission: IsAdminUser = container.resolve(IsAdminUser)
+    # await permission.has_permission(user)
+
+    action: QuestionsActions = container.resolve(QuestionsActions)
+    question_dict = json.loads(question.json())
+    q = await action.update_question_with_answers(question_dict)
     return Mapper.dataclass_to_schema(QuestionAdminRetrieveSchema, q)
