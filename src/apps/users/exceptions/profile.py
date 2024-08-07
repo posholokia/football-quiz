@@ -41,5 +41,5 @@ class ProfileNameIsProfanity(BaseHTTPException):
 
 @dataclass(eq=False)
 class ProfanityServiceNotAvailable(BaseHTTPException):
-    code: int = 500
+    code: int = 503
     detail: str = "Сервис проверки нецензурной лексики недоступен"

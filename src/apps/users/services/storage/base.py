@@ -33,6 +33,9 @@ class IProfileService(ABC):
     @abstractmethod
     async def get_by_device(self, token: str) -> ProfileEntity: ...
 
+    @abstractmethod
+    async def exists_by_token(self, token: str) -> bool: ...
+
 
 @dataclass
 class IStatisticService(ABC):

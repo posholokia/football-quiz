@@ -17,5 +17,5 @@ class InvalidDeviceToken(BaseHTTPException):
 
 @dataclass(eq=False)
 class NotUniqueDeviceToken(BaseHTTPException):
-    code: int = 401
-    detail: str = "Токен устройства не уникален"
+    code: int = 400
+    detail: str = "Для этого устройства уже создан профиль"

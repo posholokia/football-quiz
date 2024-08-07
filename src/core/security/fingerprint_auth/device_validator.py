@@ -35,9 +35,5 @@ class DeviceTokenValidate(BaseValidator):
             raise InvalidDeviceToken()
 
     async def _token_not_exists(self, token) -> None:
-        try:
-            await self.repository.get_by_device(token)
-        except TypeError:
-            return
-        else:
+        if await self.repository.exists_by_token(token):
             raise NotUniqueDeviceToken()

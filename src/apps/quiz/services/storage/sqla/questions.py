@@ -1,6 +1,5 @@
 import random as python_random
 from dataclasses import dataclass
-from datetime import datetime
 
 from sqlalchemy import (
     delete,
@@ -21,38 +20,21 @@ from sqlalchemy.sql.functions import (
 from sqlalchemy.sql.selectable import Select
 
 from apps.quiz.converter import (
-    answer_orm_to_entity,
-    category_orm_to_entity,
-    complaint_orm_to_entity,
-    list_category_orm_to_entity,
     list_orm_question_to_entity,
     question_from_json_to_dto,
     question_orm_to_admin_dto,
     question_orm_to_entity,
 )
-from apps.quiz.exceptions import (
-    CategoryComplaintDoesNotExists,
-    QuestionDoesNotExists,
-)
+from apps.quiz.exceptions import QuestionDoesNotExists
 from apps.quiz.exceptions.answer import AnswerDoesNotExists
 from apps.quiz.models import (
     Answer,
-    AnswerEntity,
-    CategoryComplaint,
-    CategoryComplaintEntity,
     Complaint,
-    ComplaintEntity,
     Question,
     QuestionAdminDTO,
     QuestionEntity,
 )
-from apps.quiz.services.storage.base import (
-    IAnswerService,
-    ICategoryComplaintService,
-    IComplaintService,
-    IQuestionService,
-)
-from apps.users.models import ProfileEntity
+from apps.quiz.services.storage.base import IQuestionService
 from core.database.db import Database
 
 
@@ -252,99 +234,3 @@ class ORMQuestionsService(IQuestionService):
             .options(selectinload(Question.answers))
         )
         return query
-
-
-@dataclass
-class ORMAnswerService(IAnswerService):
-    db: Database
-
-    async def create(
-        self,
-        text: str,
-        right: bool,
-        question_id: int,
-    ) -> AnswerEntity:
-        async with self.db.get_session() as session:
-            answer = Answer(
-                text=text,
-                right=right,
-                question_id=question_id,
-            )
-            session.add(answer)
-            return await answer_orm_to_entity(answer)
-
-    async def update(
-        self,
-        pk: int,
-        **fields,
-    ) -> AnswerEntity:
-        async with self.db.get_session() as session:
-            query = update(Answer).where(Answer.id == pk).values(**fields)
-            res = await session.execute(query)
-            orm_result = res.fetchone()
-            return await answer_orm_to_entity(orm_result[0])
-
-    async def exists_by_id(self, pk: int) -> bool:
-        async with self.db.get_ro_session() as session:
-            query = select(exists().where(Answer.id == pk))
-            return session.scalar(query)
-
-
-@dataclass
-class ORMComplaintService(IComplaintService):
-    db: Database
-
-    async def create(
-        self,
-        text: str,
-        question: QuestionEntity,
-        profile: ProfileEntity,
-        category: CategoryComplaintEntity,
-    ) -> ComplaintEntity:
-        async with self.db.get_session() as session:
-            complaint = Complaint(
-                profile_id=profile.id,
-                question_id=question.id,
-                text=text,
-                created_at=datetime.now(),
-                solved=False,
-                category_id=category.id,
-            )
-            session.add(complaint)
-            await session.commit()
-            return await complaint_orm_to_entity(
-                complaint, question, profile, category
-            )
-
-    async def get_by_id(self, pk: int) -> ComplaintEntity: ...
-
-    # async def get_count_by_questions(self, question_id: int) -> int:
-    #     async with self.db.get_ro_session() as session:
-    #         query = select(func.count(Complaint.question_id == question_id))
-    #         result = await session.execute(query)
-    #         return result.scalar_one()
-
-    async def list(self) -> ComplaintEntity: ...
-
-
-@dataclass
-class ORMCategoryComplaintService(ICategoryComplaintService):
-    db: Database
-
-    async def list(self) -> list[CategoryComplaintEntity]:
-        async with self.db.get_ro_session() as session:
-            query = select(CategoryComplaint)
-            result = await session.execute(query)
-            orm_result = result.scalars().all()
-
-            return await list_category_orm_to_entity(orm_result)
-
-    async def get_by_id(self, pk: int) -> CategoryComplaintEntity:
-        async with self.db.get_ro_session() as session:
-            query = select(CategoryComplaint)
-            result = await session.execute(query)
-            orm_result = result.fetchone()
-
-            if orm_result is None:
-                raise CategoryComplaintDoesNotExists()
-            return await category_orm_to_entity(orm_result[0])

@@ -4,8 +4,6 @@ from typing import (
     AsyncGenerator,
 )
 
-from loguru import logger
-
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import (
     async_sessionmaker,
@@ -51,7 +49,6 @@ class Database:
     async def get_session(self) -> AsyncGenerator[AsyncSession, Any]:
         session: AsyncSession = self._session()
         try:
-            logger.debug("Соединение с БД открыто")
             yield session
         except SQLAlchemyError:
             await session.rollback()
@@ -59,7 +56,6 @@ class Database:
         finally:
             await session.commit()
             await session.close()
-            logger.debug("Соединение с БД закрылось")
 
     @asynccontextmanager
     async def get_ro_session(self) -> AsyncGenerator[AsyncSession, Any]:
