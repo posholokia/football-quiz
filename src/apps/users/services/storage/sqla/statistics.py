@@ -12,130 +12,39 @@ from sqlalchemy import (
     select,
     update,
 )
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
-from sqlalchemy.sql import (
-    func,
-    true,
-)
+from sqlalchemy.sql import func
 
 from apps.users.converter import (
     orm_ladder_to_dto,
-    orm_profile_title_to_entity,
-    orm_profile_to_dto,
     orm_statistics_to_entity,
     orm_title_statistics_to_dto,
-    orm_user_to_entity,
-)
-from apps.users.exceptions.auth import UserDoesNotExists
-from apps.users.exceptions.profile import (
-    AlreadyExistsProfile,
-    DoesNotExistsProfile,
 )
 from apps.users.exceptions.statistics import StatisticDoseNotExists
 from apps.users.models import (
-    BestPlayerTitle,
-    BestPlayerTitleEntity,
     Profile,
-    ProfileEntity,
     Statistic,
     StatisticEntity,
-    User,
-    UserEntity,
 )
 from apps.users.models.dto import (
     LadderStatisticDTO,
     TitleStatisticDTO,
 )
-from apps.users.services.storage import (
-    IProfileService,
-    IStatisticService,
-)
-from apps.users.services.storage.base import (
-    IProfileTitleService,
-    IUserService,
-)
+from apps.users.services.storage import IStatisticService
 from core.database.db import (
     Base,
     Database,
 )
 
 
-T = TypeVar("T", bound=Base)
+TModel = TypeVar("TModel", bound=Base)
 
 
 @dataclass
-class ORMProfileService(IProfileService):
+class ORMStatisticService(IStatisticService, Generic[TModel]):
     db: Database
-
-    async def create(self, device: str) -> ProfileEntity:
-        try:
-            async with self.db.get_session() as session:
-                new_profile = Profile(
-                    name="Игрок",
-                    device_uuid=device,
-                )
-                session.add(new_profile)
-                await session.commit()
-                return await orm_profile_to_dto(new_profile)
-
-        except IntegrityError:
-            raise AlreadyExistsProfile()
-
-    async def get_or_create(self, device: str) -> ProfileEntity:
-        async with self.db.get_session() as session:
-            query = select(Profile).where(Profile.device_uuid == device)
-            result = await session.execute(query)
-            orm_result = result.fetchone()
-
-            if orm_result is None:
-                new_profile = Profile(
-                    name="Игрок",
-                    device_uuid=device,
-                )
-                session.add(new_profile)
-                await session.commit()
-            else:
-                new_profile = orm_result[0]
-            return await orm_profile_to_dto(new_profile)
-
-    async def patch(self, pk: int, **kwargs) -> ProfileEntity:
-        async with self.db.get_session() as session:
-            query = (
-                update(Profile)
-                .where(Profile.id == pk)
-                .values(**kwargs)
-                .returning(Profile)
-            )
-            result = await session.execute(query)
-            await session.commit()
-            orm_result = result.fetchone()
-            return await orm_profile_to_dto(orm_result[0])
-
-    async def get_by_id(self, pk: int) -> ProfileEntity:
-        async with self.db.get_ro_session() as session:
-            query = select(Profile).where(Profile.id == pk)
-            result = await session.execute(query)
-            orm_result = result.fetchone()
-
-            if orm_result is None:
-                raise DoesNotExistsProfile()
-
-            return await orm_profile_to_dto(orm_result[0])
-
-    async def get_by_device(self, token: str) -> ProfileEntity:
-        async with self.db.get_ro_session() as session:
-            query = select(Profile).where(Profile.device_uuid == token)
-            result = await session.execute(query)
-            orm_result = result.fetchone()
-            return await orm_profile_to_dto(orm_result[0])
-
-
-@dataclass
-class ORMStatisticService(IStatisticService, Generic[T]):
-    db: Database
-    model: Type[T]
+    model: Type[TModel]
 
     async def create(self, pk: int, place: int) -> StatisticEntity:
         async with self.db.get_session() as session:
@@ -401,69 +310,3 @@ class ORMStatisticService(IStatisticService, Generic[T]):
             return None
 
         return orm_result[0]
-
-
-@dataclass
-class ORMProfileTitleService(IProfileTitleService):
-    db: Database
-
-    async def get_or_create_by_profile(
-        self,
-        profile_pk: int,
-    ) -> BestPlayerTitleEntity:
-        """Вызывается внутри другой сессии, не напрямую"""
-        async with self.db.get_session() as session:
-            query = select(BestPlayerTitle).where(
-                BestPlayerTitle.profile_id == profile_pk
-            )
-            res = await session.execute(query)
-            title = res.fetchone()
-
-            if title is None:  # если не найдена
-                title = BestPlayerTitle(
-                    best_of_the_day=0,
-                    best_of_the_month=0,
-                    profile_id=profile_pk,
-                )
-                session.add(title)
-                return await orm_profile_title_to_entity(title)
-            return await orm_profile_title_to_entity(title[0])
-
-    async def patch(self, profile_pk: int, **fields) -> BestPlayerTitleEntity:
-        """Вызывается внутри другой сессии, не напрямую"""
-        async with self.db.get_session() as session:
-            query = (
-                update(BestPlayerTitle)
-                .where(BestPlayerTitle.profile_id == profile_pk)
-                .values(**fields)
-                .returning(BestPlayerTitle)
-            )
-            result = await session.execute(query)
-            orm_result = result.fetchone()
-            return await orm_profile_title_to_entity(orm_result[0])
-
-
-@dataclass
-class ORMUserService(IUserService):
-    db: Database
-
-    async def get_by_username(self, username: str) -> UserEntity | None:
-        async with self.db.get_ro_session() as session:
-            query = select(User).where(User.username == username)
-            res = await session.execute(query)
-            user_orm = res.fetchone()
-            if user_orm is None:
-                return None
-            return await orm_user_to_entity(user_orm[0])
-
-    async def get_by_id(self, pk: int) -> UserEntity:
-        async with self.db.get_ro_session() as session:
-            query = select(User).where(
-                and_(User.id == pk, User.is_active == true())
-            )
-            res = await session.execute(query)
-            user_orm = res.fetchone()
-
-            if user_orm is None:
-                raise UserDoesNotExists()
-            return await orm_user_to_entity(user_orm[0])
