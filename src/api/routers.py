@@ -1,12 +1,12 @@
 from fastapi import APIRouter
 from starlette import status
 
-from .admin.auth import router as auth_admin_router
-from .admin.game_settings import router as game_settings_router
-from .admin.quiz import router as quiz_admin_router
-from .mobile.game_settings import router as game_router
-from .mobile.quiz import router as quiz_router
-from .mobile.users import router as users_routers
+from .admin.auth.handlers import router as auth_admin_router
+from .admin.game_settings.handlers import router as game_settings_router
+from .admin.quiz.handlers import router as quiz_admin_router
+from .mobile.game_settings.handlers import router as game_router
+from .mobile.quiz.handlers import router as quiz_router
+from .mobile.users.handlers import router as users_routers
 
 
 routers = APIRouter()

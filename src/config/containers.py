@@ -19,21 +19,24 @@ from apps.quiz.actions import (
 )
 from apps.quiz.permissions.quiz import DevicePermissions
 from apps.quiz.services.storage.base import (
+    IAnswerService,
     ICategoryComplaintService,
     IComplaintService,
     IQuestionService,
 )
 from apps.quiz.services.storage.sqla import (
+    ORMAnswerService,
     ORMCategoryComplaintService,
     ORMComplaintService,
     ORMQuestionsService,
 )
+from apps.quiz.validator.answers import AnswerListValidator
 from apps.users.actions import (
+    AdminAuthAction,
     CompositeStatisticAction,
     ProfileActions,
     StatisticsActions,
 )
-from apps.users.actions.user import AdminAuthAction
 from apps.users.models import (
     DayStatistic,
     MonthStatistic,
@@ -106,6 +109,7 @@ class DiContainer:
         self.container.register(
             ICategoryComplaintService, ORMCategoryComplaintService
         )
+        self.container.register(IAnswerService, ORMAnswerService)
 
     def __init_service_containers(self):
         self.container.register(RedisPool, scope=Scope.singleton)
@@ -123,6 +127,7 @@ class DiContainer:
     def __init_validators_containers(self):
         self.container.register(ProfileValidator)
         self.container.register(DeviceTokenValidate)
+        self.container.register(AnswerListValidator)
 
     def __init_permission_containers(self):
         self.container.register(ProfilePermissions)

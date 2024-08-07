@@ -4,7 +4,10 @@ from abc import (
 )
 from dataclasses import dataclass
 
+from api.admin.quiz.schema import QuestionFullCreateSchema
+
 from apps.quiz.models import (
+    AnswerEntity,
     CategoryComplaintEntity,
     ComplaintEntity,
     QuestionAdminDTO,
@@ -22,6 +25,12 @@ class IQuestionService(ABC):
     async def get_by_id(self, pk: int) -> QuestionEntity: ...
 
     @abstractmethod
+    async def get_by_id_with_complaints_count(
+        self,
+        pk: int,
+    ) -> QuestionAdminDTO: ...
+
+    @abstractmethod
     async def get_list_with_complaints_count(
         self,
         offset: int,
@@ -34,6 +43,33 @@ class IQuestionService(ABC):
 
     @abstractmethod
     async def delete(self, pk: int) -> None: ...
+
+    @abstractmethod
+    async def create(self, text: str, published: bool) -> QuestionEntity: ...
+
+    @abstractmethod
+    async def create_from_json(
+        self,
+        question: QuestionFullCreateSchema,
+    ) -> QuestionAdminDTO: ...
+
+
+@dataclass
+class IAnswerService(ABC):
+    @abstractmethod
+    async def create(
+        self,
+        text: str,
+        right: bool,
+        question_id: int,
+    ) -> AnswerEntity: ...
+
+    @abstractmethod
+    async def update(
+        self,
+        pk: int,
+        **fields,
+    ) -> AnswerEntity: ...
 
 
 @dataclass

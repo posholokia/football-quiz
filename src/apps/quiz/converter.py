@@ -46,6 +46,20 @@ async def question_orm_to_entity(orm_result: Question) -> QuestionEntity:
     return question
 
 
+async def created_from_json_question_to_dto(
+    question: Question,
+    answers: list[Answer],
+):
+    answer_list = [await answer_orm_to_entity(a) for a in answers]
+    return QuestionAdminDTO(
+        id=question.id,
+        text=question.text,
+        published=question.published,
+        answers=answer_list,
+        complaints=0,
+    )
+
+
 async def question_orm_to_admin_dto(orm_result: Row) -> QuestionAdminDTO:
     question, complaints_count = orm_result
     answer_list = [await answer_orm_to_entity(a) for a in question.answers]

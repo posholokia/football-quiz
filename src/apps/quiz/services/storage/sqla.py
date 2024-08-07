@@ -2,11 +2,14 @@ import random as python_random
 from dataclasses import dataclass
 from datetime import datetime
 
+from api.admin.quiz.schema import QuestionFullCreateSchema
+
 from sqlalchemy import (
     delete,
     select,
     tablesample,
     true,
+    update,
 )
 from sqlalchemy.orm import (
     aliased,
@@ -16,10 +19,13 @@ from sqlalchemy.sql.functions import (
     func,
     random,
 )
+from sqlalchemy.sql.selectable import Select
 
 from apps.quiz.converter import (
+    answer_orm_to_entity,
     category_orm_to_entity,
     complaint_orm_to_entity,
+    created_from_json_question_to_dto,
     list_category_orm_to_entity,
     list_orm_question_to_entity,
     question_orm_to_admin_dto,
@@ -30,6 +36,8 @@ from apps.quiz.exceptions import (
     QuestionDoesNotExists,
 )
 from apps.quiz.models import (
+    Answer,
+    AnswerEntity,
     CategoryComplaint,
     CategoryComplaintEntity,
     Complaint,
@@ -39,6 +47,7 @@ from apps.quiz.models import (
     QuestionEntity,
 )
 from apps.quiz.services.storage.base import (
+    IAnswerService,
     ICategoryComplaintService,
     IComplaintService,
     IQuestionService,
@@ -85,6 +94,18 @@ class ORMQuestionsService(IQuestionService):
                 raise QuestionDoesNotExists()
             return await question_orm_to_entity(orm_result[0])
 
+    async def get_by_id_with_complaints_count(
+        self,
+        pk: int,
+    ) -> QuestionAdminDTO:
+        async with self.db.get_ro_session() as session:
+            query = self._sub_question_with_complaints_count().where(
+                Question.id == pk
+            )
+            result = await session.execute(query)
+            questions = result.fetchone()
+            return await question_orm_to_admin_dto(questions)
+
     async def get_list_with_complaints_count(
         self,
         offset: int,
@@ -92,20 +113,8 @@ class ORMQuestionsService(IQuestionService):
         search: str | None = None,
     ) -> list[QuestionAdminDTO]:
         async with self.db.get_ro_session() as session:
-            subquery = (
-                select(
-                    Question.id,
-                    func.count(Complaint.id).label("complaints_count"),
-                )
-                .outerjoin(Complaint, Complaint.question_id == Question.id)
-                .group_by(Question.id)
-                .subquery()
-            )
-
             query = (
-                select(Question, subquery.c.complaints_count)
-                .outerjoin(subquery, subquery.c.id == Question.id)
-                .options(selectinload(Question.answers))
+                self._sub_question_with_complaints_count()
                 .offset(offset)
                 .limit(limit)
             )
@@ -131,6 +140,91 @@ class ORMQuestionsService(IQuestionService):
         async with self.db.get_session() as session:
             query = delete(Question).where(Question.id == pk)
             await session.execute(query)
+
+    async def create(self, text: str, published: bool) -> QuestionEntity:
+        async with self.db.get_session() as session:
+            question = Question(
+                text=text,
+                published=published,
+            )
+            session.add(question)
+            return await question_orm_to_entity(question)
+
+    async def create_from_json(
+        self,
+        question: QuestionFullCreateSchema,
+    ) -> QuestionAdminDTO:
+        async with self.db.get_session() as session:
+            q = Question(
+                text=question.text,
+                published=question.published,
+            )
+            session.add(q)
+            await session.flush()
+
+            answers = []
+            for answer in question.answers:
+                answer = Answer(
+                    text=answer.text,
+                    right=answer.right,
+                    question_id=q.id,
+                )
+                session.add(answer)
+                answers.append(answer)
+            await session.flush(answers)
+
+            return await created_from_json_question_to_dto(
+                question=q, answers=answers
+            )
+
+    def _sub_question_with_complaints_count(self) -> Select:
+        subquery = (
+            select(
+                Question.id,
+                func.count(Complaint.id).label("complaints_count"),
+            )
+            .outerjoin(Complaint, Complaint.question_id == Question.id)
+            .group_by(Question.id)
+            .subquery()
+        )
+
+        query = (
+            select(Question, subquery.c.complaints_count)
+            .outerjoin(subquery, subquery.c.id == Question.id)
+            .options(selectinload(Question.answers))
+        )
+        return query
+
+
+@dataclass
+class ORMAnswerService(IAnswerService):
+    db: Database
+
+    async def create(
+        self,
+        text: str,
+        right: bool,
+        question_id: int,
+    ) -> AnswerEntity:
+        async with self.db.get_session() as session:
+            answer = Answer(
+                text=text,
+                right=right,
+                question_id=question_id,
+            )
+            session.add(answer)
+            return await answer_orm_to_entity(answer)
+
+    async def update(
+        self,
+        pk: int,
+        **fields,
+    ) -> AnswerEntity:
+        async with self.db.get_session() as session:
+            query = update(Answer).where(Answer.id == pk).values(**fields)
+            res = await session.execute(query)
+            orm_result = res.fetchone()
+            return await answer_orm_to_entity(orm_result[0])
 
 
 @dataclass

@@ -1,5 +1,7 @@
-from api.admin.depends import get_user_from_token
-from api.admin.quiz.schema import QuestionAdminRetrieveSchema
+from api.admin.quiz.schema import (
+    QuestionAdminRetrieveSchema,
+    QuestionFullCreateSchema,
+)
 from api.pagination import PagePaginator
 from api.schema import (
     PagePaginationIn,
@@ -14,10 +16,13 @@ from fastapi import (
 from fastapi.security import HTTPBearer
 from starlette import status
 
-from apps.quiz.actions import QuestionsActions
+from apps.quiz.actions.questions import QuestionsActions
 from apps.users.models import UserEntity
 from apps.users.permissions.admin import IsAdminUser
 from config.containers import get_container
+from services.mapper import Mapper
+
+from ..depends import get_user_from_token
 
 
 router = APIRouter()
@@ -69,3 +74,21 @@ async def delete_question(
     action: QuestionsActions = container.resolve(QuestionsActions)
     await action.delete_question(question_id)
     return None
+
+
+@router.post(
+    "/admin/question/",
+    status_code=status.HTTP_200_OK,
+    description="Создание вопроса вместе с ответами",
+)
+async def create_question(
+    question: QuestionFullCreateSchema,
+    user: UserEntity = Depends(get_user_from_token),
+    container: Container = Depends(get_container),
+) -> QuestionAdminRetrieveSchema:
+    permission: IsAdminUser = container.resolve(IsAdminUser)
+    await permission.has_permission(user)
+
+    action: QuestionsActions = container.resolve(QuestionsActions)
+    q = await action.create_question_with_answers(question)
+    return Mapper.dataclass_to_schema(QuestionAdminRetrieveSchema, q)
