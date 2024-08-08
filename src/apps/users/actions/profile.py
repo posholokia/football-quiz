@@ -1,7 +1,10 @@
 from dataclasses import dataclass
 
 from apps.users.actions.statistic import CompositeStatisticAction
-from apps.users.models import ProfileEntity
+from apps.users.models import (
+    ProfileAdminDTO,
+    ProfileEntity,
+)
 from apps.users.services.storage import IProfileService
 from apps.users.validator.profile import ProfileValidator
 
@@ -30,7 +33,20 @@ class ProfileActions:
     async def get_by_device(self, device_uuid: str) -> ProfileEntity:
         return await self.profile_repository.get_by_device(device_uuid)
 
-    async def patch_profile(self, pk: int, name: str) -> ProfileEntity:
-        # await self.validator.validate(name=name)
-        profile = await self.profile_repository.patch(pk, name=name)
-        return profile
+    async def patch_profile(self, pk: int, **fields) -> ProfileEntity:
+        await self.validator.validate(name=fields.get("name"))
+        return await self.profile_repository.patch(pk, **fields)
+
+    async def get_list(
+        self,
+        page: int,
+        limit: int,
+        search: str,
+    ) -> list[ProfileAdminDTO]:
+        offset = (page - 1) * limit
+        return await self.profile_repository.get_list_with_complaints_count(
+            offset, limit, search
+        )
+
+    async def get_count(self, search: str | None = None) -> int:
+        return await self.profile_repository.get_count(search)

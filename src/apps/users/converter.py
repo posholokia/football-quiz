@@ -1,3 +1,5 @@
+from sqlalchemy.engine.row import Row
+
 from apps.users.models import (
     BestPlayerTitle,
     BestPlayerTitleEntity,
@@ -10,6 +12,7 @@ from apps.users.models import (
 )
 from apps.users.models.dto import (
     LadderStatisticDTO,
+    ProfileAdminDTO,
     TitleStatisticDTO,
 )
 
@@ -22,7 +25,12 @@ async def orm_profile_to_entity(orm_result: Profile) -> ProfileEntity:
     )
 
 
-async def orm_statistics_to_entity(orm_result: Statistic) -> StatisticEntity:
+async def orm_statistics_to_entity(
+    orm_result: Statistic | None,
+) -> StatisticEntity | None:
+    if orm_result is None:
+        return None
+
     return StatisticEntity(
         id=orm_result.id,
         games=orm_result.games,
@@ -91,4 +99,18 @@ async def orm_user_to_entity(orm_result: User) -> UserEntity:
         is_superuser=orm_result.is_superuser,
         is_active=orm_result.is_active,
         username=orm_result.username,
+    )
+
+
+async def profile_orm_to_admin_dto(orm_result: Row) -> ProfileAdminDTO:
+    profile, complaint_count = orm_result
+    print(f"\n\n{profile.statistic=}")
+    statistic = await orm_statistics_to_entity(profile.statistic)
+    return ProfileAdminDTO(
+        id=profile.id,
+        name=profile.name,
+        device_uuid=profile.device_uuid,
+        last_visit=profile.last_visit,
+        statistic=statistic,
+        complaints=complaint_count,
     )

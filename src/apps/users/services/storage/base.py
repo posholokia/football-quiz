@@ -12,6 +12,7 @@ from apps.users.models import (
 )
 from apps.users.models.dto import (
     LadderStatisticDTO,
+    ProfileAdminDTO,
     TitleStatisticDTO,
 )
 
@@ -25,7 +26,7 @@ class IProfileService(ABC):
     async def get_or_create(self, device: str) -> ProfileEntity: ...
 
     @abstractmethod
-    async def patch(self, pk, **kwargs) -> ProfileEntity: ...
+    async def patch(self, pk, **fields) -> ProfileEntity: ...
 
     @abstractmethod
     async def get_by_id(self, pk: int) -> ProfileEntity: ...
@@ -35,6 +36,17 @@ class IProfileService(ABC):
 
     @abstractmethod
     async def exists_by_token(self, token: str) -> bool: ...
+
+    @abstractmethod
+    async def get_count(self, search: str | None = None) -> int: ...
+
+    @abstractmethod
+    async def get_list_with_complaints_count(
+        self,
+        offset: int,
+        limit: int,
+        search: str | None = None,
+    ) -> list[ProfileAdminDTO]: ...
 
 
 @dataclass

@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from datetime import datetime
 from enum import Enum
 
 from .entity import (
@@ -19,14 +20,14 @@ class TitleStatisticDTO(StatisticEntity):
 
 
 @dataclass
-class LadderStatisticDTO:
-    id: int
-    games: int
-    score: int
-    place: int
-    rights: int
-    wrongs: int
-    perfect_rounds: int
-    trend: int
+class LadderStatisticDTO(StatisticEntity):
     profile: ProfileEntity
     title: BestPlayerTitleEntity | None = None
+
+
+@dataclass
+class ProfileAdminDTO(ProfileEntity):
+    def __init__(self, last_visit: datetime, complaints: int, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.last_visit = last_visit
+        self.complaints = complaints

@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import (
     Annotated,
     Type,
@@ -130,6 +131,8 @@ async def set_user_statistic(
         StatisticsActions, model=Statistic
     )
     stat = await action.get_by_profile(pk)
+    profile_action: ProfileActions = container.resolve(ProfileActions)
+    await profile_action.patch_profile(pk=pk, last_visit=datetime.now())
     return Mapper.dataclass_to_schema(StatisticsRetrieveSchema, stat)
 
 

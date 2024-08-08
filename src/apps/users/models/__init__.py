@@ -1,6 +1,7 @@
 from .dto import (
     LadderStatisticDTO,
     PeriodStatistic,
+    ProfileAdminDTO,
     TitleStatisticDTO,
 )
 from .entity import (
@@ -33,4 +34,5 @@ __all__ = (
     "TitleStatisticDTO",
     "LadderStatisticDTO",
     "PeriodStatistic",
+    "ProfileAdminDTO",
 )

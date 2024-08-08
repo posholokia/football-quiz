@@ -14,6 +14,7 @@ from sqlalchemy.orm import (
     mapped_column,
     relationship,
 )
+from sqlalchemy.sql.functions import func
 
 from core.database.db import Base
 
@@ -52,6 +53,7 @@ class Profile(Base):
     device_uuid: Mapped[str] = mapped_column(
         String(32), unique=True, nullable=False, index=True
     )
+    last_visit: Mapped[datetime] = mapped_column(DateTime, default=func.now())
     user_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("users.id"), nullable=True
     )

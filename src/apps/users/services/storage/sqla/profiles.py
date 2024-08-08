@@ -5,11 +5,18 @@ from sqlalchemy import (
     select,
     update,
 )
+from sqlalchemy.orm import selectinload
+from sqlalchemy.sql.functions import func
 
-from apps.users.converter import orm_profile_to_entity
+from apps.quiz.models import Complaint
+from apps.users.converter import (
+    orm_profile_to_entity,
+    profile_orm_to_admin_dto,
+)
 from apps.users.exceptions.profile import DoesNotExistsProfile
 from apps.users.models import (
     Profile,
+    ProfileAdminDTO,
     ProfileEntity,
 )
 from apps.users.services.storage import IProfileService
@@ -47,12 +54,12 @@ class ORMProfileService(IProfileService):
                 new_profile = orm_result[0]
             return await orm_profile_to_entity(new_profile)
 
-    async def patch(self, pk: int, **kwargs) -> ProfileEntity:
+    async def patch(self, pk: int, **fields) -> ProfileEntity:
         async with self.db.get_session() as session:
             query = (
                 update(Profile)
                 .where(Profile.id == pk)
-                .values(**kwargs)
+                .values(**fields)
                 .returning(Profile)
             )
             result = await session.execute(query)
@@ -82,3 +89,45 @@ class ORMProfileService(IProfileService):
         async with self.db.get_ro_session() as session:
             query = select(exists().where(Profile.device_uuid == token))
             return await session.scalar(query)
+
+    async def get_count(self, search: str | None = None) -> int:
+        async with self.db.get_ro_session() as session:
+            query = select(func.count(Profile.name))
+
+            if search is not None:
+                query = query.filter(Profile.name.ilike(f"%{search}%"))
+
+            result = await session.execute(query)
+            return result.scalar_one()
+
+    async def get_list_with_complaints_count(
+        self,
+        offset: int,
+        limit: int,
+        search: str | None = None,
+    ) -> list[ProfileAdminDTO]:
+        async with self.db.get_ro_session() as session:
+            subquery = (
+                select(
+                    Profile.id,
+                    func.count(Complaint.id).label("complaints_count"),
+                )
+                .outerjoin(Complaint, Complaint.profile_id == Profile.id)
+                .group_by(Profile.id)
+                .subquery()
+            )
+
+            query = (
+                select(Profile, subquery.c.complaints_count)
+                .outerjoin(subquery, subquery.c.id == Profile.id)
+                .options(selectinload(Profile.statistic))
+                .offset(offset)
+                .limit(limit)
+            )
+
+            if search is not None:
+                query = query.filter(Profile.name.ilike(f"%{search}%"))
+
+            result = await session.execute(query)
+            profiles = result.fetchall()
+            return [await profile_orm_to_admin_dto(p) for p in profiles]
