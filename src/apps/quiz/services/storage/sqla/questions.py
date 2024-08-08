@@ -20,10 +20,10 @@ from sqlalchemy.sql.functions import (
 from sqlalchemy.sql.selectable import Select
 
 from apps.quiz.converter import (
-    list_orm_question_to_entity,
+    list_orm_question_with_answer_to_entity,
     question_from_json_to_dto,
     question_orm_to_admin_dto,
-    question_orm_to_entity,
+    question_with_answer_orm_to_entity,
 )
 from apps.quiz.exceptions import QuestionDoesNotExists
 from apps.quiz.exceptions.answer import AnswerDoesNotExists
@@ -60,7 +60,7 @@ class ORMQuestionsService(IQuestionService):
                 question.answers = sorted(
                     question.answers, key=lambda x: python_random.random()
                 )
-            return await list_orm_question_to_entity(questions)
+            return await list_orm_question_with_answer_to_entity(questions)
 
     async def get_by_id(self, pk: int) -> QuestionEntity:
         async with self.db.get_ro_session() as session:
@@ -74,7 +74,7 @@ class ORMQuestionsService(IQuestionService):
 
             if orm_result is None:
                 raise QuestionDoesNotExists()
-            return await question_orm_to_entity(orm_result[0])
+            return await question_with_answer_orm_to_entity(orm_result[0])
 
     async def get_by_id_with_complaints_count(
         self,
@@ -91,7 +91,7 @@ class ORMQuestionsService(IQuestionService):
     async def get_list_with_complaints_count(
         self,
         offset: int,
-        limit: int,
+        limit: int = 100,
         search: str | None = None,
     ) -> list[QuestionAdminDTO]:
         async with self.db.get_ro_session() as session:
@@ -130,7 +130,7 @@ class ORMQuestionsService(IQuestionService):
                 published=published,
             )
             session.add(question)
-            return await question_orm_to_entity(question)
+            return await question_with_answer_orm_to_entity(question)
 
     async def create_from_json(
         self,

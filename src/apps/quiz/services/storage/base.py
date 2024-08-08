@@ -32,7 +32,7 @@ class IQuestionService(ABC):
     async def get_list_with_complaints_count(
         self,
         offset: int,
-        limit: int,
+        limit: int = 100,
         search: str | None = None,
     ) -> list[QuestionAdminDTO]: ...
 
@@ -103,7 +103,14 @@ class IComplaintService(ABC):
     async def get_by_id(self, question_id: int) -> ComplaintEntity: ...
 
     @abstractmethod
-    async def list(self) -> ComplaintEntity: ...
+    async def get_list(
+        self,
+        offset: int,
+        limit: int = 100,
+    ) -> list[ComplaintEntity]: ...
+
+    @abstractmethod
+    async def get_count(self) -> int: ...
 
 
 @dataclass

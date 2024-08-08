@@ -13,20 +13,23 @@ from apps.quiz.models import (
     QuestionAdminDTO,
     QuestionEntity,
 )
+from apps.users.converter import orm_profile_to_entity
 from apps.users.models import ProfileEntity
 
 
-async def list_orm_question_to_entity(
+async def list_orm_question_with_answer_to_entity(
     orm_result: Sequence[Question],
 ) -> list[QuestionEntity]:
     question_list = []
     for question in orm_result:
-        q = await question_orm_to_entity(question)
+        q = await question_with_answer_orm_to_entity(question)
         question_list.append(q)
     return question_list
 
 
-async def question_orm_to_entity(orm_result: Question) -> QuestionEntity:
+async def question_with_answer_orm_to_entity(
+    orm_result: Question,
+) -> QuestionEntity:
     answer_list = []
     answers = orm_result.answers
     for answer in answers:
@@ -87,6 +90,34 @@ async def complaint_orm_to_entity(
     profile: ProfileEntity,
     category: CategoryComplaintEntity,
 ) -> ComplaintEntity:
+    return ComplaintEntity(
+        id=orm_result.id,
+        profile=profile,
+        question=question,
+        text=orm_result.text,
+        created_at=orm_result.created_at,
+        solved=orm_result.solved,
+        category=category,
+    )
+
+
+async def question_orm_to_entity(
+    orm_result: Question,
+) -> QuestionEntity:
+    question = QuestionEntity(
+        id=orm_result.id,
+        text=orm_result.text,
+        published=orm_result.published,
+    )
+    return question
+
+
+async def complaint_with_related_orm_to_entity(
+    orm_result: Complaint,
+) -> ComplaintEntity:
+    profile = await orm_profile_to_entity(orm_result.profile)
+    question = await question_orm_to_entity(orm_result.question)
+    category = await category_orm_to_entity(orm_result.category)
     return ComplaintEntity(
         id=orm_result.id,
         profile=profile,

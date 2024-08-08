@@ -37,6 +37,17 @@ class ComplaintsActions:
             category,
         )
 
+    async def get_list(
+        self,
+        page: int,
+        limit: int,
+    ) -> list[ComplaintEntity]:
+        offset = (page - 1) * limit
+        return await self.complaint_repository.get_list(offset, limit)
+
+    async def get_count(self) -> int:
+        return await self.complaint_repository.get_count()
+
 
 @dataclass
 class CategoryComplaintsActions:

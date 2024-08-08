@@ -43,7 +43,7 @@ class QuestionsActions:
 
     async def create_question_with_answers(
         self,
-        question: dict[str, str | bool | list[dict[str, str | bool]]],
+        question: dict[str, Any],
     ) -> QuestionAdminDTO:
         answers = question["answers"]
         await self.answer_validator.validate(answers)

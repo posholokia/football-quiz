@@ -1,6 +1,7 @@
 import json
 
 from api.admin.quiz.schema import (
+    ComplaintAdminRetrieveSchema,
     QuestionAdminRetrieveSchema,
     QuestionFullCreateSchema,
     QuestionFullUpdateSchema,
@@ -19,6 +20,7 @@ from fastapi import (
 from fastapi.security import HTTPBearer
 from starlette import status
 
+from apps.quiz.actions import ComplaintsActions
 from apps.quiz.actions.questions import QuestionsActions
 from apps.users.models import UserEntity
 from apps.users.permissions.admin import IsAdminUser
@@ -115,3 +117,31 @@ async def update_question(
     question_dict = json.loads(question.json())
     q = await action.update_question_with_answers(question_dict)
     return Mapper.dataclass_to_schema(QuestionAdminRetrieveSchema, q)
+
+
+@router.get(
+    "/admin/complaint/",
+    status_code=status.HTTP_200_OK,
+    description="Получить список жалоб\n\nПагинация:\n\n"
+    ":: page - номер запрошенной страницы\n\n"
+    ":: limit - кол-во записей на странице\n\n"
+    ":: pages - всего страницы для заданного limit",
+)
+async def get_list_complaints(
+    pagination_in: PagePaginationIn = Depends(),
+    # user: UserEntity = Depends(get_user_from_token),
+    container: Container = Depends(get_container),
+) -> PagePaginationResponseSchema[ComplaintAdminRetrieveSchema]:
+    # permission: IsAdminUser = container.resolve(IsAdminUser)
+    # await permission.has_permission(user)
+
+    action: ComplaintsActions = container.resolve(ComplaintsActions)
+    paginator: PagePaginator = container.resolve(
+        service_key=PagePaginator,
+        pagination=pagination_in,
+        schema=ComplaintAdminRetrieveSchema,
+        action=action,
+    )
+    res = await paginator.paginate(action.get_list)
+
+    return await res(pagination_in.page, pagination_in.limit)

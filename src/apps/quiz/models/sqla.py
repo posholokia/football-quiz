@@ -14,6 +14,7 @@ from sqlalchemy.orm import (
     relationship,
 )
 
+from apps.users.models import Profile
 from core.database.db import Base
 
 
@@ -80,14 +81,16 @@ class Complaint(Base):
     profile_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("profiles.id"), nullable=True
     )
-    profile = relationship("Profile", back_populates="complaints")
+    profile: Mapped[Profile] = relationship(
+        "Profile", back_populates="complaints"
+    )
     question_id: Mapped[int] = mapped_column(
         Integer,
         ForeignKey("questions.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
     )
-    question = relationship(
+    question: Mapped[Question] = relationship(
         "Question",
         back_populates="complaints",
     )

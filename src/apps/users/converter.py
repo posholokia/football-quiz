@@ -14,7 +14,7 @@ from apps.users.models.dto import (
 )
 
 
-async def orm_profile_to_dto(orm_result: Profile) -> ProfileEntity:
+async def orm_profile_to_entity(orm_result: Profile) -> ProfileEntity:
     return ProfileEntity(
         id=orm_result.id,
         name=orm_result.name,
@@ -53,7 +53,7 @@ async def orm_title_statistics_to_dto(
 
 
 async def orm_ladder_to_dto(orm_result: Statistic) -> LadderStatisticDTO:
-    profile_dto = await orm_profile_to_dto(orm_result.profile)
+    profile_dto = await orm_profile_to_entity(orm_result.profile)
     title_dto = await orm_profile_title_to_entity(orm_result.profile.title)
     return LadderStatisticDTO(
         id=orm_result.id,

@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from pydantic import (
     BaseModel,
     Field,
@@ -11,8 +13,6 @@ class AnswerAdminBaseSchema(BaseModel):
 
 class AnswerAdminRetrieveSchema(AnswerAdminBaseSchema):
     id: int
-    text: str
-    right: bool
 
 
 class QuestionAdminRetrieveSchema(BaseModel):
@@ -31,3 +31,27 @@ class QuestionFullCreateSchema(BaseModel):
 
 class QuestionFullUpdateSchema(QuestionAdminRetrieveSchema):
     pass
+
+
+class ProfileAdminRetrieveSchema(BaseModel):
+    id: int
+    name: str
+
+
+class QuestionShortAdminRetrieveSchema(BaseModel):
+    id: int
+    text: str
+
+
+class CategoryAdminRetrieveSchema(BaseModel):
+    id: int
+    name: str
+
+
+class ComplaintAdminRetrieveSchema(BaseModel):
+    id: int
+    profile: ProfileAdminRetrieveSchema
+    question: QuestionShortAdminRetrieveSchema
+    text: str
+    created_at: datetime
+    category: CategoryAdminRetrieveSchema

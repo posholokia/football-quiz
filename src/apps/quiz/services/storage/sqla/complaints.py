@@ -2,10 +2,12 @@ from dataclasses import dataclass
 from datetime import datetime
 
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
+from sqlalchemy.sql.functions import func
 
 from apps.quiz.converter import (
     category_orm_to_entity,
-    complaint_orm_to_entity,
+    complaint_with_related_orm_to_entity,
     list_category_orm_to_entity,
 )
 from apps.quiz.exceptions import CategoryComplaintDoesNotExists
@@ -46,13 +48,41 @@ class ORMComplaintService(IComplaintService):
             )
             session.add(complaint)
             await session.commit()
-            return await complaint_orm_to_entity(
+            return await complaint_with_related_orm_to_entity(
                 complaint, question, profile, category
             )
 
     async def get_by_id(self, pk: int) -> ComplaintEntity: ...
 
-    async def list(self) -> ComplaintEntity: ...
+    async def get_list(
+        self,
+        offset: int,
+        limit: int = 100,
+    ) -> list[ComplaintEntity]:
+        async with self.db.get_ro_session() as session:
+            query = (
+                select(Complaint)
+                .options(
+                    selectinload(Complaint.profile),
+                    selectinload(Complaint.question),
+                    selectinload(Complaint.category),
+                )
+                .offset(offset)
+                .limit(limit)
+            )
+            result = await session.execute(query)
+            complaints = result.fetchall()
+
+            return [
+                await complaint_with_related_orm_to_entity(c[0])
+                for c in complaints
+            ]
+
+    async def get_count(self) -> int:
+        async with self.db.get_ro_session() as session:
+            query = select(func.count(Complaint.id))
+            result = await session.execute(query)
+            return result.scalar_one()
 
 
 @dataclass

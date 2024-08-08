@@ -73,16 +73,14 @@ class PagePaginator(BasePaginator):
     schema: Type[TSchema]
 
     async def paginate(
-        self, func: Callable[[int, int, str | None], Coroutine]
-    ) -> Callable[[int, int, str | None], Coroutine]:
+        self, func: Callable[..., Coroutine]
+    ) -> Callable[..., Coroutine]:
         async def wrapper(
-            page: int,
-            limit: int,
-            search: str | None = None,
+            page: int, limit: int, *args, **kwargs
         ) -> PagePaginationResponseSchema:
-            res = await func(page, limit, search)
+            res = await func(page, limit, *args, **kwargs)
 
-            count = await self.action.get_count(search)
+            count = await self.action.get_count(*args, **kwargs)
             total = math.ceil(count / limit)
 
             obj_list = [
