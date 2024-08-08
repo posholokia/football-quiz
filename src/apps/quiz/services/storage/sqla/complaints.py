@@ -1,12 +1,16 @@
 from dataclasses import dataclass
 from datetime import datetime
 
-from sqlalchemy import select
+from sqlalchemy import (
+    delete,
+    select,
+)
 from sqlalchemy.orm import selectinload
 from sqlalchemy.sql.functions import func
 
 from apps.quiz.converter import (
     category_orm_to_entity,
+    complaint_orm_to_entity,
     complaint_with_related_orm_to_entity,
     list_category_orm_to_entity,
 )
@@ -48,7 +52,7 @@ class ORMComplaintService(IComplaintService):
             )
             session.add(complaint)
             await session.commit()
-            return await complaint_with_related_orm_to_entity(
+            return await complaint_orm_to_entity(
                 complaint, question, profile, category
             )
 
@@ -83,6 +87,11 @@ class ORMComplaintService(IComplaintService):
             query = select(func.count(Complaint.id))
             result = await session.execute(query)
             return result.scalar_one()
+
+    async def delete(self, pk: int) -> None:
+        async with self.db.get_session() as session:
+            query = delete(Complaint).where(Complaint.id == pk)
+            await session.execute(query)
 
 
 @dataclass

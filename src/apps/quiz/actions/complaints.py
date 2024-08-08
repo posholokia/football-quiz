@@ -48,6 +48,9 @@ class ComplaintsActions:
     async def get_count(self) -> int:
         return await self.complaint_repository.get_count()
 
+    async def delete_complaint(self, pk: int) -> None:
+        await self.complaint_repository.delete(pk)
+
 
 @dataclass
 class CategoryComplaintsActions:

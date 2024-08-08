@@ -70,11 +70,11 @@ async def get_list_question(
 )
 async def delete_question(
     question_id: int,
-    # user: UserEntity = Depends(get_user_from_token),
+    user: UserEntity = Depends(get_user_from_token),
     container: Container = Depends(get_container),
 ) -> None:
-    # permission: IsAdminUser = container.resolve(IsAdminUser)
-    # await permission.has_permission(user)
+    permission: IsAdminUser = container.resolve(IsAdminUser)
+    await permission.has_permission(user)
 
     action: QuestionsActions = container.resolve(QuestionsActions)
     await action.delete_question(question_id)
@@ -88,11 +88,11 @@ async def delete_question(
 )
 async def create_question(
     question: QuestionFullCreateSchema,
-    # user: UserEntity = Depends(get_user_from_token),
+    user: UserEntity = Depends(get_user_from_token),
     container: Container = Depends(get_container),
 ) -> QuestionAdminRetrieveSchema:
-    # permission: IsAdminUser = container.resolve(IsAdminUser)
-    # await permission.has_permission(user)
+    permission: IsAdminUser = container.resolve(IsAdminUser)
+    await permission.has_permission(user)
 
     action: QuestionsActions = container.resolve(QuestionsActions)
     question_dict = json.loads(question.json())
@@ -107,11 +107,11 @@ async def create_question(
 )
 async def update_question(
     question: QuestionFullUpdateSchema,
-    # user: UserEntity = Depends(get_user_from_token),
+    user: UserEntity = Depends(get_user_from_token),
     container: Container = Depends(get_container),
 ) -> QuestionAdminRetrieveSchema:
-    # permission: IsAdminUser = container.resolve(IsAdminUser)
-    # await permission.has_permission(user)
+    permission: IsAdminUser = container.resolve(IsAdminUser)
+    await permission.has_permission(user)
 
     action: QuestionsActions = container.resolve(QuestionsActions)
     question_dict = json.loads(question.json())
@@ -129,11 +129,11 @@ async def update_question(
 )
 async def get_list_complaints(
     pagination_in: PagePaginationIn = Depends(),
-    # user: UserEntity = Depends(get_user_from_token),
+    user: UserEntity = Depends(get_user_from_token),
     container: Container = Depends(get_container),
 ) -> PagePaginationResponseSchema[ComplaintAdminRetrieveSchema]:
-    # permission: IsAdminUser = container.resolve(IsAdminUser)
-    # await permission.has_permission(user)
+    permission: IsAdminUser = container.resolve(IsAdminUser)
+    await permission.has_permission(user)
 
     action: ComplaintsActions = container.resolve(ComplaintsActions)
     paginator: PagePaginator = container.resolve(
@@ -145,3 +145,21 @@ async def get_list_complaints(
     res = await paginator.paginate(action.get_list)
 
     return await res(pagination_in.page, pagination_in.limit)
+
+
+@router.delete(
+    "/admin/complaint/{complaint_id}/",
+    status_code=status.HTTP_204_NO_CONTENT,
+    description="Удаление жалобы",
+)
+async def delete_complaint(
+    complaint_id: int,
+    user: UserEntity = Depends(get_user_from_token),
+    container: Container = Depends(get_container),
+) -> None:
+    permission: IsAdminUser = container.resolve(IsAdminUser)
+    await permission.has_permission(user)
+
+    action: ComplaintsActions = container.resolve(ComplaintsActions)
+    await action.delete_complaint(complaint_id)
+    return None

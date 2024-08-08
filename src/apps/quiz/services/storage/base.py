@@ -112,6 +112,9 @@ class IComplaintService(ABC):
     @abstractmethod
     async def get_count(self) -> int: ...
 
+    @abstractmethod
+    async def delete(self, pk: int) -> None: ...
+
 
 @dataclass
 class ICategoryComplaintService(ABC):
