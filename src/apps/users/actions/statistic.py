@@ -78,7 +78,6 @@ class StatisticsActions:
 
     async def delete_statistic(self, period: PeriodStatistic) -> None:
         first_place_statistic = await self.repository.get_by_place(place=1)
-
         if first_place_statistic is None:
             return
 
@@ -118,6 +117,7 @@ class StatisticsActions:
             wrongs=current_stat.wrongs + wrongs,
             perfect_rounds=current_stat.perfect_rounds + int(perfect_round),
             trend=0,
+            profile_id=current_stat.profile_id,
         )
 
     async def get_top_ladder(

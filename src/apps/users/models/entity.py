@@ -20,6 +20,7 @@ class StatisticEntity:
     wrongs: int
     trend: int
     perfect_rounds: int
+    profile_id: int
 
 
 @dataclass

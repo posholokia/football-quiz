@@ -161,5 +161,6 @@ class ORMProfileService(IProfileService):
             select(Profile, subquery.c.complaints_count)
             .outerjoin(subquery, subquery.c.id == Profile.id)
             .options(selectinload(Profile.statistic))
+            .order_by(Profile.id)
         )
         return query

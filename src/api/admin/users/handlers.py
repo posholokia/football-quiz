@@ -27,7 +27,7 @@ router = APIRouter()
 @router.get(
     "/admin/profiles/",
     status_code=status.HTTP_200_OK,
-    description="Получить список вопросов\n\nПагинация:\n\n"
+    description="Получить список игроков\n\nПагинация:\n\n"
     ":: page - номер запрошенной страницы\n\n"
     ":: limit - кол-во записей на странице\n\n"
     ":: pages - всего страницы для заданного limit",
@@ -70,7 +70,7 @@ async def reset_profile_name(
 
     profile = await action.reset_name(profile_id)
 
-    return await Mapper.dataclass_to_schema(
+    return Mapper.dataclass_to_schema(
         ProfileAdminRetrieveSchema,
         profile,
     )

@@ -40,6 +40,7 @@ async def orm_statistics_to_entity(
         wrongs=orm_result.wrongs,
         perfect_rounds=orm_result.perfect_rounds,
         trend=orm_result.trend,
+        profile_id=orm_result.profile_id,
     )
 
 
@@ -57,6 +58,7 @@ async def orm_title_statistics_to_dto(
         perfect_rounds=orm_result.perfect_rounds,
         trend=orm_result.trend,
         title=title_dto,
+        profile_id=orm_result.profile_id,
     )
 
 
@@ -74,6 +76,7 @@ async def orm_ladder_to_dto(orm_result: Statistic) -> LadderStatisticDTO:
         trend=orm_result.trend,
         profile=profile_dto,
         title=title_dto,
+        profile_id=orm_result.profile_id,
     )
 
 
