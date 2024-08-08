@@ -104,7 +104,6 @@ async def orm_user_to_entity(orm_result: User) -> UserEntity:
 
 async def profile_orm_to_admin_dto(orm_result: Row) -> ProfileAdminDTO:
     profile, complaint_count = orm_result
-    print(f"\n\n{profile.statistic=}")
     statistic = await orm_statistics_to_entity(profile.statistic)
     return ProfileAdminDTO(
         id=profile.id,

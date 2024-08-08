@@ -48,6 +48,12 @@ class IProfileService(ABC):
         search: str | None = None,
     ) -> list[ProfileAdminDTO]: ...
 
+    @abstractmethod
+    async def get_with_complaints_count_by_id(
+        self,
+        pk: int,
+    ) -> ProfileAdminDTO: ...
+
 
 @dataclass
 class IStatisticService(ABC):

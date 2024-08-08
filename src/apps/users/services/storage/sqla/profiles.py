@@ -7,6 +7,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import selectinload
 from sqlalchemy.sql.functions import func
+from sqlalchemy.sql.selectable import Select
 
 from apps.quiz.models import Complaint
 from apps.users.converter import (
@@ -65,6 +66,12 @@ class ORMProfileService(IProfileService):
             result = await session.execute(query)
             await session.commit()
             orm_result = result.fetchone()
+
+            if orm_result is None:
+                raise DoesNotExistsProfile(
+                    detail=f"Профиль с id={pk} не найден"
+                )
+
             return await orm_profile_to_entity(orm_result[0])
 
     async def get_by_id(self, pk: int) -> ProfileEntity:
@@ -107,20 +114,8 @@ class ORMProfileService(IProfileService):
         search: str | None = None,
     ) -> list[ProfileAdminDTO]:
         async with self.db.get_ro_session() as session:
-            subquery = (
-                select(
-                    Profile.id,
-                    func.count(Complaint.id).label("complaints_count"),
-                )
-                .outerjoin(Complaint, Complaint.profile_id == Profile.id)
-                .group_by(Profile.id)
-                .subquery()
-            )
-
             query = (
-                select(Profile, subquery.c.complaints_count)
-                .outerjoin(subquery, subquery.c.id == Profile.id)
-                .options(selectinload(Profile.statistic))
+                self._sub_get_with_complaints_count()
                 .offset(offset)
                 .limit(limit)
             )
@@ -131,3 +126,40 @@ class ORMProfileService(IProfileService):
             result = await session.execute(query)
             profiles = result.fetchall()
             return [await profile_orm_to_admin_dto(p) for p in profiles]
+
+    async def get_with_complaints_count_by_id(
+        self,
+        pk: int,
+    ) -> ProfileAdminDTO:
+        async with self.db.get_ro_session() as session:
+            query = self._sub_get_with_complaints_count().where(
+                Profile.id == pk
+            )
+
+            result = await session.execute(query)
+            profile = result.fetchone()
+
+            if profile is None:
+                raise DoesNotExistsProfile(
+                    detail=f"Профиль с id={pk} не найден"
+                )
+            return await profile_orm_to_admin_dto(profile)
+
+    @staticmethod
+    def _sub_get_with_complaints_count() -> Select:
+        subquery = (
+            select(
+                Profile.id,
+                func.count(Complaint.id).label("complaints_count"),
+            )
+            .outerjoin(Complaint, Complaint.profile_id == Profile.id)
+            .group_by(Profile.id)
+            .subquery()
+        )
+
+        query = (
+            select(Profile, subquery.c.complaints_count)
+            .outerjoin(subquery, subquery.c.id == Profile.id)
+            .options(selectinload(Profile.statistic))
+        )
+        return query

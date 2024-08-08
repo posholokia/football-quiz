@@ -50,3 +50,9 @@ class ProfileActions:
 
     async def get_count(self, search: str | None = None) -> int:
         return await self.profile_repository.get_count(search)
+
+    async def reset_name(self, pk: int) -> ProfileAdminDTO:
+        await self.profile_repository.patch(pk, name=f"Игрок-{pk}")
+        return await self.profile_repository.get_with_complaints_count_by_id(
+            pk,
+        )
