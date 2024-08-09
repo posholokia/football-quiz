@@ -1,8 +1,15 @@
-from dataclasses import dataclass
+from dataclasses import (
+    dataclass,
+    field,
+)
 
-from .entity import QuestionEntity
+from .entity import AnswerEntity
 
 
 @dataclass
-class QuestionAdminDTO(QuestionEntity):
+class QuestionAdminDTO:
+    id: int
+    text: str
+    published: bool
     complaints: int = 0
+    answers: list[AnswerEntity] = field(default_factory=list)

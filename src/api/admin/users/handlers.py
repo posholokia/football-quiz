@@ -48,7 +48,7 @@ async def get_list_profiles(
         schema=ProfileAdminRetrieveSchema,
         action=action,
     )
-    res = await paginator.paginate(action.get_list)
+    res = await paginator.paginate(action.get_list_admin)
 
     return await res(pagination_in.page, pagination_in.limit, search)
 

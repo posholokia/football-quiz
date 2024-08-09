@@ -5,34 +5,29 @@ from abc import (
 from dataclasses import dataclass
 
 from apps.users.models import (
-    BestPlayerTitleEntity,
-    ProfileEntity,
-    StatisticEntity,
-    UserEntity,
-)
-from apps.users.models.dto import (
-    LadderStatisticDTO,
-    ProfileAdminDTO,
-    TitleStatisticDTO,
+    BestPlayerTitle,
+    Profile,
+    Statistic,
+    User,
 )
 
 
 @dataclass
 class IProfileService(ABC):
     @abstractmethod
-    async def create(self, device: str) -> ProfileEntity: ...
+    async def create(self, device: str) -> Profile: ...
 
     @abstractmethod
-    async def get_or_create(self, device: str) -> ProfileEntity: ...
+    async def get_or_create(self, device: str) -> Profile: ...
 
     @abstractmethod
-    async def patch(self, pk, **fields) -> ProfileEntity: ...
+    async def patch(self, pk, **fields) -> Profile: ...
 
     @abstractmethod
-    async def get_by_id(self, pk: int) -> ProfileEntity: ...
+    async def get_by_id(self, pk: int) -> Profile: ...
 
     @abstractmethod
-    async def get_by_device(self, token: str) -> ProfileEntity: ...
+    async def get_by_device(self, token: str) -> Profile: ...
 
     @abstractmethod
     async def exists_by_token(self, token: str) -> bool: ...
@@ -46,33 +41,35 @@ class IProfileService(ABC):
         offset: int,
         limit: int,
         search: str | None = None,
-    ) -> list[ProfileAdminDTO]: ...
+    ) -> list[tuple[Profile, int]]: ...
 
     @abstractmethod
     async def get_with_complaints_count_by_id(
         self,
         pk: int,
-    ) -> ProfileAdminDTO: ...
+    ) -> tuple[Profile, int]: ...
 
 
 @dataclass
 class IStatisticService(ABC):
     @abstractmethod
-    async def create(self, pk: int, place: int) -> StatisticEntity: ...
+    async def create(
+        self,
+        pk: int,
+        place: int,
+    ) -> Statistic: ...
 
     @abstractmethod
-    async def get_by_profile(self, profile_pk: int) -> TitleStatisticDTO: ...
+    async def get_by_profile(self, profile_pk: int) -> Statistic: ...
 
     @abstractmethod
-    async def get_by_place(self, place: int) -> StatisticEntity | None: ...
+    async def get_by_place(self, place: int) -> Statistic | None: ...
 
     @abstractmethod
-    async def get_or_create_by_profile(
-        self, profile_pk: int
-    ) -> StatisticEntity: ...
+    async def get_or_create_by_profile(self, profile_pk: int) -> Statistic: ...
 
     @abstractmethod
-    async def patch(self, pk: int, **fields) -> TitleStatisticDTO: ...
+    async def patch(self, pk: int, **fields) -> Statistic: ...
 
     @abstractmethod
     async def get_user_rank(
@@ -85,7 +82,7 @@ class IStatisticService(ABC):
         self,
         offset: int | None,
         limit: int | None,
-    ) -> list[LadderStatisticDTO]: ...
+    ) -> list[Statistic]: ...
 
     @abstractmethod
     async def get_count(self) -> int: ...
@@ -112,18 +109,16 @@ class IProfileTitleService(ABC):
     async def get_or_create_by_profile(
         self,
         profile_pk: int,
-    ) -> BestPlayerTitleEntity: ...
+    ) -> BestPlayerTitle: ...
 
     @abstractmethod
-    async def patch(
-        self, profile_pk: int, **fields
-    ) -> BestPlayerTitleEntity: ...
+    async def patch(self, profile_pk: int, **fields) -> BestPlayerTitle: ...
 
 
 @dataclass
 class IUserService(ABC):
     @abstractmethod
-    async def get_by_username(self, username: str) -> UserEntity: ...
+    async def get_by_username(self, username: str) -> User: ...
 
     @abstractmethod
-    async def get_by_id(self, pk: int) -> UserEntity: ...
+    async def get_by_id(self, pk: int) -> User: ...

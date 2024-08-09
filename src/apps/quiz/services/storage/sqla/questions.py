@@ -9,6 +9,7 @@ from sqlalchemy import (
     true,
     update,
 )
+from sqlalchemy.engine.row import Row
 from sqlalchemy.orm import (
     aliased,
     selectinload,
@@ -19,20 +20,12 @@ from sqlalchemy.sql.functions import (
 )
 from sqlalchemy.sql.selectable import Select
 
-from apps.quiz.converter import (
-    list_orm_question_with_answer_to_entity,
-    question_from_json_to_dto,
-    question_orm_to_admin_dto,
-    question_with_answer_orm_to_entity,
-)
 from apps.quiz.exceptions import QuestionDoesNotExists
 from apps.quiz.exceptions.answer import AnswerDoesNotExists
 from apps.quiz.models import (
     Answer,
     Complaint,
     Question,
-    QuestionAdminDTO,
-    QuestionEntity,
 )
 from apps.quiz.services.storage.base import IQuestionService
 from core.database.db import Database
@@ -42,7 +35,7 @@ from core.database.db import Database
 class ORMQuestionsService(IQuestionService):
     db: Database
 
-    async def get_random(self, limit: int) -> list[QuestionEntity]:
+    async def get_random(self, limit: int) -> list[Question]:
         async with self.db.get_ro_session() as session:
             q = aliased(Question, tablesample(Question, func.bernoulli(0.2)))
             query = (
@@ -60,9 +53,9 @@ class ORMQuestionsService(IQuestionService):
                 question.answers = sorted(
                     question.answers, key=lambda x: python_random.random()
                 )
-            return await list_orm_question_with_answer_to_entity(questions)
+            return questions
 
-    async def get_by_id(self, pk: int) -> QuestionEntity:
+    async def get_by_id(self, pk: int) -> Question:
         async with self.db.get_ro_session() as session:
             query = (
                 select(Question)
@@ -70,30 +63,30 @@ class ORMQuestionsService(IQuestionService):
                 .options(selectinload(Question.answers))
             )
             result = await session.execute(query)
-            orm_result = result.fetchone()
+            orm_result = result.scalar()
 
             if orm_result is None:
                 raise QuestionDoesNotExists()
-            return await question_with_answer_orm_to_entity(orm_result[0])
+            return orm_result
 
     async def get_by_id_with_complaints_count(
         self,
         pk: int,
-    ) -> QuestionAdminDTO:
+    ) -> Row[Question, int]:
         async with self.db.get_ro_session() as session:
             query = self._sub_question_with_complaints_count().where(
                 Question.id == pk
             )
             result = await session.execute(query)
             questions = result.fetchone()
-            return await question_orm_to_admin_dto(questions)
+            return questions
 
     async def get_list_with_complaints_count(
         self,
         offset: int,
         limit: int = 100,
         search: str | None = None,
-    ) -> list[QuestionAdminDTO]:
+    ) -> list[Row[Question, int]]:
         async with self.db.get_ro_session() as session:
             query = (
                 self._sub_question_with_complaints_count()
@@ -106,7 +99,7 @@ class ORMQuestionsService(IQuestionService):
 
             result = await session.execute(query)
             questions = result.fetchall()
-            return [await question_orm_to_admin_dto(q) for q in questions]
+            return questions
 
     async def get_count(self, search: str | None = None) -> int:
         async with self.db.get_ro_session() as session:
@@ -123,21 +116,21 @@ class ORMQuestionsService(IQuestionService):
             query = delete(Question).where(Question.id == pk)
             await session.execute(query)
 
-    async def create(self, text: str, published: bool) -> QuestionEntity:
+    async def create(self, text: str, published: bool) -> Question:
         async with self.db.get_session() as session:
             question = Question(
                 text=text,
                 published=published,
             )
             session.add(question)
-            return await question_with_answer_orm_to_entity(question)
+            return question
 
     async def create_from_json(
         self,
         question_text: str,
         question_published: bool,
         answers: list[dict[str, str | bool]],
-    ) -> QuestionAdminDTO:
+    ) -> tuple[Question, list[Answer]]:
         async with self.db.get_session() as session:
             q = Question(
                 text=question_text,
@@ -157,18 +150,15 @@ class ORMQuestionsService(IQuestionService):
                 answer_models.append(answer)
             await session.flush(answer_models)
 
-            return await question_from_json_to_dto(
-                question=q, answers=answer_models
-            )
+            return q, answer_models
 
     async def update_from_json(
         self,
         question_id: int,
         question_text: str,
         question_published: bool,
-        question_complaints: int,
         answers: list[dict[str, str | bool | int]],
-    ) -> QuestionAdminDTO:
+    ) -> tuple[Question, list[Answer]]:
         async with self.db.get_session() as session:
             query_questions = (
                 update(Question)
@@ -180,7 +170,7 @@ class ORMQuestionsService(IQuestionService):
                 .returning(Question)
             )
             result = await session.execute(query_questions)
-            question = result.fetchone()
+            question = result.scalar()
 
             if question is None:
                 await session.rollback()
@@ -197,7 +187,7 @@ class ORMQuestionsService(IQuestionService):
                     .returning(Answer)
                 )
                 result = await session.execute(query_answer)
-                a = result.fetchone()
+                a = result.scalar()
 
                 if a is None:
                     await session.rollback()
@@ -205,12 +195,8 @@ class ORMQuestionsService(IQuestionService):
                         detail=f"Ответ с id={answer['id']} не существует"
                     )
 
-                answer_models.append(a[0])
-            return await question_from_json_to_dto(
-                question=question[0],
-                answers=answer_models,
-                complaints=question_complaints,
-            )
+                answer_models.append(a)
+            return question, answer_models
 
     async def exists_by_id(self, pk: int) -> bool:
         async with self.db.get_ro_session() as session:

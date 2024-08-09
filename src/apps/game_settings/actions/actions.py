@@ -9,7 +9,9 @@ class GameSettingsActions:
     repository: IGameSettingsService
 
     async def get(self) -> GameSettingsEntity:
-        return await self.repository.get()
+        game_settings = await self.repository.get()
+        return game_settings.to_entity()
 
     async def patch(self, **fields) -> GameSettingsEntity:
-        return await self.repository.patch(**fields)
+        game_settings = await self.repository.patch(**fields)
+        return game_settings.to_entity()

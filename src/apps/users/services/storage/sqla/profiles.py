@@ -10,16 +10,8 @@ from sqlalchemy.sql.functions import func
 from sqlalchemy.sql.selectable import Select
 
 from apps.quiz.models import Complaint
-from apps.users.converter import (
-    orm_profile_to_entity,
-    profile_orm_to_admin_dto,
-)
 from apps.users.exceptions.profile import DoesNotExistsProfile
-from apps.users.models import (
-    Profile,
-    ProfileAdminDTO,
-    ProfileEntity,
-)
+from apps.users.models import Profile
 from apps.users.services.storage import IProfileService
 from core.database.db import Database
 
@@ -28,7 +20,7 @@ from core.database.db import Database
 class ORMProfileService(IProfileService):
     db: Database
 
-    async def create(self, device: str) -> ProfileEntity:
+    async def create(self, device: str) -> Profile:
         async with self.db.get_session() as session:
             new_profile = Profile(
                 name="Игрок",
@@ -36,13 +28,13 @@ class ORMProfileService(IProfileService):
             )
             session.add(new_profile)
             await session.commit()
-            return await orm_profile_to_entity(new_profile)
+            return new_profile
 
-    async def get_or_create(self, device: str) -> ProfileEntity:
+    async def get_or_create(self, device: str) -> Profile:
         async with self.db.get_session() as session:
             query = select(Profile).where(Profile.device_uuid == device)
             result = await session.execute(query)
-            orm_result = result.fetchone()
+            orm_result = result.scalar()
 
             if orm_result is None:
                 new_profile = Profile(
@@ -51,11 +43,10 @@ class ORMProfileService(IProfileService):
                 )
                 session.add(new_profile)
                 await session.commit()
-            else:
-                new_profile = orm_result[0]
-            return await orm_profile_to_entity(new_profile)
 
-    async def patch(self, pk: int, **fields) -> ProfileEntity:
+            return await new_profile
+
+    async def patch(self, pk: int, **fields) -> Profile:
         async with self.db.get_session() as session:
             query = (
                 update(Profile)
@@ -65,32 +56,31 @@ class ORMProfileService(IProfileService):
             )
             result = await session.execute(query)
             await session.commit()
-            orm_result = result.fetchone()
+            orm_result = result.scalar()
 
             if orm_result is None:
                 raise DoesNotExistsProfile(
                     detail=f"Профиль с id={pk} не найден"
                 )
 
-            return await orm_profile_to_entity(orm_result[0])
+            return orm_result
 
-    async def get_by_id(self, pk: int) -> ProfileEntity:
+    async def get_by_id(self, pk: int) -> Profile:
         async with self.db.get_ro_session() as session:
             query = select(Profile).where(Profile.id == pk)
             result = await session.execute(query)
-            orm_result = result.fetchone()
+            orm_result = result.scalar()
 
             if orm_result is None:
                 raise DoesNotExistsProfile()
 
-            return await orm_profile_to_entity(orm_result[0])
+            return orm_result
 
-    async def get_by_device(self, token: str) -> ProfileEntity:
+    async def get_by_device(self, token: str) -> Profile:
         async with self.db.get_ro_session() as session:
             query = select(Profile).where(Profile.device_uuid == token)
             result = await session.execute(query)
-            orm_result = result.fetchone()
-            return await orm_profile_to_entity(orm_result[0])
+            return result.scalar()
 
     async def exists_by_token(self, token: str) -> bool:
         async with self.db.get_ro_session() as session:
@@ -112,7 +102,7 @@ class ORMProfileService(IProfileService):
         offset: int,
         limit: int,
         search: str | None = None,
-    ) -> list[ProfileAdminDTO]:
+    ) -> list[tuple[Profile, int]]:
         async with self.db.get_ro_session() as session:
             query = (
                 self._sub_get_with_complaints_count()
@@ -125,12 +115,13 @@ class ORMProfileService(IProfileService):
 
             result = await session.execute(query)
             profiles = result.fetchall()
-            return [await profile_orm_to_admin_dto(p) for p in profiles]
+
+            return profiles
 
     async def get_with_complaints_count_by_id(
         self,
         pk: int,
-    ) -> ProfileAdminDTO:
+    ) -> tuple[Profile, int]:
         async with self.db.get_ro_session() as session:
             query = self._sub_get_with_complaints_count().where(
                 Profile.id == pk
@@ -143,7 +134,7 @@ class ORMProfileService(IProfileService):
                 raise DoesNotExistsProfile(
                     detail=f"Профиль с id={pk} не найден"
                 )
-            return await profile_orm_to_admin_dto(profile)
+            return profile
 
     @staticmethod
     def _sub_get_with_complaints_count() -> Select:
@@ -164,3 +155,20 @@ class ORMProfileService(IProfileService):
             .order_by(Profile.id)
         )
         return query
+
+
+if __name__ == "__main__":
+    import asyncio
+
+    from apps.users.services.storage.base import IProfileService
+    from config.containers import get_container
+
+    async def main():
+        container = get_container()
+        repo: ORMProfileService = container.resolve(IProfileService)
+        res = await repo.get_list_with_complaints_count(0, 10)
+
+        for i in res:
+            print(i[0].to_entity())
+
+    asyncio.run(main())

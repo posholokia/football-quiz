@@ -19,13 +19,11 @@ from apps.quiz.actions import (
 )
 from apps.quiz.permissions.quiz import DevicePermissions
 from apps.quiz.services.storage.base import (
-    IAnswerService,
     ICategoryComplaintService,
     IComplaintService,
     IQuestionService,
 )
 from apps.quiz.services.storage.sqla import (
-    ORMAnswerService,
     ORMCategoryComplaintService,
     ORMComplaintService,
     ORMQuestionsService,
@@ -109,7 +107,6 @@ class DiContainer:
         self.container.register(
             ICategoryComplaintService, ORMCategoryComplaintService
         )
-        self.container.register(IAnswerService, ORMAnswerService)
 
     def __init_service_containers(self):
         self.container.register(RedisPool, scope=Scope.singleton)

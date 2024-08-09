@@ -4,13 +4,13 @@ from abc import (
 )
 from dataclasses import dataclass
 
-from apps.game_settings.models import GameSettingsEntity
+from apps.game_settings.models import GameSettings
 
 
 @dataclass
 class IGameSettingsService(ABC):
     @abstractmethod
-    async def get(self) -> GameSettingsEntity: ...
+    async def get(self) -> GameSettings: ...
 
     @abstractmethod
-    async def patch(self, **fields) -> GameSettingsEntity: ...
+    async def patch(self, **fields) -> GameSettings: ...

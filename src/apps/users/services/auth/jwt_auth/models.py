@@ -22,7 +22,7 @@ class AccessToken(Token):
 @dataclass
 class RefreshToken(Token):
     token_type: TokenType = TokenType.refresh
-    lifetime: timedelta = timedelta(seconds=2)
+    lifetime: timedelta = timedelta(weeks=2)
     sub_claim: str = "user_id"
 
     async def access_token(self, refresh_token: str) -> str:

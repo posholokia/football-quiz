@@ -8,25 +8,15 @@ from sqlalchemy import (
 from sqlalchemy.orm import selectinload
 from sqlalchemy.sql.functions import func
 
-from apps.quiz.converter import (
-    category_orm_to_entity,
-    complaint_orm_to_entity,
-    complaint_with_related_orm_to_entity,
-    list_category_orm_to_entity,
-)
 from apps.quiz.exceptions import CategoryComplaintDoesNotExists
 from apps.quiz.models import (
     CategoryComplaint,
-    CategoryComplaintEntity,
     Complaint,
-    ComplaintEntity,
-    QuestionEntity,
 )
 from apps.quiz.services.storage.base import (
     ICategoryComplaintService,
     IComplaintService,
 )
-from apps.users.models import ProfileEntity
 from core.database.db import Database
 
 
@@ -37,32 +27,30 @@ class ORMComplaintService(IComplaintService):
     async def create(
         self,
         text: str,
-        question: QuestionEntity,
-        profile: ProfileEntity,
-        category: CategoryComplaintEntity,
-    ) -> ComplaintEntity:
+        question_id: int,
+        profile_id: int,
+        category_id: int,
+    ) -> Complaint:
         async with self.db.get_session() as session:
             complaint = Complaint(
-                profile_id=profile.id,
-                question_id=question.id,
+                profile_id=profile_id,
+                question_id=question_id,
                 text=text,
                 created_at=datetime.now(),
                 solved=False,
-                category_id=category.id,
+                category_id=category_id,
             )
             session.add(complaint)
             await session.commit()
-            return await complaint_orm_to_entity(
-                complaint, question, profile, category
-            )
+            return complaint
 
-    async def get_by_id(self, pk: int) -> ComplaintEntity: ...
+    async def get_by_id(self, pk: int) -> Complaint: ...
 
     async def get_list(
         self,
         offset: int,
         limit: int = 100,
-    ) -> list[ComplaintEntity]:
+    ) -> list[Complaint]:
         async with self.db.get_ro_session() as session:
             query = (
                 select(Complaint)
@@ -75,12 +63,9 @@ class ORMComplaintService(IComplaintService):
                 .limit(limit)
             )
             result = await session.execute(query)
-            complaints = result.fetchall()
+            complaints = result.scalars().fetchall()
 
-            return [
-                await complaint_with_related_orm_to_entity(c[0])
-                for c in complaints
-            ]
+            return complaints
 
     async def get_count(self) -> int:
         async with self.db.get_ro_session() as session:
@@ -98,20 +83,51 @@ class ORMComplaintService(IComplaintService):
 class ORMCategoryComplaintService(ICategoryComplaintService):
     db: Database
 
-    async def list(self) -> list[CategoryComplaintEntity]:
+    async def list(self) -> list[CategoryComplaint]:
         async with self.db.get_ro_session() as session:
             query = select(CategoryComplaint)
             result = await session.execute(query)
             orm_result = result.scalars().all()
 
-            return await list_category_orm_to_entity(orm_result)
+            return orm_result
 
-    async def get_by_id(self, pk: int) -> CategoryComplaintEntity:
+    async def get_by_id(self, pk: int) -> CategoryComplaint:
         async with self.db.get_ro_session() as session:
-            query = select(CategoryComplaint)
+            query = select(CategoryComplaint).where(CategoryComplaint.id == pk)
             result = await session.execute(query)
-            orm_result = result.fetchone()
+            orm_result = result.scalar()
 
             if orm_result is None:
                 raise CategoryComplaintDoesNotExists()
-            return await category_orm_to_entity(orm_result[0])
+            return orm_result
+
+
+if __name__ == "__main__":
+    import asyncio
+
+    from apps.quiz.services.storage.base import (
+        ICategoryComplaintService,
+        IComplaintService,
+    )
+    from apps.quiz.services.storage.sqla import (
+        ORMCategoryComplaintService,
+        ORMComplaintService,
+    )
+    from config.containers import get_container
+
+    async def main():
+        container = get_container()
+        repo: ORMComplaintService = container.resolve(IComplaintService)
+        res = await repo.get_list(0, 1)
+        for complaint in res:
+            print(complaint.to_entity())
+            print(complaint.category_id)
+            pass
+
+        cat_repo: ORMCategoryComplaintService = container.resolve(
+            ICategoryComplaintService
+        )
+        cat = await cat_repo.get_by_id(14)
+        print(cat.to_entity())
+
+    asyncio.run(main())

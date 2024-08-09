@@ -1,11 +1,10 @@
 from dataclasses import dataclass
 
 from apps.users.models import (
-    LadderStatisticDTO,
     PeriodStatistic,
+    StatisticDTO,
     StatisticEntity,
 )
-from apps.users.models.dto import TitleStatisticDTO
 from apps.users.services.storage import (
     IProfileService,
     IStatisticService,
@@ -32,12 +31,13 @@ class StatisticsActions:
         rights: int,
         wrongs: int,
         perfect_round: bool,
-    ) -> TitleStatisticDTO:
-        profile = await self.profile_repository.get_by_id(profile_pk)
+    ) -> StatisticDTO:
+        profile_orm = await self.profile_repository.get_by_id(profile_pk)
         # получаем текущую статистику игрока
-        current_stat = await self.repository.get_or_create_by_profile(
-            profile.id,
+        statistic_orm = await self.repository.get_or_create_by_profile(
+            profile_orm.id,
         )
+        current_stat = statistic_orm.to_entity()
         # получаем обновленную статистику в виде DTO,
         # место в рейтинге не меняем
         after_game_stat = await self._get_updated_statistic(
@@ -58,7 +58,7 @@ class StatisticsActions:
             trend=after_game_stat.trend,
         )
         # получаем новое место игрока после обновления статистики
-        new_place = await self.get_user_rank(profile.id)
+        new_place = await self.get_user_rank(profile_orm.id)
         # если место не изменилось, выходим из функции
         if current_stat.place == new_place:
             return new_stat
@@ -71,10 +71,33 @@ class StatisticsActions:
             trend=current_stat.place - new_place,
         )
         stat = await self.repository.get_by_profile(profile_pk)
-        return stat
+        return StatisticDTO(
+            id=stat.to_entity().id,
+            games=stat.to_entity().games,
+            score=stat.to_entity().score,
+            place=stat.to_entity().place,
+            rights=stat.to_entity().rights,
+            wrongs=stat.to_entity().wrongs,
+            trend=stat.to_entity().trend,
+            perfect_rounds=stat.to_entity().perfect_rounds,
+            profile=stat.to_entity().profile,
+            title=stat.to_entity().profile.title,
+        )
 
-    async def get_by_profile(self, profile_pk: int) -> TitleStatisticDTO:
-        return await self.repository.get_by_profile(profile_pk)
+    async def get_by_profile(self, profile_pk: int) -> StatisticDTO:
+        stat = await self.repository.get_by_profile(profile_pk)
+        return StatisticDTO(
+            id=stat.to_entity().id,
+            games=stat.to_entity().games,
+            score=stat.to_entity().score,
+            place=stat.to_entity().place,
+            rights=stat.to_entity().rights,
+            wrongs=stat.to_entity().wrongs,
+            trend=stat.to_entity().trend,
+            perfect_rounds=stat.to_entity().perfect_rounds,
+            profile=stat.to_entity().profile,
+            title=stat.to_entity().profile.title,
+        )
 
     async def delete_statistic(self, period: PeriodStatistic) -> None:
         first_place_statistic = await self.repository.get_by_place(place=1)
@@ -117,16 +140,29 @@ class StatisticsActions:
             wrongs=current_stat.wrongs + wrongs,
             perfect_rounds=current_stat.perfect_rounds + int(perfect_round),
             trend=0,
-            profile_id=current_stat.profile_id,
         )
 
     async def get_top_ladder(
         self,
         offset: int | None = None,
         limit: int | None = None,
-    ) -> list[LadderStatisticDTO]:
+    ) -> list[StatisticDTO]:
         statistics = await self.repository.get_top_gamers(offset, limit)
-        return statistics
+        return [
+            StatisticDTO(
+                id=stat.to_entity().id,
+                games=stat.to_entity().games,
+                score=stat.to_entity().score,
+                place=stat.to_entity().place,
+                rights=stat.to_entity().rights,
+                wrongs=stat.to_entity().wrongs,
+                trend=stat.to_entity().trend,
+                perfect_rounds=stat.to_entity().perfect_rounds,
+                profile=stat.to_entity().profile,
+                title=stat.to_entity().profile.title,
+            )
+            for stat in statistics
+        ]
 
     async def get_count_statistic(self) -> int:
         return await self.repository.get_count()

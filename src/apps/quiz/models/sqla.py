@@ -5,6 +5,7 @@ from sqlalchemy import (
     Boolean,
     DateTime,
     ForeignKey,
+    inspect,
     Integer,
     Text,
 )
@@ -13,7 +14,14 @@ from sqlalchemy.orm import (
     mapped_column,
     relationship,
 )
+from sqlalchemy.orm.base import LoaderCallableStatus as load_status
 
+from apps.quiz.models import (
+    AnswerEntity,
+    CategoryComplaintEntity,
+    ComplaintEntity,
+    QuestionEntity,
+)
 from apps.users.models import Profile
 from core.database.db import Base
 
@@ -43,6 +51,32 @@ class Question(Base):
         passive_deletes=True,
     )
 
+    def to_entity(self):
+        """
+        Преобразует ORM в объект Entity.
+        Если связанный объект(ы) не подгружен из БД,
+        то в поле объекта будет None или пустой список соответственно
+        """
+        answers = (
+            self.answers
+            if not inspect(self).attrs.answers.loaded_value
+            == load_status.NO_VALUE
+            else []
+        )
+        complaints = (
+            self.complaints
+            if not inspect(self).attrs.complaints.loaded_value
+            == load_status.NO_VALUE
+            else []
+        )
+        return QuestionEntity(
+            id=self.id,
+            text=self.text,
+            published=self.published,
+            answers=[answer.to_entity() for answer in answers],
+            complaints=[complaint.to_entity() for complaint in complaints],
+        )
+
 
 class Answer(Base):
     __tablename__ = "answers"
@@ -66,6 +100,25 @@ class Answer(Base):
         "Question",
         back_populates="answers",
     )
+
+    def to_entity(self):
+        """
+        Преобразует ORM в объект Entity.
+        Если связанный объект(ы) не подгружен из БД,
+        то в поле объекта будет None или пустой список соответственно
+        """
+        question = (
+            self.question
+            if not inspect(self).attrs.question.loaded_value
+            == load_status.NO_VALUE
+            else None
+        )
+        return AnswerEntity(
+            id=self.id,
+            text=self.text,
+            right=self.right,
+            question=question.to_entity() if question else None,
+        )
 
 
 class Complaint(Base):
@@ -104,6 +157,40 @@ class Complaint(Base):
         "CategoryComplaint", back_populates="complaint"
     )
 
+    def to_entity(self) -> ComplaintEntity:
+        """
+        Преобразует ORM в объект Entity.
+        Если связанный объект(ы) не подгружен из БД,
+        то в поле объекта будет None или пустой список соответственно
+        """
+        profile = (
+            self.profile
+            if not inspect(self).attrs.profile.loaded_value
+            == load_status.NO_VALUE
+            else None
+        )
+        question = (
+            self.question
+            if not inspect(self).attrs.question.loaded_value
+            == load_status.NO_VALUE
+            else None
+        )
+        category = (
+            self.category
+            if not inspect(self).attrs.category.loaded_value
+            == load_status.NO_VALUE
+            else None
+        )
+        return ComplaintEntity(
+            id=self.id,
+            text=self.text,
+            created_at=self.created_at,
+            solved=self.solved,
+            profile=profile.to_entity() if profile else None,
+            question=question.to_entity() if question else None,
+            category=category.to_entity() if category else None,
+        )
+
 
 class CategoryComplaint(Base):
     __tablename__ = "category_complaints"
@@ -119,3 +206,21 @@ class CategoryComplaint(Base):
     complaint: Mapped[List["CategoryComplaint"]] = relationship(
         "Complaint", back_populates="category"
     )
+
+    def to_entity(self) -> CategoryComplaintEntity:
+        """
+        Преобразует ORM в объект Entity.
+        Если связанный объект(ы) не подгружен из БД,
+        то в поле объекта будет None или пустой список соответственно
+        """
+        complaints = (
+            self.complaint
+            if not inspect(self).attrs.complaint.loaded_value
+            == load_status.NO_VALUE
+            else []
+        )
+        return CategoryComplaintEntity(
+            id=self.id,
+            name=self.name,
+            complaints=[c.to_entity for c in complaints],
+        )

@@ -4,29 +4,29 @@ from abc import (
 )
 from dataclasses import dataclass
 
+from sqlalchemy.engine.row import Row
+
 from apps.quiz.models import (
-    AnswerEntity,
-    CategoryComplaintEntity,
-    ComplaintEntity,
-    QuestionAdminDTO,
-    QuestionEntity,
+    Answer,
+    CategoryComplaint,
+    Complaint,
+    Question,
 )
-from apps.users.models import ProfileEntity
 
 
 @dataclass
 class IQuestionService(ABC):
     @abstractmethod
-    async def get_random(self, limit: int) -> list[QuestionEntity]: ...
+    async def get_random(self, limit: int) -> list[Question]: ...
 
     @abstractmethod
-    async def get_by_id(self, pk: int) -> QuestionEntity: ...
+    async def get_by_id(self, pk: int) -> Question: ...
 
     @abstractmethod
     async def get_by_id_with_complaints_count(
         self,
         pk: int,
-    ) -> QuestionAdminDTO: ...
+    ) -> Row[Question, int]: ...
 
     @abstractmethod
     async def get_list_with_complaints_count(
@@ -34,7 +34,7 @@ class IQuestionService(ABC):
         offset: int,
         limit: int = 100,
         search: str | None = None,
-    ) -> list[QuestionAdminDTO]: ...
+    ) -> list[Row[Question, int]]: ...
 
     @abstractmethod
     async def get_count(self, search: str | None = None) -> int: ...
@@ -43,7 +43,7 @@ class IQuestionService(ABC):
     async def delete(self, pk: int) -> None: ...
 
     @abstractmethod
-    async def create(self, text: str, published: bool) -> QuestionEntity: ...
+    async def create(self, text: str, published: bool) -> Question: ...
 
     @abstractmethod
     async def create_from_json(
@@ -51,7 +51,7 @@ class IQuestionService(ABC):
         question_text: str,
         question_published: bool,
         answers: list[dict[str, str | bool]],
-    ) -> QuestionAdminDTO: ...
+    ) -> tuple[Question, list[Answer]]: ...
 
     @abstractmethod
     async def update_from_json(
@@ -59,9 +59,8 @@ class IQuestionService(ABC):
         question_id: int,
         question_text: str,
         question_published: bool,
-        question_complaints: int,
         answers: list[dict[str, str | bool | int]],
-    ) -> QuestionAdminDTO: ...
+    ) -> tuple[Question, list[Answer]]: ...
 
     @abstractmethod
     async def exists_by_id(self, pk: int) -> bool: ...
@@ -75,14 +74,14 @@ class IAnswerService(ABC):
         text: str,
         right: bool,
         question_id: int,
-    ) -> AnswerEntity: ...
+    ) -> Answer: ...
 
     @abstractmethod
     async def update(
         self,
         pk: int,
         **fields,
-    ) -> AnswerEntity: ...
+    ) -> Answer: ...
 
     @abstractmethod
     async def exists_by_id(self, pk: int) -> bool: ...
@@ -94,20 +93,20 @@ class IComplaintService(ABC):
     async def create(
         self,
         text: str,
-        question: QuestionEntity,
-        profile: ProfileEntity,
-        category_id: CategoryComplaintEntity,
-    ) -> ComplaintEntity: ...
+        question_id: int,
+        profile_id: int,
+        category_id: int,
+    ) -> Complaint: ...
 
     @abstractmethod
-    async def get_by_id(self, question_id: int) -> ComplaintEntity: ...
+    async def get_by_id(self, question_id: int) -> Complaint: ...
 
     @abstractmethod
     async def get_list(
         self,
         offset: int,
         limit: int = 100,
-    ) -> list[ComplaintEntity]: ...
+    ) -> list[Complaint]: ...
 
     @abstractmethod
     async def get_count(self) -> int: ...
@@ -119,7 +118,7 @@ class IComplaintService(ABC):
 @dataclass
 class ICategoryComplaintService(ABC):
     @abstractmethod
-    async def list(self) -> list[CategoryComplaintEntity]: ...
+    async def list(self) -> list[CategoryComplaint]: ...
 
     @abstractmethod
-    async def get_by_id(self, pk: int) -> CategoryComplaintEntity: ...
+    async def get_by_id(self, pk: int) -> CategoryComplaint: ...

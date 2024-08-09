@@ -13,6 +13,7 @@ class QuestionEntity:
     text: str
     published: bool
     answers: list["AnswerEntity"] = field(default_factory=list)
+    complaints: list["ComplaintEntity"] = field(default_factory=list)
 
 
 @dataclass
@@ -20,20 +21,22 @@ class AnswerEntity:
     id: int
     text: str
     right: bool
-
-
-@dataclass
-class ComplaintEntity:
-    id: int
-    profile: ProfileEntity
-    question: QuestionEntity
-    text: str
-    created_at: datetime
-    solved: bool
-    category: "CategoryComplaintEntity"
+    question: QuestionEntity | None = None
 
 
 @dataclass
 class CategoryComplaintEntity:
     id: int
     name: str
+    complaints: list["ComplaintEntity"] = field(default_factory=list)
+
+
+@dataclass
+class ComplaintEntity:
+    id: int
+    text: str
+    created_at: datetime
+    solved: bool
+    profile: ProfileEntity | None = None
+    question: QuestionEntity | None = None
+    category: CategoryComplaintEntity | None = None

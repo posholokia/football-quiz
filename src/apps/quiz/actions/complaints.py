@@ -26,16 +26,17 @@ class ComplaintsActions:
         category_id: int,
         profile_id: int,
     ) -> ComplaintEntity:
-        profile = await self.profile_repository.get_by_id(profile_id)
-        question = await self.question_repository.get_by_id(question_id)
-        category = await self.category_repository.get_by_id(category_id)
+        await self.profile_repository.get_by_id(profile_id)
+        await self.question_repository.get_by_id(question_id)
+        await self.category_repository.get_by_id(category_id)
 
-        return await self.complaint_repository.create(
+        complaint = await self.complaint_repository.create(
             text,
-            question,
-            profile,
-            category,
+            question_id,
+            profile_id,
+            category_id,
         )
+        return complaint.to_entity()
 
     async def get_list(
         self,
@@ -43,7 +44,8 @@ class ComplaintsActions:
         limit: int,
     ) -> list[ComplaintEntity]:
         offset = (page - 1) * limit
-        return await self.complaint_repository.get_list(offset, limit)
+        complaints = await self.complaint_repository.get_list(offset, limit)
+        return [c.to_entity() for c in complaints]
 
     async def get_count(self) -> int:
         return await self.complaint_repository.get_count()
@@ -57,4 +59,5 @@ class CategoryComplaintsActions:
     category_repository: ICategoryComplaintService
 
     async def list(self) -> list[CategoryComplaintEntity]:
-        return await self.category_repository.list()
+        categories = await self.category_repository.list()
+        return [cat.to_entity() for cat in categories]

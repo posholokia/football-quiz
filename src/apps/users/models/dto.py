@@ -6,6 +6,7 @@ from .entity import (
     BestPlayerTitleEntity,
     ProfileEntity,
     StatisticEntity,
+    UserEntity,
 )
 
 
@@ -15,19 +16,25 @@ class PeriodStatistic(Enum):
 
 
 @dataclass
-class TitleStatisticDTO(StatisticEntity):
-    title: BestPlayerTitleEntity | None = None
-
-
-@dataclass
-class LadderStatisticDTO(StatisticEntity):
+class StatisticDTO:
+    id: int
+    games: int
+    score: int
+    place: int
+    rights: int
+    wrongs: int
+    trend: int
+    perfect_rounds: int
     profile: ProfileEntity
-    title: BestPlayerTitleEntity | None = None
+    title: BestPlayerTitleEntity
 
 
 @dataclass
-class ProfileAdminDTO(ProfileEntity):
-    def __init__(self, last_visit: datetime, complaints: int, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.last_visit = last_visit
-        self.complaints = complaints
+class ProfileAdminDTO:
+    id: int
+    name: str
+    device_uuid: str
+    last_visit: datetime
+    complaints: int
+    user: UserEntity | None = None
+    statistic: StatisticEntity | None = None

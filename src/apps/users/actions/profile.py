@@ -23,36 +23,61 @@ class ProfileActions:
         name = f"Игрок-{profile_pk}"
         #  присваиваем профилю новое имя
         profile = await self.profile_repository.patch(profile_pk, name=name)
-
-        # await self.statistic_repository.create(profile_pk)
-        return profile
+        return profile.to_entity()
 
     async def get_by_id(self, pk: int) -> ProfileEntity:
-        return await self.profile_repository.get_by_id(pk)
+        profile = await self.profile_repository.get_by_id(pk)
+        return profile.to_entity()
 
     async def get_by_device(self, device_uuid: str) -> ProfileEntity:
-        return await self.profile_repository.get_by_device(device_uuid)
+        profile = await self.profile_repository.get_by_device(device_uuid)
+        return profile.to_entity()
 
     async def patch_profile(self, pk: int, **fields) -> ProfileEntity:
-        await self.validator.validate(name=fields.get("name"))
-        return await self.profile_repository.patch(pk, **fields)
+        # await self.validator.validate(name=fields.get("name"))
+        profile = await self.profile_repository.patch(pk, **fields)
+        return profile.to_entity()
 
-    async def get_list(
+    async def get_list_admin(
         self,
         page: int,
         limit: int,
         search: str,
     ) -> list[ProfileAdminDTO]:
         offset = (page - 1) * limit
-        return await self.profile_repository.get_list_with_complaints_count(
-            offset, limit, search
+        orm_rows = (
+            await self.profile_repository.get_list_with_complaints_count(
+                offset, limit, search
+            )
         )
+        return [
+            ProfileAdminDTO(
+                id=profile.to_entity().id,
+                name=profile.to_entity().name,
+                device_uuid=profile.to_entity().device_uuid,
+                last_visit=profile.last_visit,
+                complaints=complaints,
+                user=profile.to_entity().user,
+                statistic=profile.to_entity().statistic,
+            )
+            for profile, complaints in orm_rows
+        ]
 
     async def get_count(self, search: str | None = None) -> int:
         return await self.profile_repository.get_count(search)
 
     async def reset_name(self, pk: int) -> ProfileAdminDTO:
         await self.profile_repository.patch(pk, name=f"Игрок-{pk}")
-        return await self.profile_repository.get_with_complaints_count_by_id(
-            pk,
+        (
+            profile,
+            complaints,
+        ) = await self.profile_repository.get_with_complaints_count_by_id(pk)
+        return ProfileAdminDTO(
+            id=profile.to_entity().id,
+            name=profile.to_entity().name,
+            device_uuid=profile.to_entity().device_uuid,
+            last_visit=profile.last_visit,
+            complaints=complaints,
+            user=profile.to_entity().user,
+            statistic=profile.to_entity().statistic,
         )

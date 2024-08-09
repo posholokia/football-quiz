@@ -12,6 +12,7 @@ from jwt.exceptions import (
     DecodeError,
     ExpiredSignatureError,
 )
+from loguru import logger
 
 from config import settings
 from services.jwt_token.exceptions import (
@@ -85,9 +86,11 @@ class Token:
                 verify=True,
             )
         except (ExpiredSignatureError, DecodeError) as e:
+            logger.debug("Ошибка декодирования токена: {}", e)
             raise DecodeJWTError(f"Ошибка при декодировании токена: {e}")
 
         if payload.get("typ") is None:
+            logger.debug("Ошибка декодирования токена, тип токена не указан")
             raise DecodeJWTError("Декодирован токен без указания его типа")
 
         return payload

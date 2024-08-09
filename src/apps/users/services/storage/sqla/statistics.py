@@ -16,20 +16,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 from sqlalchemy.sql import func
 
-from apps.users.converter import (
-    orm_ladder_to_dto,
-    orm_statistics_to_entity,
-    orm_title_statistics_to_dto,
-)
 from apps.users.exceptions.statistics import StatisticDoseNotExists
 from apps.users.models import (
     Profile,
     Statistic,
-    StatisticEntity,
-)
-from apps.users.models.dto import (
-    LadderStatisticDTO,
-    TitleStatisticDTO,
 )
 from apps.users.services.storage import IStatisticService
 from core.database.db import (
@@ -46,12 +36,11 @@ class ORMStatisticService(IStatisticService, Generic[TModel]):
     db: Database
     model: Type[TModel]
 
-    async def create(self, pk: int, place: int) -> StatisticEntity:
+    async def create(self, pk: int, place: int) -> Statistic:
         async with self.db.get_session() as session:
-            stat = await self._sub_create(session, pk, place)
-            return await orm_statistics_to_entity(stat)
+            return await self._sub_create(session, pk, place)
 
-    async def get_by_profile(self, profile_pk: int) -> TitleStatisticDTO:
+    async def get_by_profile(self, profile_pk: int) -> Statistic:
         async with self.db.get_ro_session() as session:
             stat = await self._sub_get_by_profile(session, profile_pk)
 
@@ -59,21 +48,19 @@ class ORMStatisticService(IStatisticService, Generic[TModel]):
                 raise StatisticDoseNotExists(
                     detail=f"Статистика для игрока с id: {profile_pk} не найдена"
                 )
-            return await orm_title_statistics_to_dto(stat)
+            return stat
 
-    async def get_by_place(self, place: int) -> StatisticEntity | None:
+    async def get_by_place(self, place: int) -> Statistic | None:
         async with self.db.get_ro_session() as session:
             query = select(self.model).where(self.model.place == place)
             res = await session.execute(query)
-            orm_result = res.fetchone()
+            orm_result = res.scalar()
 
             if orm_result is None:
                 return None
-            return await orm_statistics_to_entity(orm_result[0])
+            return orm_result
 
-    async def get_or_create_by_profile(
-        self, profile_pk: int
-    ) -> StatisticEntity:
+    async def get_or_create_by_profile(self, profile_pk: int) -> Statistic:
         async with self.db.get_session() as session:
             # пытаемся получить статистику
             statistic = await self._sub_get_by_profile(session, profile_pk)
@@ -86,7 +73,7 @@ class ORMStatisticService(IStatisticService, Generic[TModel]):
                     session, profile_pk, place + 1
                 )
 
-            return await orm_statistics_to_entity(statistic)
+            return statistic
 
     async def replace_profiles(self, new_place, old_place) -> None:
         """
@@ -141,7 +128,7 @@ class ORMStatisticService(IStatisticService, Generic[TModel]):
             )
             await session.execute(query)
 
-    async def patch(self, pk: int, **fields) -> StatisticEntity:
+    async def patch(self, pk: int, **fields) -> Statistic:
         async with self.db.get_session() as session:
             query = (
                 update(self.model)
@@ -151,8 +138,7 @@ class ORMStatisticService(IStatisticService, Generic[TModel]):
             )
             result = await session.execute(query)
             await session.commit()
-            orm_result = result.fetchone()
-            return await orm_statistics_to_entity(orm_result[0])
+            return result.scalar()
 
     async def get_user_rank(
         self,
@@ -187,7 +173,7 @@ class ORMStatisticService(IStatisticService, Generic[TModel]):
         self,
         offset: int | None,
         limit: int | None,
-    ) -> list[LadderStatisticDTO]:
+    ) -> list[Statistic]:
         """Получение топа игроков"""
         async with self.db.get_ro_session() as session:
             query = (
@@ -202,8 +188,7 @@ class ORMStatisticService(IStatisticService, Generic[TModel]):
                 .limit(limit)
             )
             result = await session.execute(query)
-            ladder = result.scalars().all()
-            return [await orm_ladder_to_dto(obj) for obj in ladder]
+            return result.scalars().all()
 
     async def get_count(self) -> int:
         """Общее количество игроков со статистикой"""
@@ -304,9 +289,26 @@ class ORMStatisticService(IStatisticService, Generic[TModel]):
             .where(self.model.profile_id == profile_pk)
         )
         res = await session.execute(query)
-        orm_result = res.fetchone()
+        orm_result = res.scalar()
 
         if orm_result is None:
             return None
 
-        return orm_result[0]
+        return orm_result
+
+
+if __name__ == "__main__":
+    import asyncio
+
+    from apps.users.services.storage.base import IStatisticService
+    from config.containers import get_container
+
+    async def main():
+        container = get_container()
+        repo: ORMStatisticService = container.resolve(IStatisticService)
+        res = await repo.get_top_gamers(0, 10)
+
+        for i in res:
+            print(i.to_entity())
+
+    asyncio.run(main())

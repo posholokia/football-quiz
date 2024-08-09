@@ -95,7 +95,7 @@ async def change_profile(
     await permissions.has_permission(pk, cred.token)
 
     actions: ProfileActions = container.resolve(ProfileActions)
-    profile = await actions.patch_profile(pk, profile.name)
+    profile = await actions.patch_profile(pk, name=profile.name)
     return Mapper.dataclass_to_schema(ProfileSchema, profile)
 
 

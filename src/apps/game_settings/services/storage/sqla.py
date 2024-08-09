@@ -5,11 +5,7 @@ from sqlalchemy import (
     update,
 )
 
-from apps.game_settings.converter import orm_game_settings_to_entity
-from apps.game_settings.models import (
-    GameSettings,
-    GameSettingsEntity,
-)
+from apps.game_settings.models import GameSettings
 from apps.game_settings.services.storage.base import IGameSettingsService
 from core.database.db import Database
 
@@ -18,14 +14,13 @@ from core.database.db import Database
 class ORMGameSettingsService(IGameSettingsService):
     db: Database
 
-    async def get(self) -> GameSettingsEntity:
+    async def get(self) -> GameSettings:
         async with self.db.get_ro_session() as session:
             query = select(GameSettings).limit(1)
             result = await session.execute(query)
-            orm_result = result.scalars().first()
-            return await orm_game_settings_to_entity(orm_result)
+            return result.scalars().first()
 
-    async def patch(self, **fields) -> GameSettingsEntity:
+    async def patch(self, **fields) -> GameSettings:
         """
         В БД может быть только одна запись с настройками,
         поэтому запрос без указания какой объект обновить.
@@ -35,5 +30,20 @@ class ORMGameSettingsService(IGameSettingsService):
                 update(GameSettings).values(**fields).returning(GameSettings)
             )
             result = await session.execute(query)
-            orm_result = result.fetchone()
-            return await orm_game_settings_to_entity(orm_result[0])
+            orm_result = result.scalar()
+            return orm_result
+
+
+if __name__ == "__main__":
+    import asyncio
+
+    from apps.game_settings.services.storage.base import IGameSettingsService
+    from config.containers import get_container
+
+    async def main():
+        container = get_container()
+        repo: ORMGameSettingsService = container.resolve(IGameSettingsService)
+        res = await repo.patch(question_limit=10)
+        print(res.to_entity())
+
+    asyncio.run(main())
