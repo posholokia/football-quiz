@@ -166,9 +166,8 @@ if __name__ == "__main__":
     async def main():
         container = get_container()
         repo: ORMProfileService = container.resolve(IProfileService)
-        res = await repo.get_list_with_complaints_count(0, 10)
+        res = await repo.create("1234")
 
-        for i in res:
-            print(i[0].to_entity())
+        print(res.to_entity())
 
     asyncio.run(main())

@@ -4,6 +4,7 @@ from fastapi import (
     FastAPI,
     Request,
 )
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from config import settings
@@ -26,6 +27,21 @@ def create_app() -> FastAPI:
             status_code=exc.code,
             content={"detail": exc.detail},
         )
+
+    origins = [
+        "https://football-quiz.fun",
+        "https://www.football-quiz.fun",
+        "https://admin.football-quiz.fun;",
+        "http://localhost:5173",
+    ]
+
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=origins,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
     app.include_router(routers, prefix="/api/v1")
     return app
