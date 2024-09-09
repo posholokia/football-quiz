@@ -31,7 +31,7 @@ def create_app() -> FastAPI:
     origins = [
         "https://football-quiz.fun",
         "https://www.football-quiz.fun",
-        "https://admin.football-quiz.fun;",
+        "https://admin.football-quiz.fun",
         "http://localhost:5173",
     ]
 

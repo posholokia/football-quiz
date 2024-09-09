@@ -41,22 +41,12 @@ def upgrade() -> None:
     )
     op.create_index(op.f('ix_game_settings_id'), 'game_settings', ['id'], unique=True)
     # ### end Alembic commands ###
-
-    bind = op.get_bind()
-    Session = sessionmaker(bind=bind)
-    session = Session()
-    new_game_settings = GameSettings(
-        time_round=20,
-        question_limit=10,
-        max_energy=100,
-        start_energy=100,
-        energy_for_ad=100,
-        round_cost=10,
-        question_skip_cost=5,
-        energy_perfect_round=5
+    op.execute(
+        """
+        INSERT INTO game_settings (time_round, question_limit, max_energy, start_energy, energy_for_ad, round_cost, question_skip_cost, energy_perfect_round)
+        VALUES (20, 10, 100, 100, 100, 10, 5, 5);
+        """
     )
-    session.add(new_game_settings)
-    session.commit()
 
 
 def downgrade() -> None:
