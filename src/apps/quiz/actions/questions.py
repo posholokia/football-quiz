@@ -22,6 +22,9 @@ class QuestionsActions:
         question = await self.repository.get_by_id(pk)
         return question.to_entity()
 
+    async def get_with_complaints(self, pk: int) -> QuestionEntity:
+        return await self.repository.get_question_with_all_complaints(pk)
+
     async def get_list(
         self,
         page: int,

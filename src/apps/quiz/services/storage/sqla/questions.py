@@ -14,6 +14,8 @@ from sqlalchemy.orm import (
     aliased,
     selectinload,
 )
+from sqlalchemy.orm import joinedload
+
 from sqlalchemy.sql.functions import (
     func,
     random,
@@ -25,7 +27,7 @@ from apps.quiz.exceptions.answer import AnswerDoesNotExists
 from apps.quiz.models import (
     Answer,
     Complaint,
-    Question,
+    Question, QuestionEntity,
 )
 from apps.quiz.services.storage.base import IQuestionService
 from core.database.db import Database
@@ -68,6 +70,24 @@ class ORMQuestionsService(IQuestionService):
             if orm_result is None:
                 raise QuestionDoesNotExists()
             return orm_result
+
+    async def get_question_with_all_complaints(self, pk: int) -> QuestionEntity:
+        async with self.db.get_ro_session() as session:
+            query = (
+                select(Question)
+                .where(Question.id == pk)
+                .options(
+                    joinedload(Question.answers),
+                    joinedload(Question.complaints)
+                    .joinedload(Complaint.category)
+                )
+            )
+            result = await session.execute(query)
+            orm_result = result.scalar()
+
+            if orm_result is None:
+                raise QuestionDoesNotExists()
+            return orm_result.to_entity()
 
     async def get_by_id_with_complaints_count(
         self,

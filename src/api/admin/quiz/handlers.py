@@ -4,7 +4,7 @@ from api.admin.quiz.schema import (
     ComplaintAdminRetrieveSchema,
     QuestionAdminRetrieveSchema,
     QuestionFullCreateSchema,
-    QuestionFullUpdateSchema,
+    QuestionFullUpdateSchema, QuestionWithRelationshipsSchema,
 )
 from api.pagination import PagePaginator
 from api.schema import (
@@ -117,6 +117,24 @@ async def update_question(
     question_dict = json.loads(question.json())
     q = await action.update_question_with_answers(question_dict)
     return Mapper.dataclass_to_schema(QuestionAdminRetrieveSchema, q)
+
+
+@router.get(
+    "/admin/question/{question_id}/",
+    status_code=status.HTTP_200_OK,
+    description="Получить вопрос по id.",
+)
+async def update_question(
+    question_id: int,
+    # user: UserEntity = Depends(get_user_from_token),
+    container: Container = Depends(get_container),
+) -> QuestionWithRelationshipsSchema:
+    permission: IsAdminUser = container.resolve(IsAdminUser)
+    # await permission.has_permission(user)
+
+    action: QuestionsActions = container.resolve(QuestionsActions)
+    question = await action.get_with_complaints(question_id)
+    return Mapper.dataclass_to_schema(QuestionWithRelationshipsSchema, question)
 
 
 @router.get(

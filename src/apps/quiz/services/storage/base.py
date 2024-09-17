@@ -10,7 +10,7 @@ from apps.quiz.models import (
     Answer,
     CategoryComplaint,
     Complaint,
-    Question,
+    Question, QuestionEntity,
 )
 
 
@@ -21,6 +21,9 @@ class IQuestionService(ABC):
 
     @abstractmethod
     async def get_by_id(self, pk: int) -> Question: ...
+
+    @abstractmethod
+    async def get_question_with_all_complaints(self, pk: int) -> QuestionEntity: ...
 
     @abstractmethod
     async def get_by_id_with_complaints_count(

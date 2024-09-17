@@ -33,6 +33,10 @@ class QuestionFullUpdateSchema(QuestionAdminRetrieveSchema):
     pass
 
 
+class QuestionWithRelationshipsSchema(QuestionAdminRetrieveSchema):
+    complaints: list["ComplaintShortRetrieveSchema"] = Field(default_factory=list)
+
+
 class ProfileAdminRetrieveSchema(BaseModel):
     id: int
     name: str
@@ -48,10 +52,13 @@ class CategoryAdminRetrieveSchema(BaseModel):
     name: str
 
 
-class ComplaintAdminRetrieveSchema(BaseModel):
+class ComplaintShortRetrieveSchema(BaseModel):
     id: int
-    profile: ProfileAdminRetrieveSchema
-    question: QuestionShortAdminRetrieveSchema
     text: str
     created_at: datetime
     category: CategoryAdminRetrieveSchema
+
+
+class ComplaintAdminRetrieveSchema(ComplaintShortRetrieveSchema):
+    profile: ProfileAdminRetrieveSchema
+    question: QuestionShortAdminRetrieveSchema
