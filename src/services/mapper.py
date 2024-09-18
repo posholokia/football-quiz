@@ -64,9 +64,9 @@ class Mapper:
                 Mapper.dataclass_to_schema(CSchema, obj_c)
         """
         attrs = {}
-        for field in schema.__fields__.keys():
+        for field in schema.model_fields.keys():
             value = getattr(obj, field)
-            sub_schema = schema.__fields__[field]
+            sub_schema = schema.model_fields[field]
             field_type = cls._extract_field_type_schema(sub_schema.annotation)
             if (
                 isinstance(value, list)

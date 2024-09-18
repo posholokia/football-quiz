@@ -95,7 +95,7 @@ async def create_question(
     await permission.has_permission(user)
 
     action: QuestionsActions = container.resolve(QuestionsActions)
-    question_dict = json.loads(question.json())
+    question_dict = json.loads(question.model_dump_json())
     q = await action.create_question_with_answers(question_dict)
     return Mapper.dataclass_to_schema(QuestionAdminRetrieveSchema, q)
 
@@ -103,7 +103,7 @@ async def create_question(
 @router.put(
     "/admin/question/{question_id}/",
     status_code=status.HTTP_200_OK,
-    description="Удаление вопроса",
+    description="Редактирование вопроса",
 )
 async def update_question(
     question: QuestionFullUpdateSchema,
@@ -114,7 +114,7 @@ async def update_question(
     await permission.has_permission(user)
 
     action: QuestionsActions = container.resolve(QuestionsActions)
-    question_dict = json.loads(question.json())
+    question_dict = json.loads(question.model_dump_json())
     q = await action.update_question_with_answers(question_dict)
     return Mapper.dataclass_to_schema(QuestionAdminRetrieveSchema, q)
 
@@ -124,13 +124,13 @@ async def update_question(
     status_code=status.HTTP_200_OK,
     description="Получить вопрос по id.",
 )
-async def update_question(
+async def get_question(
     question_id: int,
-    # user: UserEntity = Depends(get_user_from_token),
+    user: UserEntity = Depends(get_user_from_token),
     container: Container = Depends(get_container),
 ) -> QuestionWithRelationshipsSchema:
     permission: IsAdminUser = container.resolve(IsAdminUser)
-    # await permission.has_permission(user)
+    await permission.has_permission(user)
 
     action: QuestionsActions = container.resolve(QuestionsActions)
     question = await action.get_with_complaints(question_id)

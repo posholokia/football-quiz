@@ -45,7 +45,7 @@ async def _get_remote_config(cred: Credentials) -> tuple[Any, dict]:
         return response_json, response_headers
 
 
-async def _get_etag_header(headers: dict) -> str:
+def _get_etag_header(headers: dict) -> str:
     etag = headers.get("Etag")
 
     if etag is None:
@@ -56,7 +56,7 @@ async def _get_etag_header(headers: dict) -> str:
     return etag
 
 
-async def _get_api_key(response: Any) -> str:
+def _get_api_key(response: Any) -> str:
     try:
         return response["parameters"]["api_key"]["defaultValue"]["value"]
     except KeyError as e:
@@ -64,7 +64,7 @@ async def _get_api_key(response: Any) -> str:
         raise FirebaseRemoteConfigError()
 
 
-async def _set_api_key(conf: dict) -> str:
+def _set_api_key(conf: dict) -> str:
     try:
         api_key = uuid.uuid4().hex
         conf["parameters"]["api_key"]["defaultValue"]["value"] = api_key

@@ -17,7 +17,7 @@ class ConfigBuilder:
     @classmethod
     def build_from_env(cls, config: Type[T]) -> T:
         attrs = {}
-        for field, value in config.__fields__.items():
+        for field, value in config.model_fields.items():
             # преимущество над значением в init над env.
             # если в init есть значение по умолчанию, значит оно не обязательно
             # и мы записываем в конфиг значение по умолчанию, иначе ищем в env

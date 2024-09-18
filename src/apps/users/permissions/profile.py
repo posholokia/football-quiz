@@ -15,5 +15,5 @@ class ProfilePermissions(BasePermission):
             profile = await self.repository.get_by_device(token)
             if profile.id != profile_pk:
                 raise ProfileDoesNotMatchTheDevice()
-        except TypeError:
+        except AttributeError:
             raise UnauthorizedDevice()

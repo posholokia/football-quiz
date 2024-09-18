@@ -34,6 +34,10 @@ isort = "^5.13.2"
 ruff = "^0.5.1"
 pre-commit = "^3.7.1"
 mypy = "^1.11.0"
+pytest = "^8.3.3"
+trio = "^0.26.2"
+anyio = "^4.4.0"
+pytest-asyncio = "^0.24.0"
 
 
 [build-system]
@@ -97,3 +101,8 @@ sections=[
     "FIRSTPARTY",
     "LOCALFOLDER",
 ]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+addopts = "-v"
+testpaths = ["test"]

@@ -9,12 +9,16 @@ from services.firebase.query import (
     _set_api_key,
     _set_new_conf,
 )
+from config import settings
 
 
 async def check_firebase_apikey(api_key: str) -> None:
+    if settings.environ != "prod":
+        return
+
     credentials = await _get_credentials()
     remote_config, _ = await _get_remote_config(credentials)
-    remote_api_key = await _get_api_key(remote_config)
+    remote_api_key = _get_api_key(remote_config)
 
     if api_key != remote_api_key:
         logger.debug(
@@ -26,8 +30,8 @@ async def check_firebase_apikey(api_key: str) -> None:
 async def change_api_key() -> None:
     credentials = await _get_credentials()
     config, header = await _get_remote_config(credentials)
-    new_conf = await _set_api_key(config)
-    etag = await _get_etag_header(header)
+    new_conf = _set_api_key(config)
+    etag = _get_etag_header(header)
     await _set_new_conf(new_conf, credentials, etag)
 
 

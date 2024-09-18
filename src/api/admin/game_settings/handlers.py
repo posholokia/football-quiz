@@ -57,7 +57,7 @@ async def patch_game_settings(
     settings = await action.patch(
         **{
             field: getattr(settings, field)
-            for field in settings.__fields__.keys()
+            for field in settings.model_fields.keys()
             if getattr(settings, field) is not None
         }
     )
