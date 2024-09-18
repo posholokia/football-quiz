@@ -1,3 +1,4 @@
+import loguru
 import pytest
 
 from test.http_request import send_post, send_patch, send_get, send_delete, send_put
@@ -236,6 +237,86 @@ async def test_create_question_no_four_answer(jwt_access_token):
         },
     )
     assert 400 == response.status_code
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_bulk_create_question(jwt_access_token):
+    access = await jwt_access_token
+    response = await send_post(
+        url="/api/v1/admin/question/bulk_create/",
+        json=[
+            {
+                "text": "Вопрос массового создания 1",
+                "published": True,
+                "answers": [
+                    {
+                        "text": "Неправильный ответ1",
+                        "right": False
+                    },
+                    {
+                        "text": "Неправильный ответ2",
+                        "right": False
+                    },
+                    {
+                        "text": "Правильный ответ",
+                        "right": True
+                    },
+                    {
+                        "text": "Неправильный ответ3",
+                        "right": False
+                    },
+                ]
+            },
+            {
+                "text": "Вопрос массового создания 2",
+                "published": True,
+                "answers": [
+                    {
+                        "text": "Неправильный ответ1",
+                        "right": False
+                    },
+                    {
+                        "text": "Неправильный ответ2",
+                        "right": False
+                    },
+                    {
+                        "text": "Правильный ответ",
+                        "right": True
+                    },
+                    {
+                        "text": "Неправильный ответ3",
+                        "right": False
+                    },
+                ]
+            },
+            {
+                "text": "Вопрос массового создания 3",
+                "published": True,
+                "answers": [
+                    {
+                        "text": "Неправильный ответ1",
+                        "right": False
+                    },
+                    {
+                        "text": "Неправильный ответ2",
+                        "right": False
+                    },
+                    {
+                        "text": "Правильный ответ",
+                        "right": True
+                    },
+                    {
+                        "text": "Неправильный ответ3",
+                        "right": False
+                    },
+                ]
+            },
+        ],
+        headers={
+            "Authorization": f"Bearer {access}",
+        },
+    )
+    assert 204 == response.status_code
 
 
 @pytest.mark.asyncio(loop_scope="session")

@@ -100,6 +100,25 @@ async def create_question(
     return Mapper.dataclass_to_schema(QuestionAdminRetrieveSchema, q)
 
 
+@router.post(
+    "/admin/question/bulk_create/",
+    status_code=status.HTTP_204_NO_CONTENT,
+    description="Массовое создание вопросов",
+)
+async def create_question(
+    questions: list[QuestionFullCreateSchema],
+    user: UserEntity = Depends(get_user_from_token),
+    container: Container = Depends(get_container),
+) -> None:
+    permission: IsAdminUser = container.resolve(IsAdminUser)
+    await permission.has_permission(user)
+
+    action: QuestionsActions = container.resolve(QuestionsActions)
+    for question in questions:
+        question_dict = json.loads(question.model_dump_json())
+        await action.create_question_with_answers(question_dict)
+
+
 @router.put(
     "/admin/question/{question_id}/",
     status_code=status.HTTP_200_OK,
