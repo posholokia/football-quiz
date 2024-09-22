@@ -21,7 +21,7 @@ from core.security.fingerprint_auth.mobile_auth import (
     http_device,
     MobileAuthorizationCredentials,
 )
-from services.mapper import Mapper
+from services.mapper import dataclass_to_schema
 
 from .schema import (
     CreateComplaintSchema,
@@ -45,7 +45,7 @@ async def get_questions(
 
     actions: QuestionsActions = container.resolve(QuestionsActions)
     questions = await actions.get_random(limit)
-    return [Mapper.dataclass_to_schema(QuestionSchema, q) for q in questions]
+    return [dataclass_to_schema(QuestionSchema, q) for q in questions]
 
 
 @router.post("/complain/", status_code=status.HTTP_204_NO_CONTENT)
@@ -82,6 +82,6 @@ async def category_list(
     )
     categories_list = await action.list()
     return [
-        Mapper.dataclass_to_schema(RetrieveCategorySchema, cat)
+        dataclass_to_schema(RetrieveCategorySchema, cat)
         for cat in categories_list
     ]

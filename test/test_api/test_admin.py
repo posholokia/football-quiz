@@ -1,8 +1,17 @@
+from test.http_request import (
+    send_delete,
+    send_get,
+    send_patch,
+    send_post,
+    send_put,
+)
+from test.test_api.fixture import (
+    jwt_access_token,
+    jwt_refresh_token,
+)
+
 import loguru
 import pytest
-
-from test.http_request import send_post, send_patch, send_get, send_delete, send_put
-from test.test_api.fixture import jwt_refresh_token, jwt_access_token
 
 
 @pytest.mark.asyncio(loop_scope="session")
@@ -364,14 +373,14 @@ async def test_edit_question(jwt_access_token):
 async def test_get_one_question(jwt_access_token):
     access = await jwt_access_token
     response = await send_get(
-        url="/api/v1/admin/question/42602/",
+        url="/api/v1/admin/question/2346/",
         headers={
             "Authorization": f"Bearer {access}",
         },
     )
     assert 200 == response.status_code
-    assert ("Бывший украинский футбольный клуб из города Николаева "
-            "Николаевской области?") == response.json()["text"]
+    assert "Лучший бомбардир ПСЖ за всю историю?" == response.json()["text"]
+    assert 5 == len(response.json()["complaints"])
 
 
 @pytest.mark.asyncio(loop_scope="session")

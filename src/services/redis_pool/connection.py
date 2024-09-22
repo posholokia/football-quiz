@@ -27,6 +27,19 @@ class RedisPool:
         time_ex: int | None = None,
         timestamp_ex: int | None = None,
     ) -> None:
+        """
+        Сохранить ключ - значение в кеш. Метод сохраняет данные только
+        на фиксированный срок. Если срок хранения не будет указан
+        (time_ex и timestamp_ex = None), то ключ будет храниться сутки.
+
+        :param key:             Ключ.
+        :param value:           Значение ключа.
+        :param time_ex:         Сколько времени, в секундах, должен
+                                храниться ключ.
+        :param timestamp_ex:    Временная метка, в секундах, когда должен
+                                истечь срок хранения.
+        :return:                None.
+        """
         conn = await self.connect()
         if not (time_ex or timestamp_ex):
             time_ex = 86400
@@ -45,6 +58,13 @@ class RedisPool:
             )
 
     async def get_value(self, key: str) -> str | None:
+        """
+        Получить значение по ключу из кеша.
+
+        :param key: Ключ.
+        :return:    Значение ключа из кэша. Если ключ не был найден,
+                    то None.
+        """
         redis = await self.connect()
         value: bytes = await redis.get(key)
 

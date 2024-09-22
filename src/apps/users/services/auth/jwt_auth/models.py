@@ -26,7 +26,12 @@ class RefreshToken(Token):
     sub_claim: str = "user_id"
 
     async def access_token(self, refresh_token: str) -> str:
-        """Выдает access токен по refresh токену"""
+        """
+        Обновление access токена.
+
+        :param refresh_token:   Refresh токен.
+        :return:                Access токен.
+        """
         payload = self.decode(refresh_token)
 
         # проверяем что access токен обновляется по refresh токену
@@ -40,7 +45,12 @@ class RefreshToken(Token):
         return access
 
     async def for_user(self, user: UserEntity) -> str:
-        """Выдаем refresh токен юзеру"""
+        """
+        Выдаем refresh токен юзеру.
+
+        :param user:    Юзер.
+        :return:        Refresh токен.
+        """
         self.set_payload()
         self[self.sub_claim] = user.id
         return self.encode()
@@ -53,7 +63,7 @@ class BlacklistRefreshToken(RefreshToken):
     Черный список хранится в хранилище, при выдаче нового access
     токена проверяем что его нет в черном списке, тогда
     выдаем токен. Бан осуществляется по подписи токена jti - uuid4.
-    :: storage: хранилище забаненных токенов.
+    :param storage: Хранилище забаненных токенов.
     """
 
     def __init__(self, storage: ITokenStorage):
@@ -61,12 +71,23 @@ class BlacklistRefreshToken(RefreshToken):
         self.storage = storage
 
     async def access_token(self, refresh_token: str) -> str:
-        """Перед выдачей токена проверяем что его нет в черном списке"""
+        """
+        Обновление access токена. Перед обновлением проверяется,
+        что refresh токен не заблокирован.
+
+        :param refresh_token:   Refresh токен.
+        :return:                Access токен.
+        """
         await self.check_blacklist(refresh_token)
         return await super().access_token(refresh_token)
 
     async def set_blacklist(self, token: str) -> None:
-        """Записываем токен в хранилище в черный список"""
+        """
+        Записываем токен в хранилище в черный список.
+
+        :param token:   Jwt токен.
+        :return:        None.
+        """
         payload = self.decode(token)
         key = payload["jti"]
         timestamp_exp = payload["exp"]
@@ -77,7 +98,13 @@ class BlacklistRefreshToken(RefreshToken):
         )
 
     async def check_blacklist(self, token: str) -> None:
-        """Проверяем, что токена нет в черном списке. Если есть, поднимаем ошибку"""
+        """
+        Проверяем, что токена нет в черном списке.
+        Если есть, поднимаем ошибку.
+
+        :param token:   Jwt токен.
+        :return:        None.
+        """
         payload = self.decode(token)
         value = await self.storage.get_token(payload["jti"])
 

@@ -1,5 +1,9 @@
 from dataclasses import dataclass
 
+from apps.quiz.exceptions import (
+    CategoryComplaintDoesNotExists,
+    QuestionDoesNotExists,
+)
 from apps.quiz.models import (
     CategoryComplaintEntity,
     ComplaintEntity,
@@ -9,6 +13,7 @@ from apps.quiz.services.storage.base import (
     IComplaintService,
     IQuestionService,
 )
+from apps.users.exceptions.profile import DoesNotExistsProfile
 from apps.users.services.storage.base import IProfileService
 
 
@@ -26,31 +31,66 @@ class ComplaintsActions:
         category_id: int,
         profile_id: int,
     ) -> ComplaintEntity:
-        await self.profile_repository.get_by_id(profile_id)
-        await self.question_repository.get_by_id(question_id)
-        await self.category_repository.get_by_id(category_id)
+        """
+        Создать жалобу.
+
+        :param text:        Текст жалобы.
+        :param question_id: ID вопроса, на который жалоба.
+        :param category_id: ID категории жалобы.
+        :param profile_id:  ID профиля игрока, который оставил жалобу.
+        :return:            Жалоба.
+        """
+        if not await self.profile_repository.exists(id=profile_id):
+            raise DoesNotExistsProfile(
+                detail=f"Профиль с id={profile_id} не найден."
+            )
+        elif not await self.question_repository.exists(id=question_id):
+            raise QuestionDoesNotExists(
+                detail=f"Вопрос с id={question_id} не найден."
+            )
+        elif not await self.category_repository.exists(id=category_id):
+            raise CategoryComplaintDoesNotExists(
+                detail=f"Категория с id={category_id} не найдена."
+            )
 
         complaint = await self.complaint_repository.create(
-            text,
-            question_id,
-            profile_id,
-            category_id,
+            text=text,
+            question_id=question_id,
+            profile_id=profile_id,
+            category_id=category_id,
         )
-        return complaint.to_entity()
+        return complaint
 
     async def get_list(
         self,
         page: int,
         limit: int,
     ) -> list[ComplaintEntity]:
+        """
+        Получить список жалоб.
+
+        :param page:    Номер страницы с жалобами.
+        :param limit:   Размер страницы.
+        :return:        Список жалоб.
+        """
         offset = (page - 1) * limit
-        complaints = await self.complaint_repository.get_list(offset, limit)
-        return [c.to_entity() for c in complaints]
+        return await self.complaint_repository.get_list(offset, limit)
 
     async def get_count(self) -> int:
+        """
+        Получить кол-во жалоб.
+
+        :return: Число жалоб.
+        """
         return await self.complaint_repository.get_count()
 
     async def delete_complaint(self, pk: int) -> None:
+        """
+        Удалить жалобу.
+
+        :param pk:  ID жалобы.
+        :return:    None.
+        """
         await self.complaint_repository.delete(pk)
 
 
@@ -59,5 +99,9 @@ class CategoryComplaintsActions:
     category_repository: ICategoryComplaintService
 
     async def list(self) -> list[CategoryComplaintEntity]:
-        categories = await self.category_repository.list()
-        return [cat.to_entity() for cat in categories]
+        """
+        Получить список категорий жалоб.
+
+        :return: Список жалоб.
+        """
+        return await self.category_repository.list()

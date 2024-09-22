@@ -22,7 +22,15 @@ class AdminAuthAction:
     token_service: BlacklistRefreshToken
 
     async def login(self, username: str, password: str) -> tuple[str, str]:
-        user = await self.repository.get_by_username(username)
+        """
+        Метод проверки пароля и логина пользователя. Если данные
+        верные, возвращает access и refresh токены.
+
+        :param username:    Юзернейм юзера.
+        :param password:    Пароль юзера.
+        :return:            Пару refresh и access токенов.
+        """
+        user = await self.repository.get_one(username=username)
 
         if user is None or not check_password(password, user.password):
             raise InvalidAuthCredentials()
@@ -34,6 +42,12 @@ class AdminAuthAction:
         return refresh, access
 
     async def refresh_token(self, token: str) -> str:
+        """
+        Метод обновления access токена по refresh токену.
+
+        :param token:   Refresh токен.
+        :return:        Access токен.
+        """
         try:
             access = await self.token_service.access_token(token)
         except DecodeJWTError:
@@ -47,6 +61,12 @@ class AdminAuthAction:
         return access
 
     async def set_blacklist_token(self, token: str) -> None:
+        """
+        Заблокировать токен.
+
+        :param token:   Refresh токен.
+        :return:        None.
+        """
         try:
             await self.token_service.set_blacklist(token)
         except DecodeJWTError:

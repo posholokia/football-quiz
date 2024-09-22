@@ -25,3 +25,9 @@ class AnswerNotEnoughError(BaseHTTPException):
 class AnswerDoesNotExists(BaseHTTPException):
     code: int = 400
     detail: str = "Такой ответ не существует"
+
+
+@dataclass(eq=False)
+class AnswerIntegrityError(BaseHTTPException):
+    code: int = 400
+    detail: str = "Невозможно сохранить такие ответы"

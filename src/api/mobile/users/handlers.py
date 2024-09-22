@@ -5,7 +5,7 @@ from typing import (
 )
 
 from api.mobile.depends import get_statistic_model
-from api.pagination import LimitOffsetPaginator
+from api.pagination import LazyLoad
 from api.schema import (
     PaginationIn,
     PaginationResponseSchema,
@@ -35,12 +35,16 @@ from core.security.fingerprint_auth.mobile_auth import (
     MobileAuthorizationCredentials,
 )
 from services.firebase import check_firebase_apikey
-from services.mapper import Mapper
+from services.mapper import (
+    convert_to_ladder_statistic,
+    convert_to_statistic_retrieve_mobile,
+    dataclass_to_schema,
+)
 
 from ..utils import get_offset
 from .schema import (
     ApiKeySchema,
-    LadderStatisticRetrieveSchema,
+    LadderStatisticRetrieveSchema as LdrSchema,
     ProfileSchema,
     StatisticsRetrieveSchema,
     StatisticsUpdateSchema,
@@ -65,7 +69,7 @@ async def create_profile(
 
     action: ProfileActions = container.resolve(ProfileActions)
     profile = await action.create(cred.token)
-    return Mapper.dataclass_to_schema(ProfileSchema, profile)
+    return dataclass_to_schema(ProfileSchema, profile)
 
 
 @router.get("/get_profile/{pk}/", status_code=status.HTTP_200_OK)
@@ -79,8 +83,8 @@ async def get_profile(
     await permissions.has_permission(pk, cred.token)
 
     actions: ProfileActions = container.resolve(ProfileActions)
-    profile = await actions.get_by_id(pk)
-    return Mapper.dataclass_to_schema(ProfileSchema, profile)
+    profile = await actions.get_profile(id=pk)
+    return dataclass_to_schema(ProfileSchema, profile)
 
 
 @router.patch("/change_profile/{pk}/", status_code=status.HTTP_200_OK)
@@ -96,7 +100,7 @@ async def change_profile(
 
     actions: ProfileActions = container.resolve(ProfileActions)
     profile = await actions.patch_profile(pk, name=profile.name)
-    return Mapper.dataclass_to_schema(ProfileSchema, profile)
+    return dataclass_to_schema(ProfileSchema, profile)
 
 
 @router.post("/user_statistic/{pk}/", status_code=status.HTTP_200_OK)
@@ -127,13 +131,12 @@ async def set_user_statistic(
         perfect_round=stat.perfect_round,
     )
 
-    action: StatisticsActions = container.resolve(
-        StatisticsActions, model=Statistic
-    )
-    stat = await action.get_by_profile(pk)
+    action: StatisticsActions = container.resolve(StatisticsActions[Statistic])
+    stat, title = await action.get_by_profile(pk)
+
     profile_action: ProfileActions = container.resolve(ProfileActions)
     await profile_action.patch_profile(pk=pk, last_visit=datetime.now())
-    return Mapper.dataclass_to_schema(StatisticsRetrieveSchema, stat)
+    return convert_to_statistic_retrieve_mobile(stat, title)
 
 
 @router.get("/user_statistic/{pk}/", status_code=status.HTTP_200_OK)
@@ -146,11 +149,9 @@ async def get_user_statistic(
     permissions: ProfilePermissions = container.resolve(ProfilePermissions)
     await permissions.has_permission(pk, cred.token)
 
-    actions: StatisticsActions = container.resolve(
-        StatisticsActions, model=model
-    )
-    stat = await actions.get_by_profile(pk)
-    return Mapper.dataclass_to_schema(StatisticsRetrieveSchema, stat)
+    actions: StatisticsActions = container.resolve(StatisticsActions[model])
+    stat, title = await actions.get_by_profile(pk)
+    return convert_to_statistic_retrieve_mobile(stat, title)
 
 
 @router.get(
@@ -164,26 +165,27 @@ async def get_ladder_profile(
     cred: MobileAuthorizationCredentials = Depends(http_device),
     model: Type[Base] = Depends(get_statistic_model),
     container: Container = Depends(get_container),
-) -> PaginationResponseSchema[LadderStatisticRetrieveSchema]:
+) -> PaginationResponseSchema[LdrSchema]:
     permissions: ProfilePermissions = container.resolve(ProfilePermissions)
     await permissions.has_permission(pk, cred.token)
 
-    action: StatisticsActions = container.resolve(
-        StatisticsActions, model=model
-    )
+    action: StatisticsActions = container.resolve(StatisticsActions[model])
     # offset рассчитывается, чтобы профиль был в середине
     offset = await get_offset(action, pk, limit)
     pagination_in = PaginationIn(limit=limit, offset=offset)
 
-    paginator: LimitOffsetPaginator = container.resolve(
-        service_key=LimitOffsetPaginator,
+    paginator = LazyLoad(
         pagination=pagination_in,
-        schema=LadderStatisticRetrieveSchema,
         action=action,
     )
+    statistics_page = paginator.paginate(action.get_top_ladder)
 
-    res = await paginator.paginate(action.get_top_ladder)
-    return await res(pagination_in.offset, pagination_in.limit)
+    result = await statistics_page(offset, limit)
+    result.items = [
+        convert_to_ladder_statistic(item)  # type: ignore
+        for item in result.items
+    ]
+    return result
 
 
 @router.get(
@@ -205,20 +207,23 @@ async def get_ladder(
     cred: MobileAuthorizationCredentials = Depends(http_device),
     model: Type[Base] = Depends(get_statistic_model),
     container: Container = Depends(get_container),
-) -> PaginationResponseSchema[LadderStatisticRetrieveSchema]:
+) -> PaginationResponseSchema[LdrSchema]:
     permissions: DevicePermissions = container.resolve(DevicePermissions)
     await permissions.has_permission(cred.token)
 
-    action: StatisticsActions = container.resolve(
-        StatisticsActions, model=model
-    )
+    action: StatisticsActions = container.resolve(StatisticsActions[model])
 
-    paginator: LimitOffsetPaginator = container.resolve(
-        service_key=LimitOffsetPaginator,
+    paginator = LazyLoad(
         pagination=pagination_in,
-        schema=LadderStatisticRetrieveSchema,
         action=action,
     )
-    res = await paginator.paginate(action.get_top_ladder)
+    statistics_page = paginator.paginate(action.get_top_ladder)
+    result = await statistics_page(
+        offset=pagination_in.offset, limit=pagination_in.limit
+    )
 
-    return await res(pagination_in.offset, pagination_in.limit)
+    result.items = [
+        convert_to_ladder_statistic(item)  # type: ignore
+        for item in result.items
+    ]
+    return result

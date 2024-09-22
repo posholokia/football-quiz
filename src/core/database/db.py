@@ -1,8 +1,14 @@
 from contextlib import asynccontextmanager
+from dataclasses import (
+    dataclass,
+    field,
+)
 from typing import (
     Any,
     AsyncGenerator,
 )
+
+from loguru import logger
 
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import (
@@ -18,7 +24,7 @@ from config import settings
 Base = declarative_base()
 
 
-class Database:
+class DatabaseConnection:
     def __init__(self):
         db_engine = create_async_engine(
             settings.database_url,
@@ -45,24 +51,88 @@ class Database:
             class_=AsyncSession,
         )
 
+    def get_session(self):
+        return self._session
+
+    def get_ro_session(self):
+        return self._read_only_session
+
+
+@dataclass
+class Database:
+    __connection: DatabaseConnection
+    __in_transaction: bool = field(init=False, default=False)
+    __session: AsyncSession | None = field(init=False, default=None)
+    __ro_session: AsyncSession | None = field(init=False, default=None)
+
     @asynccontextmanager
     async def get_session(self) -> AsyncGenerator[AsyncSession, Any]:
-        session: AsyncSession = self._session()
+        if self.__session is None:
+            self.__session = self.__connection.get_session()()
         try:
-            yield session
+            yield self.__session
         except SQLAlchemyError:
-            await session.rollback()
+            await self.__session.rollback()
+            logger.opt(exception=True).error("Session error:\n")
             raise
         finally:
-            await session.commit()
-            await session.close()
+            if self.__in_transaction:
+                await self.__session.flush()
+            else:
+                await self.__session.commit()
+                await self.__session.close()
 
     @asynccontextmanager
     async def get_ro_session(self) -> AsyncGenerator[AsyncSession, Any]:
-        session: AsyncSession = self._read_only_session()
+        if self.__in_transaction and self.__session is None:
+            self.__session = self.__connection.get_session()()
+        if self.__ro_session is None:
+            self.__ro_session = self.__connection.get_ro_session()()
         try:
-            yield session
+            if self.__in_transaction:
+                yield self.__session
+            else:
+                yield self.__ro_session
         except SQLAlchemyError:
+            logger.opt(exception=True).error("Session error:\n")
             raise
         finally:
-            await session.close()
+            await self.__ro_session.close()
+
+    @asynccontextmanager
+    async def _transaction(self) -> AsyncGenerator[None, None]:
+        if self.__in_transaction:
+            raise RuntimeError("Repository already begun transaction")
+
+        self.__in_transaction = True
+        try:
+            yield
+        except Exception as error:
+            await self.__session.rollback()
+            raise error
+        finally:
+            await self.__session.commit()
+            await self.__session.close()
+            self.__in_transaction = False
+
+
+@dataclass
+class Transaction:
+    """
+    Для запуска транзакции объект Database в
+    атомарном кейсе должен быть одним.
+    """
+
+    __db: Database
+
+    @asynccontextmanager
+    async def begin(self) -> AsyncGenerator[None, None]:
+        """
+        Начинает транзакцию для всех используемых репозиториев.
+        Коммит сессии будет после выхода из контекстного менеджера,
+        внутри будет только флеш сессии.
+
+        :return: None
+        """
+        async with self.__db._transaction():  # noqa
+            yield

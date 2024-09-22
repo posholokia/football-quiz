@@ -9,12 +9,7 @@ class RedisTokenStorage(ITokenStorage):
     storage: RedisPool
 
     async def set_token(
-        self,
-        key: str,
-        value: str,
-        expire: int | float,
-        *args,
-        **kwargs,
+        self, key: str, value: str, expire: int | float
     ) -> None:
         await self.storage.set_exp_value(
             key=key,
@@ -22,5 +17,5 @@ class RedisTokenStorage(ITokenStorage):
             timestamp_ex=round(expire),
         )
 
-    async def get_token(self, key: str, *args, **kwargs):
+    async def get_token(self, key: str) -> str | None:
         return await self.storage.get_value(key)

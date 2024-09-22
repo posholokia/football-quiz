@@ -19,14 +19,14 @@ class QuestionAdminRetrieveSchema(BaseModel):
     id: int
     text: str
     published: bool
-    complaints: int
-    answers: list["AnswerAdminRetrieveSchema"] = Field(default_factory=list)
+    complaints: int = Field(default=0)
+    answers: list[AnswerAdminRetrieveSchema] = Field(default_factory=list)
 
 
 class QuestionFullCreateSchema(BaseModel):
     text: str
     published: bool
-    answers: list["AnswerAdminBaseSchema"]
+    answers: list[AnswerAdminBaseSchema]
 
 
 class QuestionFullUpdateSchema(QuestionAdminRetrieveSchema):
@@ -34,10 +34,12 @@ class QuestionFullUpdateSchema(QuestionAdminRetrieveSchema):
 
 
 class QuestionWithRelationshipsSchema(QuestionAdminRetrieveSchema):
-    complaints: list["ComplaintShortRetrieveSchema"] = Field(default_factory=list)
+    complaints: list["ComplaintShortRetrieveSchema"] = Field(
+        default_factory=list
+    )
 
 
-class ProfileAdminRetrieveSchema(BaseModel):
+class ProfileShortRetrieveSchema(BaseModel):
     id: int
     name: str
 
@@ -60,5 +62,5 @@ class ComplaintShortRetrieveSchema(BaseModel):
 
 
 class ComplaintAdminRetrieveSchema(ComplaintShortRetrieveSchema):
-    profile: ProfileAdminRetrieveSchema
+    profile: ProfileShortRetrieveSchema
     question: QuestionShortAdminRetrieveSchema

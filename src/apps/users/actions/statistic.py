@@ -1,8 +1,14 @@
 from dataclasses import dataclass
+from typing import (
+    Generic,
+    TypeVar,
+)
 
+from apps.users.exceptions.profile import DoesNotExistsProfile
+from apps.users.exceptions.statistics import StatisticDoseNotExists
 from apps.users.models import (
+    BestPlayerTitleEntity,
     PeriodStatistic,
-    StatisticDTO,
     StatisticEntity,
 )
 from apps.users.services.storage import (
@@ -10,174 +16,34 @@ from apps.users.services.storage import (
     IStatisticService,
 )
 from apps.users.services.storage.base import IProfileTitleService
+from core.database.db import Transaction
+
+
+T = TypeVar("T")
 
 
 @dataclass
-class StatisticsActions:
-    profile_repository: IProfileService
-    repository: IStatisticService
-    title_repository: IProfileTitleService
+class StatisticsActions(Generic[T]):
+    _profile_repository: IProfileService
+    _repository: IStatisticService[T]
+    _title_repository: IProfileTitleService
+    transaction: Transaction
 
-    async def create(self, profile_pk: int) -> None:
-        count = await self.repository.get_count_positive_score()
+    async def _create(self, profile_id: int) -> StatisticEntity:
+        """
+        Создать статистику игрока. Статистика размещается с 0 параметрами
+        на последнее место среди игроков с неотрицательными очками.
+
+        :param profile_id:  ID профиля.
+        :return:            Статистика.
+        """
+        count = await self._repository.get_count_positive_score()
         place = count + 1
-        await self.repository.create(profile_pk, place)
-        await self.repository.down_place_negative_score()
-
-    async def patch(
-        self,
-        profile_pk: int,
-        score: int,
-        rights: int,
-        wrongs: int,
-        perfect_round: bool,
-    ) -> StatisticDTO:
-        profile_orm = await self.profile_repository.get_by_id(profile_pk)
-        # получаем текущую статистику игрока
-        statistic_orm = await self.repository.get_or_create_by_profile(
-            profile_orm.id,
+        statistic = await self._repository.create(
+            profile_id=profile_id, place=place
         )
-        current_stat = statistic_orm.to_entity()
-        # получаем обновленную статистику в виде DTO,
-        # место в рейтинге не меняем
-        after_game_stat = await self._get_updated_statistic(
-            current_stat,
-            score,
-            rights,
-            wrongs,
-            perfect_round,
-        )
-        # записываем обновленную статистику в БД без изменения места
-        new_stat = await self.repository.patch(
-            pk=after_game_stat.id,
-            games=after_game_stat.games,
-            score=after_game_stat.score,
-            rights=after_game_stat.rights,
-            wrongs=after_game_stat.wrongs,
-            perfect_rounds=after_game_stat.perfect_rounds,
-            trend=after_game_stat.trend,
-        )
-        # получаем новое место игрока после обновления статистики
-        new_place = await self.get_user_rank(profile_orm.id)
-        # если место не изменилось, выходим из функции
-        if current_stat.place == new_place:
-            return new_stat
-        # сдвигаем всех затронутых игроков и
-        # присваиваем новое место ткущему юзеру
-        await self.repository.replace_profiles(new_place, current_stat.place)
-        await self.repository.patch(
-            pk=after_game_stat.id,
-            place=new_place,
-            trend=current_stat.place - new_place,
-        )
-        stat = await self.repository.get_by_profile(profile_pk)
-        return StatisticDTO(
-            id=stat.to_entity().id,
-            games=stat.to_entity().games,
-            score=stat.to_entity().score,
-            place=stat.to_entity().place,
-            rights=stat.to_entity().rights,
-            wrongs=stat.to_entity().wrongs,
-            trend=stat.to_entity().trend,
-            perfect_rounds=stat.to_entity().perfect_rounds,
-            profile=stat.to_entity().profile,
-            title=stat.to_entity().profile.title,
-        )
-
-    async def get_by_profile(self, profile_pk: int) -> StatisticDTO:
-        stat = await self.repository.get_by_profile(profile_pk)
-        return StatisticDTO(
-            id=stat.to_entity().id,
-            games=stat.to_entity().games,
-            score=stat.to_entity().score,
-            place=stat.to_entity().place,
-            rights=stat.to_entity().rights,
-            wrongs=stat.to_entity().wrongs,
-            trend=stat.to_entity().trend,
-            perfect_rounds=stat.to_entity().perfect_rounds,
-            profile=stat.to_entity().profile,
-            title=stat.to_entity().profile.title,
-        )
-
-    async def delete_statistic(self, period: PeriodStatistic) -> None:
-        first_place_statistic = await self.repository.get_by_place(place=1)
-        if first_place_statistic is None:
-            return
-
-        profile_title = await self.title_repository.get_or_create_by_profile(
-            profile_pk=first_place_statistic.profile_id
-        )
-        best_of_the_day = profile_title.best_of_the_day
-        best_of_the_month = profile_title.best_of_the_month
-
-        if period == PeriodStatistic.day:
-            best_of_the_day = best_of_the_day + 1
-        elif period == PeriodStatistic.month:
-            best_of_the_month = best_of_the_month + 1
-
-        await self.title_repository.patch(
-            profile_pk=first_place_statistic.profile_id,
-            best_of_the_day=best_of_the_day,
-            best_of_the_month=best_of_the_month,
-        )
-        await self.repository.delete_all_statistics()
-        return
-
-    @staticmethod
-    async def _get_updated_statistic(
-        current_stat: StatisticEntity,
-        score: int,
-        rights: int,
-        wrongs: int,
-        perfect_round: bool,
-    ) -> StatisticEntity:
-        return StatisticEntity(
-            id=current_stat.id,
-            games=current_stat.games + 1,
-            score=current_stat.score + score,
-            place=current_stat.place,
-            rights=current_stat.rights + rights,
-            wrongs=current_stat.wrongs + wrongs,
-            perfect_rounds=current_stat.perfect_rounds + int(perfect_round),
-            trend=0,
-        )
-
-    async def get_top_ladder(
-        self,
-        offset: int | None = None,
-        limit: int | None = None,
-    ) -> list[StatisticDTO]:
-        statistics = await self.repository.get_top_gamers(offset, limit)
-        return [
-            StatisticDTO(
-                id=stat.to_entity().id,
-                games=stat.to_entity().games,
-                score=stat.to_entity().score,
-                place=stat.to_entity().place,
-                rights=stat.to_entity().rights,
-                wrongs=stat.to_entity().wrongs,
-                trend=stat.to_entity().trend,
-                perfect_rounds=stat.to_entity().perfect_rounds,
-                profile=stat.to_entity().profile,
-                title=stat.to_entity().profile.title,
-            )
-            for stat in statistics
-        ]
-
-    async def get_count_statistic(self) -> int:
-        return await self.repository.get_count()
-
-    async def get_user_rank(self, pk: int) -> int:
-        return await self.repository.get_user_rank(pk)
-
-
-@dataclass
-class CompositeStatisticAction:
-    actions: list[StatisticsActions]
-
-    async def create(self, profile_pk: int) -> None:
-        for action in self.actions:
-            await action.create(profile_pk)
+        await self._repository.down_place_negative_score()
+        return statistic
 
     async def patch(
         self,
@@ -187,11 +53,157 @@ class CompositeStatisticAction:
         wrongs: int,
         perfect_round: bool,
     ) -> None:
-        for action in self.actions:
-            await action.patch(
-                profile_pk,
-                score,
-                rights,
-                wrongs,
-                perfect_round,
+        """
+        Обновить статистику после раунда. Сценарий перемещает всех затронутых
+        игроков на свои места в соответствии с набранными очками и играми.
+
+        :param profile_pk:      ID профиля.
+        :param score:           Набрано очков.
+        :param rights:          Верных ответов.
+        :param wrongs:          Неверных ответов.
+        :param perfect_round:   Раунд без ошибок True/False.
+        :return:                None.
+        """
+        if not await self._profile_repository.exists(id=profile_pk):
+            raise DoesNotExistsProfile()
+        # получаем текущую статистику игрока
+        statistic = await self._repository.get_one(profile_id=profile_pk)
+
+        if statistic is None:
+            statistic = await self._create(profile_id=profile_pk)
+
+        current_place = statistic.place
+        statistic.play_round(
+            score=score,
+            rights=rights,
+            wrongs=wrongs,
+            perfect_round=perfect_round,
+        )
+        # записываем обновленную статистику в БД без изменения места
+        await self._repository.update(
+            pk=statistic.id,
+            games=statistic.games,
+            score=statistic.score,
+            rights=statistic.rights,
+            wrongs=statistic.wrongs,
+            perfect_rounds=statistic.perfect_rounds,
+            trend=statistic.trend,
+        )
+        # получаем новое место игрока после обновления статистики
+        new_place = await self._repository.get_user_rank(profile_pk)
+        # если место не изменилось, выходим из функции
+        if current_place == new_place:
+            return
+        # сдвигаем всех затронутых игроков и
+        # присваиваем новое место текущему игроку
+        await self._repository.replace_profiles(new_place, current_place)
+        await self._repository.update(
+            pk=statistic.id,
+            place=new_place,
+            trend=current_place - new_place,
+        )
+
+    async def get_by_profile(
+        self, profile_pk: int
+    ) -> tuple[StatisticEntity, BestPlayerTitleEntity]:
+        """
+        Получить статистику и титулы по id профиля.
+
+        :param profile_pk:  ID профиля.
+        :return:            Статистика и титулы лучшего игрока.
+        """
+        stat = await self._repository.get_one(profile_id=profile_pk)
+        if stat is None:
+            raise StatisticDoseNotExists(
+                detail=f"Статистика для игрока с id: {profile_pk} не найдена"
             )
+        title = await self._title_repository.get_one(profile_id=profile_pk)
+        return stat, title
+
+    async def delete_statistic(self, period: PeriodStatistic) -> None:
+        """
+        Очистка ежемесячной и ежедневной статистики и
+        фиксация первых мест в рейтинге на момент очистки.
+
+        :param period:  За какой период очистить статистику, месячную/дневную.
+        :return:        None.
+        """
+        async with self.transaction.begin():
+            first_place_profile = await self._repository.get_profile_id(
+                place=1
+            )
+            if first_place_profile is None:
+                return
+
+            profile_title = await self._title_repository.get_or_create(
+                profile_id=first_place_profile
+            )
+
+            profile_title.take_best_title(period)
+
+            await self._title_repository.update(
+                profile_id=first_place_profile,
+                best_of_the_day=profile_title.best_of_the_day,
+                best_of_the_month=profile_title.best_of_the_month,
+            )
+            await self._repository.delete_all_statistics()
+
+    async def get_top_ladder(
+        self,
+        offset: int | None = None,
+        limit: int | None = None,
+    ) -> list[StatisticEntity]:
+        """
+        Получить топ игроков.
+
+        :param offset:  С какой строки (места) получить игроков.
+        :param limit:   Сколько игроков получить.
+        :return:        Список статистики игроков.
+        """
+        return await self._repository.get_top_gamers(offset, limit)
+
+    async def get_count_statistic(self) -> int:
+        """
+        Возвращает общее число игроков со статистикой.
+        """
+        return await self._repository.get_count()
+
+    async def get_user_rank(self, profile_id: int) -> int:
+        """
+        Возвращает ранг юзера в ладдере.
+
+        :param profile_id:  ID профиля.
+        :return:            Место в ладдере.
+        """
+        return await self._repository.get_user_rank(profile_id)
+
+
+@dataclass
+class CompositeStatisticAction:
+    actions: list[StatisticsActions]
+    transaction: Transaction
+
+    async def patch(
+        self,
+        profile_pk: int,
+        score: int,
+        rights: int,
+        wrongs: int,
+        perfect_round: bool,
+    ) -> None:
+        """
+        Обновление статистики игрока сразу в 3-х таблицах
+        (общая, дневная, месячная).
+
+        :param profile_pk:      ID профиля.
+        :param score:           Набрано очков.
+        :param rights:          Верных ответов.
+        :param wrongs:          Неверных ответов.
+        :param perfect_round:   Раунд без ошибок True/False.
+        :return:                None.
+        """
+        async with self.transaction.begin():
+            for action in self.actions:
+                await action.patch(
+                    profile_pk, score, rights, wrongs, perfect_round
+                )

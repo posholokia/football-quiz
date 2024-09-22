@@ -10,7 +10,5 @@ class DevicePermissions(BasePermission):
     repository: IProfileService
 
     async def has_permission(self, token: str) -> None:
-        try:
-            await self.repository.get_by_device(token)
-        except TypeError:
+        if not await self.repository.exists(device_uuid=token):
             raise UnauthorizedDevice()

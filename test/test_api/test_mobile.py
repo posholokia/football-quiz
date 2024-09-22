@@ -1,7 +1,12 @@
-import pytest
 import uuid
+from test.http_request import (
+    send_get,
+    send_patch,
+    send_post,
+)
 
-from test.http_request import send_post, send_get, send_patch
+import loguru
+import pytest
 
 
 USER1_DEVICE = uuid.uuid4().hex
@@ -148,6 +153,18 @@ async def test_get_total_ladder():
     )
     assert 200 == response.status_code
     assert 2 == len(response.json()["items"])
+    assert 6 == response.json()["paginator"]["total"]
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_get_statistic_in_ladder():
+    response = await send_get(
+        url="/api/v1/user_statistic/7/ladder/?limit=3&period=total",
+        headers={"Device": USER3_DEVICE},
+    )
+    assert 200 == response.status_code
+    assert 3 == len(response.json()["items"])
+    assert 7 == response.json()["items"][1]["profile"]["id"]
     assert 6 == response.json()["paginator"]["total"]
 
 
