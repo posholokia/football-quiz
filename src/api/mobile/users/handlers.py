@@ -10,7 +10,6 @@ from api.schema import (
     PaginationIn,
     PaginationResponseSchema,
 )
-from punq import Container
 
 from fastapi import (
     APIRouter,
@@ -27,7 +26,10 @@ from apps.users.actions import (
 )
 from apps.users.models import Statistic
 from apps.users.permissions.profile import ProfilePermissions
-from config.containers import get_container
+from config.containers import (
+    Container,
+    get_container,
+)
 from core.database.db import Base
 from core.security.fingerprint_auth.device_validator import DeviceTokenValidate
 from core.security.fingerprint_auth.mobile_auth import (

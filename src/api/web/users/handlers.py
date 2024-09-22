@@ -1,7 +1,6 @@
 from typing import Type
 
 from api.mobile.depends import get_statistic_model
-from punq import Container
 
 from fastapi import (
     APIRouter,
@@ -10,7 +9,10 @@ from fastapi import (
 from starlette import status
 
 from apps.users.actions import StatisticsActions
-from config.containers import get_container
+from config.containers import (
+    Container,
+    get_container,
+)
 from core.database.db import Base
 from services.mapper import convert_to_statistic_retrieve_mobile as convert
 

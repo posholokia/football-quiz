@@ -1,7 +1,5 @@
 from typing import Annotated
 
-from punq import Container
-
 from fastapi import (
     APIRouter,
     Depends,
@@ -16,7 +14,10 @@ from apps.quiz.actions import (
 )
 from apps.quiz.permissions.quiz import DevicePermissions
 from apps.users.permissions.profile import ProfilePermissions
-from config.containers import get_container
+from config.containers import (
+    Container,
+    get_container,
+)
 from core.security.fingerprint_auth.mobile_auth import (
     http_device,
     MobileAuthorizationCredentials,

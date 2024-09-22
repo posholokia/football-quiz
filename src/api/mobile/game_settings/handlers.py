@@ -1,5 +1,3 @@
-from punq import Container
-
 from fastapi import (
     APIRouter,
     Depends,
@@ -8,7 +6,10 @@ from starlette import status
 
 from apps.game_settings.actions import GameSettingsActions
 from apps.quiz.permissions.quiz import DevicePermissions
-from config.containers import get_container
+from config.containers import (
+    Container,
+    get_container,
+)
 from core.security.fingerprint_auth.mobile_auth import (
     http_device,
     MobileAuthorizationCredentials,

@@ -4,7 +4,6 @@ from api.admin.auth.schema import (
     RefreshTokenSchema,
     TokenObtainPairSchemaSchema,
 )
-from punq import Container
 
 from fastapi import (
     APIRouter,
@@ -13,7 +12,10 @@ from fastapi import (
 from starlette import status
 
 from apps.users.actions.user import AdminAuthAction
-from config.containers import get_container
+from config.containers import (
+    Container,
+    get_container,
+)
 
 
 router = APIRouter()

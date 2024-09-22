@@ -3,7 +3,6 @@ from api.admin.game_settings.schema import (
     GameSettingsAdminSchema,
     GameSettingsUpdateSchema,
 )
-from punq import Container
 
 from fastapi import (
     APIRouter,
@@ -15,7 +14,10 @@ from starlette import status
 from apps.game_settings.actions import GameSettingsActions
 from apps.users.models import UserEntity
 from apps.users.permissions.admin import IsAdminUser
-from config.containers import get_container
+from config.containers import (
+    Container,
+    get_container,
+)
 from services.mapper import dataclass_to_schema
 
 

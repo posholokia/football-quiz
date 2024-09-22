@@ -3,7 +3,6 @@ from api.schema import (
     PagePaginationIn,
     PagePaginationResponseSchema,
 )
-from punq import Container
 
 from fastapi import (
     APIRouter,
@@ -14,7 +13,10 @@ from starlette import status
 from apps.users.actions import ProfileActions
 from apps.users.models import UserEntity
 from apps.users.permissions.admin import IsAdminUser
-from config.containers import get_container
+from config.containers import (
+    Container,
+    get_container,
+)
 from services.mapper import convert_to_profile_retrieve_admin as convert
 
 from ..depends import get_user_from_token

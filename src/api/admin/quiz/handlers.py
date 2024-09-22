@@ -12,7 +12,6 @@ from api.schema import (
     PagePaginationIn,
     PagePaginationResponseSchema,
 )
-from punq import Container
 
 from fastapi import (
     APIRouter,
@@ -25,7 +24,10 @@ from apps.quiz.actions import ComplaintsActions
 from apps.quiz.actions.questions import QuestionsActions
 from apps.users.models import UserEntity
 from apps.users.permissions.admin import IsAdminUser
-from config.containers import get_container
+from config.containers import (
+    Container,
+    get_container,
+)
 from services.mapper import dataclass_to_schema
 
 from ..depends import get_user_from_token
