@@ -16,7 +16,7 @@ from apps.game_settings.actions import GameSettingsActions
 from apps.users.models import UserEntity
 from apps.users.permissions.admin import IsAdminUser
 from config.containers import get_container
-from services.mapper import Mapper
+from services.mapper import dataclass_to_schema
 
 
 router = APIRouter()
@@ -36,8 +36,8 @@ async def get_game_settings(
     await permission.has_permission(user)
 
     action: GameSettingsActions = container.resolve(GameSettingsActions)
-    settings = await action.get()
-    return Mapper.dataclass_to_schema(GameSettingsAdminSchema, settings)
+    settings = await action.get_settings()
+    return dataclass_to_schema(GameSettingsAdminSchema, settings)
 
 
 @router.patch(
@@ -54,11 +54,11 @@ async def patch_game_settings(
     await permission.has_permission(user)
 
     action: GameSettingsActions = container.resolve(GameSettingsActions)
-    settings = await action.patch(
+    settings = await action.edit_settings(
         **{
             field: getattr(settings, field)
             for field in settings.model_fields.keys()
             if getattr(settings, field) is not None
         }
     )
-    return Mapper.dataclass_to_schema(GameSettingsAdminSchema, settings)
+    return dataclass_to_schema(GameSettingsAdminSchema, settings)

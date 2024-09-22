@@ -132,6 +132,7 @@ class Profile(Base):
             id=self.id,
             name=self.name,
             device_uuid=self.device_uuid,
+            last_visit=self.last_visit,
             user=user.to_entity() if user else None,
             statistic=statistic.to_entity() if statistic else None,
             title=title.to_entity() if title else BestPlayerTitleEntity(),

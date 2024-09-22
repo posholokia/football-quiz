@@ -8,10 +8,23 @@ from apps.game_settings.services.storage.base import IGameSettingsService
 class GameSettingsActions:
     repository: IGameSettingsService
 
-    async def get(self) -> GameSettingsEntity:
-        game_settings = await self.repository.get()
-        return game_settings.to_entity()
+    async def get_settings(self) -> GameSettingsEntity:
+        """
+        Получить настройки игры.
 
-    async def patch(self, **fields) -> GameSettingsEntity:
-        game_settings = await self.repository.patch(**fields)
-        return game_settings.to_entity()
+        :return: Настройки.
+        """
+        return await self.repository.get_one()
+
+    async def edit_settings(self, **fields) -> GameSettingsEntity:
+        """
+        Редактировать настройки игры.
+
+        :param fields:  Настройки, которые будут обновлены. Может быть:
+                        time_round, question_limit, max_energy, start_energy,
+                        energy_for_ad, round_cost, question_skip_cost,
+                        energy_perfect_round, recovery_period,
+                        recovery_value, right_ratio, wrong_ratio.
+        :return:        Настройки.
+        """
+        return await self.repository.update(**fields)

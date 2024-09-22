@@ -7,6 +7,7 @@ from sqlalchemy import (
     ForeignKey,
     inspect,
     Integer,
+    sql,
     Text,
 )
 from sqlalchemy.orm import (
@@ -148,8 +149,10 @@ class Complaint(Base):
         back_populates="complaints",
     )
     text: Mapped[str] = mapped_column(Text)
-    created_at: Mapped[datetime] = mapped_column(DateTime)
-    solved: Mapped[bool] = mapped_column(Boolean)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, default=sql.func.now()
+    )
+    solved: Mapped[bool] = mapped_column(Boolean, default=False)
     category_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("category_complaints.id"), nullable=False
     )

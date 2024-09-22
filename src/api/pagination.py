@@ -6,8 +6,7 @@ from abc import (
 from dataclasses import dataclass
 from typing import (
     Callable,
-    Coroutine,
-    Type,
+    ParamSpec,
     TypeVar,
 )
 
@@ -20,42 +19,38 @@ from api.schema import (
     PaginationResponseSchema,
 )
 
-from services.mapper import (
-    Mapper,
-    TSchema,
-)
-
 
 TAction = TypeVar("TAction")
+T = TypeVar("T")
+F_Spec = ParamSpec("F_Spec")
+F_Return = TypeVar("F_Return")
+F_Schema = TypeVar("F_Schema")
 
 
 @dataclass
 class BasePaginator(ABC):
     @abstractmethod
-    async def paginate(self, func: Callable[[int, int], Coroutine]): ...
+    async def paginate(
+        self, func: Callable[F_Spec, F_Return]
+    ) -> Callable[F_Spec, F_Schema]: ...
 
 
 @dataclass
-class LimitOffsetPaginator(BasePaginator):
+class LazyLoad(BasePaginator):
     pagination: PaginationIn
     action: TAction
-    schema: Type[TSchema]
 
-    async def paginate(
-        self, func: Callable[[int, int], Coroutine]
-    ) -> Callable[[int, int], Coroutine]:
+    def paginate(
+        self, func: Callable[F_Spec, F_Return]
+    ) -> Callable[F_Spec, F_Schema]:
         async def wrapper(
             offset: int,
             limit: int,
-        ) -> PaginationResponseSchema:
+        ) -> F_Schema:
             res = await func(offset, limit)
-
             total = await self.action.get_count_statistic()
-            obj_list = [
-                Mapper.dataclass_to_schema(self.schema, obj) for obj in res
-            ]
             return PaginationResponseSchema(
-                items=obj_list,
+                items=res,
                 paginator=PaginationOut(
                     offset=self.pagination.offset,
                     limit=self.pagination.limit,
@@ -70,24 +65,18 @@ class LimitOffsetPaginator(BasePaginator):
 class PagePaginator(BasePaginator):
     pagination: PagePaginationIn
     action: TAction
-    schema: Type[TSchema]
 
-    async def paginate(
-        self, func: Callable[..., Coroutine]
-    ) -> Callable[..., Coroutine]:
-        async def wrapper(
-            page: int, limit: int, *args, **kwargs
-        ) -> PagePaginationResponseSchema:
+    def paginate(
+        self, func: Callable[F_Spec, F_Return]
+    ) -> Callable[F_Spec, F_Schema]:
+        async def wrapper(page: int, limit: int, *args, **kwargs) -> F_Schema:
             res = await func(page, limit, *args, **kwargs)
 
             count = await self.action.get_count(*args, **kwargs)
             total = math.ceil(count / limit)
 
-            obj_list = [
-                Mapper.dataclass_to_schema(self.schema, obj) for obj in res
-            ]
             return PagePaginationResponseSchema(
-                items=obj_list,
+                items=res,
                 paginator=PagePaginationOut(
                     page=self.pagination.page,
                     limit=self.pagination.limit,

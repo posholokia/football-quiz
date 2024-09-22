@@ -12,7 +12,7 @@ class ProfilePermissions(BasePermission):
 
     async def has_permission(self, profile_pk: int, token: str) -> None:
         try:
-            profile = await self.repository.get_by_device(token)
+            profile = await self.repository.get_one(device_uuid=token)
             if profile.id != profile_pk:
                 raise ProfileDoesNotMatchTheDevice()
         except AttributeError:

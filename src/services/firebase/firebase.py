@@ -1,5 +1,6 @@
 from loguru import logger
 
+from config import settings
 from services.firebase.exceptions import FirebaseInvalidApiKey
 from services.firebase.query import (
     _get_api_key,
@@ -9,7 +10,6 @@ from services.firebase.query import (
     _set_api_key,
     _set_new_conf,
 )
-from config import settings
 
 
 async def check_firebase_apikey(api_key: str) -> None:

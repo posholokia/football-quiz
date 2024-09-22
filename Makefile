@@ -73,7 +73,7 @@ test-mobile:
 	${DC} -f ${STOR_FILE} down
 	${DC} -f ${STOR_FILE_TEST} down
 	${DC} -f ${STOR_FILE_TEST} up -d
-	sleep 2
+	sleep 3
 	chmod +x ./test/restore.sh
 	./test/restore.sh
 	pytest test/test_api/test_mobile.py --capture=tee-sys

@@ -2,6 +2,7 @@ from .base import (
     IProfileService,
     IProfileTitleService,
     IStatisticService,
+    TModel,
 )
 from .sqla import (
     ORMProfileService,
@@ -17,4 +18,5 @@ __all__ = (
     "ORMStatisticService",
     "IProfileTitleService",
     "ORMProfileTitleService",
+    "TModel",
 )

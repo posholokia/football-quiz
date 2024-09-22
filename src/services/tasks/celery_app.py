@@ -5,11 +5,7 @@ from celery import (
     Celery,
 )
 from celery.schedules import crontab
-from celery.signals import (
-    after_task_publish,
-    worker_ready,
-    worker_shutdown,
-)
+from celery.signals import after_task_publish
 
 
 """------------------------------------------------------------------"""
@@ -43,16 +39,6 @@ class LivenessProbe(bootsteps.StartStopStep):
         HEARTBEAT_FILE.touch()
 
 
-@worker_ready.connect
-def worker_ready(**_):
-    READINESS_FILE.touch()
-
-
-@worker_shutdown.connect
-def worker_shutdown(**_):
-    READINESS_FILE.unlink(missing_ok=True)
-
-
 """------------------------------------------------------------------"""
 """--------------------НАСТРОЙКИ ПРИЛОЖЕНИЯ CELERY-------------------"""
 """------------------------------------------------------------------"""
@@ -79,8 +65,8 @@ def setup_periodic_tasks(sender, **kwargs):
 
 
 @app.task
-def celery_heartbeat():  # важен запуск задачи, не важно что она делает
-    pass
+def celery_heartbeat():
+    pass  # важен запуск задачи, ей не нужно ничего делать.
 
 
 @after_task_publish.connect(
@@ -98,11 +84,11 @@ def task_published(**_):
 app.conf.beat_schedule = {
     "clear_day_statistic": {
         "task": "clear_day_statistic",
-        "schedule": crontab(minute="0", hour="0"),
+        "schedule": crontab(minute="56", hour="12"),
     },
     "clear_month_statistic": {
         "task": "clear_month_statistic",
-        "schedule": crontab(minute="0", hour="0", day_of_month="1"),
+        "schedule": crontab(minute="56", hour="12", day_of_month="22"),
     },
     "update_firebase_config": {
         "task": "update_firebase_config",

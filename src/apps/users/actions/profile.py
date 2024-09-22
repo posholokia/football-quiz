@@ -1,10 +1,7 @@
 from dataclasses import dataclass
 
-from apps.users.actions.statistic import CompositeStatisticAction
-from apps.users.models import (
-    ProfileAdminDTO,
-    ProfileEntity,
-)
+from apps.users.exceptions.profile import DoesNotExistsProfile
+from apps.users.models import ProfileEntity
 from apps.users.services.storage import IProfileService
 from apps.users.validator.profile import ProfileValidator
 
@@ -12,72 +9,97 @@ from apps.users.validator.profile import ProfileValidator
 @dataclass
 class ProfileActions:
     profile_repository: IProfileService
-    statistic_repository: CompositeStatisticAction
     validator: ProfileValidator
 
     async def create(self, device_uuid: str) -> ProfileEntity:
+        """
+        Создание профиля игрока.
+
+        :param device_uuid: Уникальный идентификатор устройства.
+        :return:            Профиль.
+        """
         # создаем профиль
-        profile = await self.profile_repository.create(device_uuid)
+        profile = await self.profile_repository.create(
+            name="Игрок", device_uuid=device_uuid
+        )
         profile_pk = profile.id
 
         name = f"Игрок-{profile_pk}"
         #  присваиваем профилю новое имя
-        profile = await self.profile_repository.patch(profile_pk, name=name)
-        return profile.to_entity()
+        return await self.profile_repository.update(profile_pk, name=name)
 
-    async def get_by_id(self, pk: int) -> ProfileEntity:
-        profile = await self.profile_repository.get_by_id(pk)
-        return profile.to_entity()
+    async def get_profile(self, **filter_by) -> ProfileEntity:
+        """
+        Получить профиль игрока.
 
-    async def get_by_device(self, device_uuid: str) -> ProfileEntity:
-        profile = await self.profile_repository.get_by_device(device_uuid)
-        return profile.to_entity()
+        :param filter_by:   Данные для фильтрации (поиска) профиля.
+                            id - уникально;
+                            device_uuid - уникально;
+                            user_id - уникально;
+                            name.
+        :return:            Профиль.
+        """
+        profile = await self.profile_repository.get_one(**filter_by)
+        if profile is None:
+            raise DoesNotExistsProfile(
+                detail=f"Профиль по параметрам {filter_by} не найден"
+            )
+        return profile
 
     async def patch_profile(self, pk: int, **fields) -> ProfileEntity:
-        # await self.validator.validate(name=fields.get("name"))
-        profile = await self.profile_repository.patch(pk, **fields)
-        return profile.to_entity()
+        """
+        Обновление профиля игрока.
+
+        :param pk:      Id профиля.
+        :param fields:  Аргументы для обновления профиля. Возможно обновить:
+                        name, last_visit.
+        :return:        Профиль.
+        """
+        await self.validator.validate(name=fields.get("name"))
+        return await self.profile_repository.update(pk, **fields)
 
     async def get_list_admin(
         self,
         page: int,
         limit: int,
         search: str,
-    ) -> list[ProfileAdminDTO]:
+    ) -> list[tuple[ProfileEntity, int]]:
+        """
+        Получить список профилей с количеством оставленных жалоб.
+        Метод используется в админ панели.
+
+        :param page:    Номер страницы, с которой получить данные.
+        :param limit:   Количество записей на странице.
+        :param search:  Поиск по имени профиля.
+        :retutn:        Список из кортежей Профиль + число жалоб.
+        """
         offset = (page - 1) * limit
-        orm_rows = (
+        profiles = (
             await self.profile_repository.get_list_with_complaints_count(
                 offset, limit, search
             )
         )
-        return [
-            ProfileAdminDTO(
-                id=profile.to_entity().id,
-                name=profile.to_entity().name,
-                device_uuid=profile.to_entity().device_uuid,
-                last_visit=profile.last_visit,
-                complaints=complaints,
-                user=profile.to_entity().user,
-                statistic=profile.to_entity().statistic,
-            )
-            for profile, complaints in orm_rows
-        ]
+        return [(profile, complaints) for profile, complaints in profiles]
 
     async def get_count(self, search: str | None = None) -> int:
+        """
+        Возвращает общее число профилей соответсвующих условию фильтрации.
+
+        :param search:  Условие поиска профилей, поиск ведется по имени.
+        :return:        Кол-во профилей.
+        """
         return await self.profile_repository.get_count(search)
 
-    async def reset_name(self, pk: int) -> ProfileAdminDTO:
-        await self.profile_repository.patch(pk, name=f"Игрок-{pk}")
+    async def reset_name(self, pk: int) -> tuple[ProfileEntity, int]:
+        """
+        Сброс имени профиля к значению по-умолчанию.
+
+        :param pk:  ID профиля.
+        :return:    Кортеж из профиля и числа жалоб.
+        """
+        await self.profile_repository.update(pk, name=f"Игрок-{pk}")
         (
             profile,
             complaints,
         ) = await self.profile_repository.get_with_complaints_count_by_id(pk)
-        return ProfileAdminDTO(
-            id=profile.to_entity().id,
-            name=profile.to_entity().name,
-            device_uuid=profile.to_entity().device_uuid,
-            last_visit=profile.last_visit,
-            complaints=complaints,
-            user=profile.to_entity().user,
-            statistic=profile.to_entity().statistic,
-        )
+        return profile, complaints

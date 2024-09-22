@@ -1,59 +1,33 @@
 from dataclasses import dataclass
+from typing import Type
 
-from sqlalchemy import (
-    select,
-    update,
-)
-from sqlalchemy.exc import (
-    IntegrityError,
-    NoResultFound,
-)
+from sqlalchemy import update
 
-from apps.users.models import BestPlayerTitle
+from apps.users.models import BestPlayerTitleEntity
 from apps.users.services.storage.base import IProfileTitleService
 from core.database.db import Database
+from core.database.repository.base import TModel
+from core.database.repository.sqla import CommonRepository
 
 
 @dataclass
-class ORMProfileTitleService(IProfileTitleService):
+class ORMProfileTitleService(CommonRepository, IProfileTitleService):
     db: Database
+    model: Type[TModel]
 
-    async def get_or_create_by_profile(
-        self,
-        profile_pk: int,
-    ) -> BestPlayerTitle:
-        async with self.db.get_session() as session:
-            try:
-                query = select(BestPlayerTitle).where(
-                    BestPlayerTitle.profile_id == profile_pk
-                )
-                res = await session.execute(query)
-                return res.one()[0]
-            except NoResultFound:
-                title = BestPlayerTitle(
-                    best_of_the_day=0,
-                    best_of_the_month=0,
-                    profile_id=profile_pk,
-                )
-                try:
-                    session.add(title)
-                    await session.flush()
-                    return title
-                except IntegrityError:
-                    await session.rollback()
-                    query = select(BestPlayerTitle).where(
-                        BestPlayerTitle.profile_id == profile_pk
-                    )
-                    res = await session.execute(query)
-                    return res.one()[0]
+    async def get_one(self, **filter_by) -> BestPlayerTitleEntity:
+        result = await super().get_one(**filter_by)
+        if result is None:
+            return BestPlayerTitleEntity()
+        return result
 
-    async def patch(self, profile_pk: int, **fields) -> BestPlayerTitle:
+    async def update(self, profile_id: int, **fields) -> BestPlayerTitleEntity:
         async with self.db.get_session() as session:
             query = (
-                update(BestPlayerTitle)
-                .where(BestPlayerTitle.profile_id == profile_pk)
+                update(self.model)
+                .where(self.model.profile_id == profile_id)
                 .values(**fields)
-                .returning(BestPlayerTitle)
+                .returning(self.model)
             )
             result = await session.execute(query)
             return result.scalar()

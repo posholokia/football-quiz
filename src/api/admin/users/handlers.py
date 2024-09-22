@@ -15,10 +15,10 @@ from apps.users.actions import ProfileActions
 from apps.users.models import UserEntity
 from apps.users.permissions.admin import IsAdminUser
 from config.containers import get_container
-from services.mapper import Mapper
+from services.mapper import convert_to_profile_retrieve_admin as convert
 
 from ..depends import get_user_from_token
-from .schema import ProfileAdminRetrieveSchema
+from .schema import ProfileAdminRetrieveSchema as PrfSchema
 
 
 router = APIRouter()
@@ -37,20 +37,20 @@ async def get_list_profiles(
     pagination_in: PagePaginationIn = Depends(),
     user: UserEntity = Depends(get_user_from_token),
     container: Container = Depends(get_container),
-) -> PagePaginationResponseSchema[ProfileAdminRetrieveSchema]:
+) -> PagePaginationResponseSchema[PrfSchema]:
     permission: IsAdminUser = container.resolve(IsAdminUser)
     await permission.has_permission(user)
 
     action: ProfileActions = container.resolve(ProfileActions)
-    paginator: PagePaginator = container.resolve(
-        service_key=PagePaginator,
-        pagination=pagination_in,
-        schema=ProfileAdminRetrieveSchema,
-        action=action,
+    paginator = PagePaginator(pagination=pagination_in, action=action)
+    profile_page = paginator.paginate(action.get_list_admin)
+    result = await profile_page(
+        pagination_in.page, pagination_in.limit, search
     )
-    res = await paginator.paginate(action.get_list_admin)
-
-    return await res(pagination_in.page, pagination_in.limit, search)
+    result.items = [
+        convert(profile, complaints) for profile, complaints in result.items
+    ]
+    return result
 
 
 @router.post(
@@ -62,15 +62,10 @@ async def reset_profile_name(
     profile_id: int,
     user: UserEntity = Depends(get_user_from_token),
     container: Container = Depends(get_container),
-) -> ProfileAdminRetrieveSchema:
+) -> PrfSchema:
     permission: IsAdminUser = container.resolve(IsAdminUser)
     await permission.has_permission(user)
 
     action: ProfileActions = container.resolve(ProfileActions)
-
-    profile = await action.reset_name(profile_id)
-
-    return Mapper.dataclass_to_schema(
-        ProfileAdminRetrieveSchema,
-        profile,
-    )
+    profile, complaints = await action.reset_name(profile_id)
+    return convert(profile, complaints)

@@ -3,33 +3,61 @@ from abc import (
     abstractmethod,
 )
 from dataclasses import dataclass
-
-from sqlalchemy.engine.row import Row
+from typing import overload
 
 from apps.quiz.models import (
-    Answer,
-    CategoryComplaint,
-    Complaint,
-    Question, QuestionEntity,
+    AnswerEntity,
+    CategoryComplaintEntity,
+    ComplaintEntity,
+    QuestionEntity,
 )
+from core.database.repository.base import IRepository
 
 
 @dataclass
-class IQuestionService(ABC):
+class IQuestionService(IRepository, ABC):
     @abstractmethod
-    async def get_random(self, limit: int) -> list[Question]: ...
+    async def get_random(self, limit: int) -> list[QuestionEntity]:
+        """
+        Получить случайные вопросы.
+
+        :param limit:   Сколько вопросов получить.
+        :return:        Список вопросов.
+        """
+
+    @overload
+    async def get_one(self, **filter_by) -> QuestionEntity | None:  # noqa
+        """
+        Получить один вопрос.
+
+        :param filter_by:   Параметры для поиска вопроса.
+                            Могут быть: id - уникально; text, published.
+        :return:            Вопрос или None если вопрос не найден.
+        """
 
     @abstractmethod
-    async def get_by_id(self, pk: int) -> Question: ...
+    async def get_one_with_complaints(
+        self, **filter_by
+    ) -> QuestionEntity | None:
+        """
+        Получить вопрос вместе с жалобами.
+
+        :param filter_by:   Параметры для поиска вопроса.
+                            Могут быть: id - уникально; text, published.
+        :return:            Вопрос или None если вопрос не найден.
+        """
 
     @abstractmethod
-    async def get_question_with_all_complaints(self, pk: int) -> QuestionEntity: ...
+    async def get_one_with_complaints_count(
+        self, **filter_by
+    ) -> tuple[QuestionEntity, int]:
+        """
+        Получить вопрос вместе с количеством жалоб.
 
-    @abstractmethod
-    async def get_by_id_with_complaints_count(
-        self,
-        pk: int,
-    ) -> Row[Question, int]: ...
+        :param filter_by:   Параметры для поиска вопроса.
+                            Могут быть: id - уникально; text, published.
+        :return:            Вопрос и число жалоб на него.
+        """
 
     @abstractmethod
     async def get_list_with_complaints_count(
@@ -37,91 +65,117 @@ class IQuestionService(ABC):
         offset: int,
         limit: int = 100,
         search: str | None = None,
-    ) -> list[Row[Question, int]]: ...
+    ) -> list[tuple[QuestionEntity, int]]:
+        """
+        Получить список вопросом вместе с количеством жалоб.
 
-    @abstractmethod
-    async def get_count(self, search: str | None = None) -> int: ...
+        :param offset:  С какой записи получить вопросы.
+        :param limit:   Сколько получить вопросов.
+        :param search:  Поиск вопросов по тексту. Без учета
+                        регистра и строгого соответветстия.
+        :return:        Вопрос.
+        """
 
-    @abstractmethod
-    async def delete(self, pk: int) -> None: ...
+    @overload
+    async def get_count(self, search: str | None = None) -> int:  # noqa
+        """
+        Получить кол-во вопросов.
 
-    @abstractmethod
-    async def create(self, text: str, published: bool) -> Question: ...
+        :param search:  Поиск вопроса по тексту.
+        :return:        Кол-во вопросов.
+        """
 
-    @abstractmethod
-    async def create_from_json(
-        self,
-        question_text: str,
-        question_published: bool,
-        answers: list[dict[str, str | bool]],
-    ) -> tuple[Question, list[Answer]]: ...
+    @overload
+    async def create(self, **data) -> QuestionEntity:  # noqa
+        """
+        Создать вопрос.
 
-    @abstractmethod
-    async def update_from_json(
-        self,
-        question_id: int,
-        question_text: str,
-        question_published: bool,
-        answers: list[dict[str, str | bool | int]],
-    ) -> tuple[Question, list[Answer]]: ...
+        :param data:    Данные для создания вопроса - text, published.
+        :return:        Вопрос.
+        """
 
-    @abstractmethod
-    async def exists_by_id(self, pk: int) -> bool: ...
+    @overload
+    async def update(self, pk, **fields) -> QuestionEntity:  # noqa
+        """
+        Обновить вопрос.
+
+        :param pk:      ID вопроса.
+        :param fields:  Параметры которые необходимо обновить. Могут быть:
+                        text, published.
+        :return:        Вопрос.
+        """
 
 
 @dataclass
 class IAnswerService(ABC):
     @abstractmethod
-    async def create(
-        self,
-        text: str,
-        right: bool,
-        question_id: int,
-    ) -> Answer: ...
+    async def bulk_create(
+        self, data: list[dict[str, str]]
+    ) -> list[AnswerEntity]:
+        """
+        Создать ответы на вопрос.
+
+        :param data:    Данные для создания ответов. Передаются списком
+                        из словарей, где ключи - имя аттрибутов ответа:
+                        text, right, question_id.
+        :return:        Ответы.
+        """
 
     @abstractmethod
-    async def update(
-        self,
-        pk: int,
-        **fields,
-    ) -> Answer: ...
+    async def bulk_update(self, data: list[dict[str, str]]) -> None:  # noqa
+        """
+        Обновить ответы.
 
-    @abstractmethod
-    async def exists_by_id(self, pk: int) -> bool: ...
+        :param data:    Данные для обновления ответов. Передаются списком
+                        из словарей, где ключи - имя аттрибутов ответа:
+                        id, text, right. Обновление происходит по id,
+                        поэтому он обязательно должен быть в словаре.
+        :return:        None.
+        """
 
 
 @dataclass
-class IComplaintService(ABC):
-    @abstractmethod
-    async def create(
-        self,
-        text: str,
-        question_id: int,
-        profile_id: int,
-        category_id: int,
-    ) -> Complaint: ...
+class IComplaintService(IRepository, ABC):
+    @overload
+    async def create(self, **data) -> ComplaintEntity:  # noqa
+        """
+        Создать жалобу.
 
-    @abstractmethod
-    async def get_by_id(self, question_id: int) -> Complaint: ...
+        :param data:    Данные для создания жалобы - text, question_id,
+                        profile_id, category_id.
+        :return:        Жалоба.
+        """
+
+    @overload
+    async def get_one(self, **filter_by) -> ComplaintEntity:  # noqa
+        """
+        Получить одну жалобу.
+
+        :param filter_by:   Параметры для поиска вопроса.
+                            Могут быть: id - уникально; text, created_at,
+                            solved.
+        :return:            Вопрос или None если вопрос не найден.
+        """
 
     @abstractmethod
     async def get_list(
-        self,
-        offset: int,
-        limit: int = 100,
-    ) -> list[Complaint]: ...
+        self, offset: int, limit: int = 100
+    ) -> list[ComplaintEntity]:
+        """
+        Получить список жалоб.
 
-    @abstractmethod
-    async def get_count(self) -> int: ...
-
-    @abstractmethod
-    async def delete(self, pk: int) -> None: ...
+        :param offset:  С какой записи получить жалобы.
+        :param limit:   Количество жалоб.
+        :return:        Список жалоб.
+        """
 
 
 @dataclass
-class ICategoryComplaintService(ABC):
+class ICategoryComplaintService(IRepository, ABC):
     @abstractmethod
-    async def list(self) -> list[CategoryComplaint]: ...
+    async def list(self) -> list[CategoryComplaintEntity]:
+        """
+        Получить список категорий жалоб.
 
-    @abstractmethod
-    async def get_by_id(self, pk: int) -> CategoryComplaint: ...
+        :return: Список категорий.
+        """
