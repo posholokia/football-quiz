@@ -8,7 +8,7 @@ from apps.users.validator.profile import ProfileValidator
 
 @dataclass
 class ProfileActions:
-    profile_repository: IProfileService
+    __profile_repository: IProfileService
     validator: ProfileValidator
 
     async def create(self, device_uuid: str) -> ProfileEntity:
@@ -19,14 +19,14 @@ class ProfileActions:
         :return:            Профиль.
         """
         # создаем профиль
-        profile = await self.profile_repository.create(
+        profile = await self.__profile_repository.create(
             name="Игрок", device_uuid=device_uuid
         )
         profile_pk = profile.id
 
         name = f"Игрок-{profile_pk}"
         #  присваиваем профилю новое имя
-        return await self.profile_repository.update(profile_pk, name=name)
+        return await self.__profile_repository.update(profile_pk, name=name)
 
     async def get_profile(self, **filter_by) -> ProfileEntity:
         """
@@ -39,7 +39,7 @@ class ProfileActions:
                             name.
         :return:            Профиль.
         """
-        profile = await self.profile_repository.get_one(**filter_by)
+        profile = await self.__profile_repository.get_one(**filter_by)
         if profile is None:
             raise DoesNotExistsProfile(
                 detail=f"Профиль по параметрам {filter_by} не найден"
@@ -56,7 +56,7 @@ class ProfileActions:
         :return:        Профиль.
         """
         await self.validator.validate(name=fields.get("name"))
-        return await self.profile_repository.update(pk, **fields)
+        return await self.__profile_repository.update(pk, **fields)
 
     async def get_list_admin(
         self,
@@ -75,7 +75,7 @@ class ProfileActions:
         """
         offset = (page - 1) * limit
         profiles = (
-            await self.profile_repository.get_list_with_complaints_count(
+            await self.__profile_repository.get_list_with_complaints_count(
                 offset, limit, search
             )
         )
@@ -88,7 +88,7 @@ class ProfileActions:
         :param search:  Условие поиска профилей, поиск ведется по имени.
         :return:        Кол-во профилей.
         """
-        return await self.profile_repository.get_count(search)
+        return await self.__profile_repository.get_count(search)
 
     async def reset_name(self, pk: int) -> tuple[ProfileEntity, int]:
         """
@@ -97,9 +97,9 @@ class ProfileActions:
         :param pk:  ID профиля.
         :return:    Кортеж из профиля и числа жалоб.
         """
-        await self.profile_repository.update(pk, name=f"Игрок-{pk}")
+        await self.__profile_repository.update(pk, name=f"Игрок-{pk}")
         (
             profile,
             complaints,
-        ) = await self.profile_repository.get_with_complaints_count_by_id(pk)
+        ) = await self.__profile_repository.get_with_complaints_count_by_id(pk)
         return profile, complaints

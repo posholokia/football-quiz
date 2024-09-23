@@ -6,6 +6,7 @@ from abc import (
 from dataclasses import dataclass
 from typing import (
     Callable,
+    Generic,
     ParamSpec,
     TypeVar,
 )
@@ -62,7 +63,7 @@ class LazyLoad(BasePaginator):
 
 
 @dataclass
-class PagePaginator(BasePaginator):
+class PagePaginator(BasePaginator, Generic[F_Schema]):
     pagination: PagePaginationIn
     action: TAction
 

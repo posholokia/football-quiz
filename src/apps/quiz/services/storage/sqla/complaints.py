@@ -1,31 +1,22 @@
 from dataclasses import dataclass
-from typing import Type
 
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
-from apps.quiz.models import (
-    CategoryComplaintEntity,
-    ComplaintEntity,
-)
+from apps.quiz.models import ComplaintEntity
 from apps.quiz.services.storage.base import (
     ICategoryComplaintService,
     IComplaintService,
 )
-from core.database.db import Database
-from core.database.repository.base import TModel
 from core.database.repository.sqla import CommonRepository
 
 
 @dataclass
 class ORMComplaintService(CommonRepository, IComplaintService):
-    db: Database
-    model: Type[TModel]
-
     async def get_list(
         self, offset: int, limit: int = 100
     ) -> list[ComplaintEntity]:
-        async with self.db.get_ro_session() as session:
+        async with self._db.get_ro_session() as session:
             query = (
                 select(self.model)
                 .options(
@@ -44,15 +35,7 @@ class ORMComplaintService(CommonRepository, IComplaintService):
 
 @dataclass
 class ORMCategoryComplaintService(CommonRepository, ICategoryComplaintService):
-    db: Database
-    model: Type[TModel]
-
-    async def list(self) -> list[CategoryComplaintEntity]:
-        async with self.db.get_ro_session() as session:
-            query = select(self.model)
-            result = await session.execute(query)
-            orm_result = result.scalars().all()
-            return [c.to_entity() for c in orm_result]
+    pass
 
 
 if __name__ == "__main__":

@@ -24,9 +24,9 @@ T = TypeVar("T")
 
 @dataclass
 class StatisticsActions(Generic[T]):
-    _profile_repository: IProfileService
-    _repository: IStatisticService[T]
-    _title_repository: IProfileTitleService
+    __profile_repository: IProfileService
+    __repository: IStatisticService[T]
+    __title_repository: IProfileTitleService
     transaction: Transaction
 
     async def _create(self, profile_id: int) -> StatisticEntity:
@@ -37,12 +37,12 @@ class StatisticsActions(Generic[T]):
         :param profile_id:  ID профиля.
         :return:            Статистика.
         """
-        count = await self._repository.get_count_positive_score()
+        count = await self.__repository.get_count_positive_score()
         place = count + 1
-        statistic = await self._repository.create(
+        statistic = await self.__repository.create(
             profile_id=profile_id, place=place
         )
-        await self._repository.down_place_negative_score()
+        await self.__repository.down_place_negative_score()
         return statistic
 
     async def patch(
@@ -64,10 +64,10 @@ class StatisticsActions(Generic[T]):
         :param perfect_round:   Раунд без ошибок True/False.
         :return:                None.
         """
-        if not await self._profile_repository.exists(id=profile_pk):
+        if not await self.__profile_repository.exists(id=profile_pk):
             raise DoesNotExistsProfile()
         # получаем текущую статистику игрока
-        statistic = await self._repository.get_one(profile_id=profile_pk)
+        statistic = await self.__repository.get_one(profile_id=profile_pk)
 
         if statistic is None:
             statistic = await self._create(profile_id=profile_pk)
@@ -80,7 +80,7 @@ class StatisticsActions(Generic[T]):
             perfect_round=perfect_round,
         )
         # записываем обновленную статистику в БД без изменения места
-        await self._repository.update(
+        await self.__repository.update(
             pk=statistic.id,
             games=statistic.games,
             score=statistic.score,
@@ -90,14 +90,14 @@ class StatisticsActions(Generic[T]):
             trend=statistic.trend,
         )
         # получаем новое место игрока после обновления статистики
-        new_place = await self._repository.get_user_rank(profile_pk)
+        new_place = await self.__repository.get_user_rank(profile_pk)
         # если место не изменилось, выходим из функции
         if current_place == new_place:
             return
         # сдвигаем всех затронутых игроков и
         # присваиваем новое место текущему игроку
-        await self._repository.replace_profiles(new_place, current_place)
-        await self._repository.update(
+        await self.__repository.replace_profiles(new_place, current_place)
+        await self.__repository.update(
             pk=statistic.id,
             place=new_place,
             trend=current_place - new_place,
@@ -112,12 +112,12 @@ class StatisticsActions(Generic[T]):
         :param profile_pk:  ID профиля.
         :return:            Статистика и титулы лучшего игрока.
         """
-        stat = await self._repository.get_one(profile_id=profile_pk)
+        stat = await self.__repository.get_one(profile_id=profile_pk)
         if stat is None:
             raise StatisticDoseNotExists(
                 detail=f"Статистика для игрока с id: {profile_pk} не найдена"
             )
-        title = await self._title_repository.get_one(profile_id=profile_pk)
+        title = await self.__title_repository.get_one(profile_id=profile_pk)
         return stat, title
 
     async def delete_statistic(self, period: PeriodStatistic) -> None:
@@ -129,24 +129,24 @@ class StatisticsActions(Generic[T]):
         :return:        None.
         """
         async with self.transaction.begin():
-            first_place_profile = await self._repository.get_profile_id(
+            first_place_profile = await self.__repository.get_profile_id(
                 place=1
             )
             if first_place_profile is None:
                 return
 
-            profile_title = await self._title_repository.get_or_create(
+            profile_title = await self.__title_repository.get_or_create(
                 profile_id=first_place_profile
             )
 
             profile_title.take_best_title(period)
 
-            await self._title_repository.update(
+            await self.__title_repository.update(
                 profile_id=first_place_profile,
                 best_of_the_day=profile_title.best_of_the_day,
                 best_of_the_month=profile_title.best_of_the_month,
             )
-            await self._repository.delete_all_statistics()
+            await self.__repository.delete_all_statistics()
 
     async def get_top_ladder(
         self,
@@ -160,13 +160,13 @@ class StatisticsActions(Generic[T]):
         :param limit:   Сколько игроков получить.
         :return:        Список статистики игроков.
         """
-        return await self._repository.get_top_gamers(offset, limit)
+        return await self.__repository.get_top_gamers(offset, limit)
 
     async def get_count_statistic(self) -> int:
         """
         Возвращает общее число игроков со статистикой.
         """
-        return await self._repository.get_count()
+        return await self.__repository.get_count()
 
     async def get_user_rank(self, profile_id: int) -> int:
         """
@@ -175,7 +175,7 @@ class StatisticsActions(Generic[T]):
         :param profile_id:  ID профиля.
         :return:            Место в ладдере.
         """
-        return await self._repository.get_user_rank(profile_id)
+        return await self.__repository.get_user_rank(profile_id)
 
 
 @dataclass

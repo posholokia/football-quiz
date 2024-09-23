@@ -6,7 +6,7 @@ from apps.game_settings.services.storage.base import IGameSettingsService
 
 @dataclass
 class GameSettingsActions:
-    repository: IGameSettingsService
+    __repository: IGameSettingsService
 
     async def get_settings(self) -> GameSettingsEntity:
         """
@@ -14,7 +14,7 @@ class GameSettingsActions:
 
         :return: Настройки.
         """
-        return await self.repository.get_one()
+        return await self.__repository.get_one()
 
     async def edit_settings(self, **fields) -> GameSettingsEntity:
         """
@@ -27,4 +27,4 @@ class GameSettingsActions:
                         recovery_value, right_ratio, wrong_ratio.
         :return:        Настройки.
         """
-        return await self.repository.update(**fields)
+        return await self.__repository.update(**fields)

@@ -1,20 +1,14 @@
 from dataclasses import dataclass
-from typing import Type
 
 from sqlalchemy import update
 
 from apps.users.models import BestPlayerTitleEntity
 from apps.users.services.storage.base import IProfileTitleService
-from core.database.db import Database
-from core.database.repository.base import TModel
 from core.database.repository.sqla import CommonRepository
 
 
 @dataclass
 class ORMProfileTitleService(CommonRepository, IProfileTitleService):
-    db: Database
-    model: Type[TModel]
-
     async def get_one(self, **filter_by) -> BestPlayerTitleEntity:
         result = await super().get_one(**filter_by)
         if result is None:
@@ -22,7 +16,7 @@ class ORMProfileTitleService(CommonRepository, IProfileTitleService):
         return result
 
     async def update(self, profile_id: int, **fields) -> BestPlayerTitleEntity:
-        async with self.db.get_session() as session:
+        async with self._db.get_session() as session:
             query = (
                 update(self.model)
                 .where(self.model.profile_id == profile_id)

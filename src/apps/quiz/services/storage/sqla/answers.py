@@ -18,14 +18,14 @@ from core.database.repository.base import TModel
 
 @dataclass
 class ORMAnswerService(IAnswerService):
-    db: Database
+    _db: Database
     model: Type[TModel]
 
     async def bulk_create(
         self, data: list[dict[str, str]]
     ) -> list[AnswerEntity]:
         try:
-            async with self.db.get_session() as session:
+            async with self._db.get_session() as session:
                 query = insert(self.model).returning(self.model)
                 result = await session.execute(query, data)
                 orm_objs = result.scalars().all()
@@ -39,6 +39,6 @@ class ORMAnswerService(IAnswerService):
             raise AnswerIntegrityError()
 
     async def bulk_update(self, data: list[dict[str, str]]) -> None:
-        async with self.db.get_session() as session:
+        async with self._db.get_session() as session:
             query = update(self.model)
             await session.execute(query, data)

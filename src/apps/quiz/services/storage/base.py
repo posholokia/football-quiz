@@ -184,8 +184,8 @@ class IComplaintService(IRepository, ABC):
 
 @dataclass
 class ICategoryComplaintService(IRepository, ABC):
-    @abstractmethod
-    async def list(self) -> list[CategoryComplaintEntity]:
+    @overload
+    async def get_list(self) -> list[CategoryComplaintEntity]:  # noqa
         """
         Получить список категорий жалоб.
 

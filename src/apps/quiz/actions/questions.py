@@ -18,9 +18,9 @@ from core.database.db import Transaction
 
 @dataclass
 class QuestionsActions:
-    repository: IQuestionService
-    answer_repository: IAnswerService
-    answer_validator: AnswerListValidator
+    __repository: IQuestionService
+    __answer_repository: IAnswerService
+    __answer_validator: AnswerListValidator
     transaction: Transaction
 
     async def get_random(self, limit: int) -> list[QuestionEntity]:
@@ -30,7 +30,7 @@ class QuestionsActions:
         :param limit:   Кол-во вопросов.
         :return:        Список вопросов.
         """
-        return await self.repository.get_random(limit)
+        return await self.__repository.get_random(limit)
 
     async def get_by_id(self, pk: int) -> QuestionEntity:
         """
@@ -39,7 +39,7 @@ class QuestionsActions:
         :param pk:  ID вопроса.
         :return:    Вопрос.
         """
-        question = await self.repository.get_one(id=pk)
+        question = await self.__repository.get_one(id=pk)
         if not question:
             raise QuestionDoesNotExists()
         return question
@@ -51,7 +51,7 @@ class QuestionsActions:
         :param pk:  ID вопроса.
         :return:    Вопрос.
         """
-        question = await self.repository.get_one_with_complaints(id=pk)
+        question = await self.__repository.get_one_with_complaints(id=pk)
         if not question:
             raise QuestionDoesNotExists()
         return question
@@ -71,7 +71,7 @@ class QuestionsActions:
         :return:        Список вопросов с числом жалоб.
         """
         offset = (page - 1) * limit
-        question_list = await self.repository.get_list_with_complaints_count(
+        question_list = await self.__repository.get_list_with_complaints_count(
             offset, limit, search
         )
         return [
@@ -92,7 +92,7 @@ class QuestionsActions:
         :param search:  Поиск вопросов по тексту вопроса.
         :return:        Число вопросов.
         """
-        return await self.repository.get_count(search)
+        return await self.__repository.get_count(search)
 
     async def delete_question(self, pk: int) -> None:
         """
@@ -101,7 +101,7 @@ class QuestionsActions:
         :param pk:  ID вопроса.
         :return:    None.
         """
-        await self.repository.delete(pk)
+        await self.__repository.delete(pk)
 
     async def create_question_with_answers(
         self,
@@ -117,16 +117,16 @@ class QuestionsActions:
         """
         async with self.transaction.begin():
             answer_dict: list[dict[str, str | bool]] = data["answers"]
-            await self.answer_validator.validate(answer_dict)
+            await self.__answer_validator.validate(answer_dict)
 
-            question = await self.repository.create(
+            question = await self.__repository.create(
                 text=data["text"],
                 published=data["published"],
             )
             answers_data: list[dict[str, Any]] = copy.copy(answer_dict)
             for answer in answers_data:
                 answer["question_id"] = question.id
-            answers = await self.answer_repository.bulk_create(answers_data)
+            answers = await self.__answer_repository.bulk_create(answers_data)
             return QuestionAdminDTO(
                 id=question.id,
                 text=question.text,
@@ -148,14 +148,14 @@ class QuestionsActions:
         """
         async with self.transaction.begin():
             answer_dict: list[dict[str, Any]] = data["answers"]
-            await self.answer_validator.validate(answer_dict)
+            await self.__answer_validator.validate(answer_dict)
 
-            question = await self.repository.update(
+            question = await self.__repository.update(
                 pk=data["id"],
                 text=data["text"],
                 published=data["published"],
             )
-            await self.answer_repository.bulk_update(answer_dict)
+            await self.__answer_repository.bulk_update(answer_dict)
             return QuestionAdminDTO(
                 id=question.id,
                 text=question.text,
@@ -184,11 +184,11 @@ class QuestionsActions:
         for question_dict in question_data:
             # для создания вопроса ответы не нужны, убираем их из вопроса
             answer_dict: list[dict[str, Any]] = question_dict.pop("answers")
-            await self.answer_validator.validate(answer_dict)
+            await self.__answer_validator.validate(answer_dict)
 
             # и сохраняем в словарь, чтобы найти после создания вопроса.
             question_answer.update({question_dict["text"]: answer_dict})
-        questions = await self.repository.bulk_create(question_data)
+        questions = await self.__repository.bulk_create(question_data)
         answers_data = []  # для хранения данных создания ответов.
 
         for question in questions:
@@ -199,4 +199,4 @@ class QuestionsActions:
                 answer.update({"question_id": question.id})
             answers_data.extend(answer_data)
 
-        await self.answer_repository.bulk_create(answers_data)
+        await self.__answer_repository.bulk_create(answers_data)

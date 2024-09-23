@@ -3,12 +3,12 @@ from .statistic import (
     CompositeStatisticAction,
     StatisticsActions,
 )
-from .user import AdminAuthAction
+from .user import AuthAction
 
 
 __all__ = (
     "ProfileActions",
     "StatisticsActions",
     "CompositeStatisticAction",
-    "AdminAuthAction",
+    "AuthAction",
 )

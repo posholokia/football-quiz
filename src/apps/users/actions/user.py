@@ -4,7 +4,6 @@ from apps.users.exceptions.auth import (
     InvalidAuthCredentials,
     InvalidToken,
 )
-from apps.users.permissions.admin import IsAdminUser
 from apps.users.services.auth.jwt_auth.models import BlacklistRefreshToken
 from apps.users.services.auth.pwd_hash import check_password
 from apps.users.services.storage.base import IUserService
@@ -16,9 +15,8 @@ from services.jwt_token.exceptions import (
 
 
 @dataclass
-class AdminAuthAction:
-    repository: IUserService
-    permission: IsAdminUser
+class AuthAction:
+    __repository: IUserService
     token_service: BlacklistRefreshToken
 
     async def login(self, username: str, password: str) -> tuple[str, str]:
@@ -30,12 +28,10 @@ class AdminAuthAction:
         :param password:    Пароль юзера.
         :return:            Пару refresh и access токенов.
         """
-        user = await self.repository.get_one(username=username)
+        user = await self.__repository.get_one(username=username)
 
         if user is None or not check_password(password, user.password):
             raise InvalidAuthCredentials()
-
-        await self.permission.has_permission(user)
 
         refresh = await self.token_service.for_user(user)
         access = await self.token_service.access_token(refresh)

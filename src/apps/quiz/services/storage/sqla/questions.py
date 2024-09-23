@@ -1,6 +1,5 @@
 import random as python_random
 from dataclasses import dataclass
-from typing import Type
 
 from loguru import logger
 
@@ -28,18 +27,13 @@ from apps.quiz.models import (
     QuestionEntity,
 )
 from apps.quiz.services.storage.base import IQuestionService
-from core.database.db import Database
-from core.database.repository.base import TModel
 from core.database.repository.sqla import CommonRepository
 
 
 @dataclass
 class ORMQuestionsService(CommonRepository, IQuestionService):
-    db: Database
-    model: Type[TModel]
-
     async def get_random(self, limit: int) -> list[QuestionEntity]:
-        async with self.db.get_ro_session() as session:
+        async with self._db.get_ro_session() as session:
             q = aliased(
                 self.model, tablesample(self.model, func.bernoulli(0.2))
             )
@@ -61,7 +55,7 @@ class ORMQuestionsService(CommonRepository, IQuestionService):
             return [q.to_entity() for q in questions]
 
     async def get_one(self, **filter_by) -> QuestionEntity | None:
-        async with self.db.get_ro_session() as session:
+        async with self._db.get_ro_session() as session:
             query = (
                 select(self.model)
                 .filter_by(**filter_by)
@@ -74,7 +68,7 @@ class ORMQuestionsService(CommonRepository, IQuestionService):
     async def get_one_with_complaints(
         self, **filter_by
     ) -> QuestionEntity | None:
-        async with self.db.get_ro_session() as session:
+        async with self._db.get_ro_session() as session:
             query = (
                 select(self.model)
                 .filter_by(**filter_by)
@@ -92,7 +86,7 @@ class ORMQuestionsService(CommonRepository, IQuestionService):
     async def get_one_with_complaints_count(
         self, **filter_by
     ) -> tuple[QuestionEntity, int]:
-        async with self.db.get_ro_session() as session:
+        async with self._db.get_ro_session() as session:
             query = self._select_complaints_count().filter_by(**filter_by)
             result = await session.execute(query)
             questions, count = result.fetchone()
@@ -104,7 +98,7 @@ class ORMQuestionsService(CommonRepository, IQuestionService):
         limit: int = 100,
         search: str | None = None,
     ) -> list[tuple[QuestionEntity, int]]:
-        async with self.db.get_ro_session() as session:
+        async with self._db.get_ro_session() as session:
             query = self._select_complaints_count().offset(offset).limit(limit)
 
             if search is not None:
@@ -115,7 +109,7 @@ class ORMQuestionsService(CommonRepository, IQuestionService):
             return [(q.to_entity(), c) for q, c in questions]
 
     async def get_count(self, search: str | None = None) -> int:
-        async with self.db.get_ro_session() as session:
+        async with self._db.get_ro_session() as session:
             query = select(func.count(self.model.text))
 
             if search is not None:
@@ -128,7 +122,7 @@ class ORMQuestionsService(CommonRepository, IQuestionService):
         self, data: list[dict[str, str]]
     ) -> list[QuestionEntity]:
         try:
-            async with self.db.get_session() as session:
+            async with self._db.get_session() as session:
                 query = insert(self.model).returning(self.model)
                 result = await session.execute(query, data)
                 orm_objs = result.scalars().all()

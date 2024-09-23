@@ -1,20 +1,20 @@
-from api.admin.auth.schema import (
-    AccessTokenSchema,
-    AuthCredentialsSchema,
-    RefreshTokenSchema,
-    TokenObtainPairSchemaSchema,
-)
-
 from fastapi import (
     APIRouter,
     Depends,
 )
 from starlette import status
 
-from apps.users.actions.user import AdminAuthAction
+from apps.users.actions.user import AuthAction
 from config.containers import (
     Container,
     get_container,
+)
+
+from .schema import (
+    AccessTokenSchema,
+    AuthCredentialsSchema,
+    RefreshTokenSchema,
+    TokenObtainPairSchemaSchema,
 )
 
 
@@ -30,7 +30,7 @@ async def login(
     credentials: AuthCredentialsSchema,
     container: Container = Depends(get_container),
 ) -> TokenObtainPairSchemaSchema:
-    action: AdminAuthAction = container.resolve(AdminAuthAction)
+    action: AuthAction = container.resolve(AuthAction)
     refresh, access = await action.login(
         username=credentials.username,
         password=credentials.password,
@@ -50,7 +50,7 @@ async def refresh_token(
     token: RefreshTokenSchema,
     container: Container = Depends(get_container),
 ) -> AccessTokenSchema:
-    action: AdminAuthAction = container.resolve(AdminAuthAction)
+    action: AuthAction = container.resolve(AuthAction)
     access = await action.refresh_token(token.refresh)
     return AccessTokenSchema(
         access=access,
@@ -66,6 +66,6 @@ async def blacklist_token(
     token: RefreshTokenSchema,
     container: Container = Depends(get_container),
 ) -> None:
-    action: AdminAuthAction = container.resolve(AdminAuthAction)
+    action: AuthAction = container.resolve(AuthAction)
     await action.set_blacklist_token(token.refresh)
     return

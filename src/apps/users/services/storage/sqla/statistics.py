@@ -1,8 +1,5 @@
 from dataclasses import dataclass
-from typing import (
-    Generic,
-    Type,
-)
+from typing import Generic
 
 from sqlalchemy import (
     and_,
@@ -24,7 +21,6 @@ from apps.users.services.storage import (
     IStatisticService,
     TModel,
 )
-from core.database.db import Database
 from core.database.repository.sqla import CommonRepository
 
 
@@ -32,11 +28,8 @@ from core.database.repository.sqla import CommonRepository
 class ORMStatisticService(
     CommonRepository, IStatisticService, Generic[TModel]
 ):
-    db: Database
-    model: Type[TModel]
-
     async def replace_profiles(self, new_place, old_place) -> None:
-        async with self.db.get_session() as session:
+        async with self._db.get_session() as session:
             if new_place > old_place:
                 query = (
                     update(self.model)
@@ -68,7 +61,7 @@ class ORMStatisticService(
             await session.execute(query)
 
     async def down_place_negative_score(self) -> None:
-        async with self.db.get_session() as session:
+        async with self._db.get_session() as session:
             query = (
                 update(self.model)
                 .where(self.model.score < 0)
@@ -80,7 +73,7 @@ class ORMStatisticService(
             await session.execute(query)
 
     async def get_user_rank(self, profile_pk: int) -> int:
-        async with self.db.get_ro_session() as session:
+        async with self._db.get_ro_session() as session:
             subquery = select(
                 self.model,
                 func.row_number()
@@ -109,7 +102,7 @@ class ORMStatisticService(
         offset: int | None,
         limit: int | None,
     ) -> list[StatisticEntity]:
-        async with self.db.get_ro_session() as session:
+        async with self._db.get_ro_session() as session:
             query = (
                 select(self.model)
                 .order_by(self.model.place)
@@ -126,7 +119,7 @@ class ORMStatisticService(
             return [s.to_entity() for s in statistics]
 
     async def get_count_positive_score(self) -> int:
-        async with self.db.get_ro_session() as session:
+        async with self._db.get_ro_session() as session:
             query = (
                 select(func.count())
                 .select_from(self.model)
@@ -136,7 +129,7 @@ class ORMStatisticService(
             return result.scalar_one()
 
     async def delete_all_statistics(self) -> None:
-        async with self.db.get_session() as session:
+        async with self._db.get_session() as session:
             assert (
                 self.model is not Statistic
             ), "Попытка удалить общую статистику"
@@ -148,7 +141,7 @@ class ORMStatisticService(
             await session.execute(query)
 
     async def get_profile_id(self, place: int) -> int | None:
-        async with self.db.get_ro_session() as session:
+        async with self._db.get_ro_session() as session:
             query = select(self.model.profile_id).where(
                 self.model.place == place
             )

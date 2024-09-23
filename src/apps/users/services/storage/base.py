@@ -6,7 +6,6 @@ from dataclasses import dataclass
 from typing import (
     Generic,
     overload,
-    TypeVar,
 )
 
 from apps.users.models import (
@@ -15,11 +14,10 @@ from apps.users.models import (
     StatisticEntity,
     UserEntity,
 )
-from core.database.db import Base
-from core.database.repository.base import IRepository
-
-
-TModel = TypeVar("TModel", bound=Base)
+from core.database.repository.base import (
+    IRepository,
+    TModel,
+)
 
 
 @dataclass

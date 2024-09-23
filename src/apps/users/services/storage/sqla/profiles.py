@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from typing import Type
 
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
@@ -10,16 +9,11 @@ from apps.quiz.models import Complaint
 from apps.users.exceptions.profile import DoesNotExistsProfile
 from apps.users.models import ProfileEntity
 from apps.users.services.storage import IProfileService
-from core.database.db import Database
-from core.database.repository.base import TModel
 from core.database.repository.sqla import CommonRepository
 
 
 @dataclass
 class ORMProfileService(CommonRepository, IProfileService):
-    db: Database
-    model: Type[TModel]
-
     async def update(self, pk: int, **fields) -> ProfileEntity:
         profile = await super().update(pk, **fields)
 
@@ -29,7 +23,7 @@ class ORMProfileService(CommonRepository, IProfileService):
         return profile
 
     async def get_count(self, search: str | None = None) -> int:
-        async with self.db.get_ro_session() as session:
+        async with self._db.get_ro_session() as session:
             query = select(func.count(self.model.name))
 
             if search is not None:
@@ -44,7 +38,7 @@ class ORMProfileService(CommonRepository, IProfileService):
         limit: int,
         search: str | None = None,
     ) -> list[tuple[ProfileEntity, int]]:
-        async with self.db.get_ro_session() as session:
+        async with self._db.get_ro_session() as session:
             query = (
                 self._sub_get_with_complaints_count()
                 .offset(offset)
@@ -63,7 +57,7 @@ class ORMProfileService(CommonRepository, IProfileService):
         self,
         pk: int,
     ) -> tuple[ProfileEntity, int]:
-        async with self.db.get_ro_session() as session:
+        async with self._db.get_ro_session() as session:
             query = self._sub_get_with_complaints_count().where(
                 self.model.id == pk
             )

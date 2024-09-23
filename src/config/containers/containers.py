@@ -1,5 +1,8 @@
 from functools import lru_cache
 
+from apps.feedback.actions.feedback import FeedbackAction
+from apps.feedback.services.storage.base import IFeedbackService
+from apps.feedback.services.storage.sqla import ORMFeedbackService
 from apps.game_settings.actions import GameSettingsActions
 from apps.game_settings.models import GameSettings
 from apps.game_settings.services.storage.base import IGameSettingsService
@@ -30,7 +33,7 @@ from apps.quiz.services.storage.sqla import (
 from apps.quiz.services.storage.sqla.answers import ORMAnswerService
 from apps.quiz.validator.answers import AnswerListValidator
 from apps.users.actions import (
-    AdminAuthAction,
+    AuthAction,
     CompositeStatisticAction,
     ProfileActions,
     StatisticsActions,
@@ -168,6 +171,7 @@ class DiContainer:
             ORMCategoryComplaintService,
             model=CategoryComplaint,
         )
+        self.builder.register(IFeedbackService, ORMFeedbackService, model=...)
 
     def __init_service_containers(self):
         self.builder.singleton(
@@ -231,7 +235,8 @@ class DiContainer:
             CategoryComplaintsActions, CategoryComplaintsActions
         )
         self.builder.register(GameSettingsActions, GameSettingsActions)
-        self.builder.register(AdminAuthAction, AdminAuthAction)
+        self.builder.register(AuthAction, AuthAction)
+        self.builder.register(FeedbackAction, FeedbackAction)
 
 
 class DiLocalContainer:
