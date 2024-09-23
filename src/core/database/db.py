@@ -137,7 +137,7 @@ class Transaction:
         Коммит сессии будет после выхода из контекстного менеджера,
         внутри будет только флеш сессии.
 
-        :return: None
+        :return: Асинхронный генератор.
         """
         async with self.__db._transaction():  # noqa
             yield
