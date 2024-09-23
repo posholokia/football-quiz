@@ -11,15 +11,13 @@ from fastapi import (
 from starlette import status
 
 from apps.users.actions import ProfileActions
-from apps.users.models import UserEntity
-from apps.users.permissions.admin import IsAdminUser
 from config.containers import (
     Container,
     get_container,
 )
 from services.mapper import convert_to_profile_retrieve_admin as convert
 
-from ..depends import get_user_from_token
+from ..depends import is_admin_permission
 from .schema import ProfileAdminRetrieveSchema as PrfSchema
 
 
@@ -37,12 +35,9 @@ router = APIRouter()
 async def get_list_profiles(
     search: str | None = None,
     pagination_in: PagePaginationIn = Depends(),
-    user: UserEntity = Depends(get_user_from_token),
+    _=Depends(is_admin_permission),
     container: Container = Depends(get_container),
 ) -> PagePaginationResponseSchema[PrfSchema]:
-    permission: IsAdminUser = container.resolve(IsAdminUser)
-    await permission.has_permission(user)
-
     action: ProfileActions = container.resolve(ProfileActions)
     paginator = PagePaginator(pagination=pagination_in, action=action)
     profile_page = paginator.paginate(action.get_list_admin)
@@ -62,12 +57,9 @@ async def get_list_profiles(
 )
 async def reset_profile_name(
     profile_id: int,
-    user: UserEntity = Depends(get_user_from_token),
+    _=Depends(is_admin_permission),
     container: Container = Depends(get_container),
 ) -> PrfSchema:
-    permission: IsAdminUser = container.resolve(IsAdminUser)
-    await permission.has_permission(user)
-
     action: ProfileActions = container.resolve(ProfileActions)
     profile, complaints = await action.reset_name(profile_id)
     return convert(profile, complaints)

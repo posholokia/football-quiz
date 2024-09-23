@@ -115,10 +115,10 @@ class QuestionsActions:
                         Answers должен содержать text, right, question_id.
         :return:        Вопрос с числом жалоб.
         """
-        answer_dict: list[dict[str, str | bool]] = data["answers"]
-        await self.answer_validator.validate(answer_dict)
-
         async with self.transaction.begin():
+            answer_dict: list[dict[str, str | bool]] = data["answers"]
+            await self.answer_validator.validate(answer_dict)
+
             question = await self.repository.create(
                 text=data["text"],
                 published=data["published"],
@@ -146,10 +146,10 @@ class QuestionsActions:
                         Answers должен содержать id, text, right, question_id.
         :return:        Вопрос с числом жалоб.
         """
-        answer_dict: list[dict[str, Any]] = data["answers"]
-        await self.answer_validator.validate(answer_dict)
-
         async with self.transaction.begin():
+            answer_dict: list[dict[str, Any]] = data["answers"]
+            await self.answer_validator.validate(answer_dict)
+
             question = await self.repository.update(
                 pk=data["id"],
                 text=data["text"],
@@ -163,3 +163,40 @@ class QuestionsActions:
                 complaints=data["complaints"],
                 answers=[AnswerEntity(**answer) for answer in answer_dict],
             )
+
+    async def bulk_create_question_with_answers(
+        self,
+        data: list[dict[str, Any]],
+    ) -> None:
+        """
+        Массовое создание вопросов с ответами.
+
+        :param data:    Список json'ов с данными для создания вопроса
+                        и ответов. Каждый вопрос должен содержать text,
+                        published, answers. Answers должен содержать
+                        text, right, question_id.
+        :return:        None
+        """
+        question_data = copy.deepcopy(data)
+        # здесь по тексту вопроса храним его ответы
+        question_answer: dict[str, Any] = {}
+
+        for question_dict in question_data:
+            # для создания вопроса ответы не нужны, убираем их из вопроса
+            answer_dict: list[dict[str, Any]] = question_dict.pop("answers")
+            await self.answer_validator.validate(answer_dict)
+
+            # и сохраняем в словарь, чтобы найти после создания вопроса.
+            question_answer.update({question_dict["text"]: answer_dict})
+        questions = await self.repository.bulk_create(question_data)
+        answers_data = []  # для хранения данных создания ответов.
+
+        for question in questions:
+            # находим ответы для созданного вопроса
+            answer_data = question_answer.get(question.text)
+            # и присваиваем им id вопроса
+            for answer in answer_data:
+                answer.update({"question_id": question.id})
+            answers_data.extend(answer_data)
+
+        await self.answer_repository.bulk_create(answers_data)

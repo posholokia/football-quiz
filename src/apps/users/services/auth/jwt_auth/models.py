@@ -23,7 +23,7 @@ class AccessToken(Token):
 class RefreshToken(Token):
     token_type: TokenType = TokenType.refresh
     lifetime: timedelta = timedelta(weeks=2)
-    sub_claim: str = "user_id"
+    sub_claim: str = "user"
 
     async def access_token(self, refresh_token: str) -> str:
         """
@@ -52,7 +52,11 @@ class RefreshToken(Token):
         :return:        Refresh токен.
         """
         self.set_payload()
-        self[self.sub_claim] = user.id
+        self[self.sub_claim] = {
+            "id": user.id,
+            "superuser": user.is_superuser,
+            "active": user.is_active,
+        }
         return self.encode()
 
 

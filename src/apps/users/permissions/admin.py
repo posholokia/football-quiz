@@ -11,5 +11,6 @@ class IsAdminUser(BasePermission):
     repository: IUserService
 
     async def has_permission(self, user: UserEntity) -> None:
+        print(user)
         if not user.is_superuser:
             raise UserIsNotAdminError()

@@ -84,27 +84,32 @@ class Database:
 
     @asynccontextmanager
     async def get_ro_session(self) -> AsyncGenerator[AsyncSession, Any]:
-        if self.__in_transaction and self.__session is None:
-            self.__session = self.__connection.get_session()()
         if self.__ro_session is None:
             self.__ro_session = self.__connection.get_ro_session()()
         try:
-            if self.__in_transaction:
-                yield self.__session
-            else:
-                yield self.__ro_session
+            yield self.__ro_session
         except SQLAlchemyError:
             logger.opt(exception=True).error("Session error:\n")
             raise
         finally:
-            await self.__ro_session.close()
+            if not self.__in_transaction:
+                await self.__ro_session.close()
 
     @asynccontextmanager
     async def _transaction(self) -> AsyncGenerator[None, None]:
+        """
+        Контекстный менеджер начинает транзакцию.
+        """
         if self.__in_transaction:
             raise RuntimeError("Repository already begun transaction")
 
+        # Внутри транзакции сессия на запись и чтения должна быть одна,
+        # чтобы можно было внутри транзакции читать изменения. Также для
+        # удобства сессии созданы тут, чтобы избежать ошибки в finally блоке,
+        # когда этот менеджер ловит exception, а сессия еще не была открыта
+        # (например, при валидации данных перед их записью в репозиторий).
         self.__in_transaction = True
+        self.__session = self.__ro_session = self.__connection.get_session()()
         try:
             yield
         except Exception as error:

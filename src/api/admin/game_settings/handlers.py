@@ -1,4 +1,4 @@
-from api.admin.depends import get_user_from_token
+from api.admin.depends import is_admin_permission
 from api.admin.game_settings.schema import (
     GameSettingsAdminSchema,
     GameSettingsUpdateSchema,
@@ -12,8 +12,6 @@ from fastapi.security import HTTPBearer
 from starlette import status
 
 from apps.game_settings.actions import GameSettingsActions
-from apps.users.models import UserEntity
-from apps.users.permissions.admin import IsAdminUser
 from config.containers import (
     Container,
     get_container,
@@ -31,12 +29,9 @@ http_bearer = HTTPBearer()
     description="Получить настройки игры",
 )
 async def get_game_settings(
-    user: UserEntity = Depends(get_user_from_token),
+    _=Depends(is_admin_permission),
     container: Container = Depends(get_container),
 ) -> GameSettingsAdminSchema:
-    permission: IsAdminUser = container.resolve(IsAdminUser)
-    await permission.has_permission(user)
-
     action: GameSettingsActions = container.resolve(GameSettingsActions)
     settings = await action.get_settings()
     return dataclass_to_schema(GameSettingsAdminSchema, settings)
@@ -49,12 +44,9 @@ async def get_game_settings(
 )
 async def patch_game_settings(
     settings: GameSettingsUpdateSchema,
-    user: UserEntity = Depends(get_user_from_token),
+    _=Depends(is_admin_permission),
     container: Container = Depends(get_container),
 ) -> GameSettingsAdminSchema:
-    permission: IsAdminUser = container.resolve(IsAdminUser)
-    await permission.has_permission(user)
-
     action: GameSettingsActions = container.resolve(GameSettingsActions)
     settings = await action.edit_settings(
         **{

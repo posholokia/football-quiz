@@ -84,6 +84,7 @@ async def test_add_user_statistic():
         },
         headers={"Device": USER1_DEVICE},
     )
+    print(f"{response.text=}")
     assert 200 == response.status_code
     assert 3 == response.json()["place"]
 

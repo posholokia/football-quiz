@@ -1,5 +1,7 @@
 import json
+from typing import Annotated
 
+from annotated_types import MaxLen
 from api.admin.quiz.schema import (
     ComplaintAdminRetrieveSchema as CplSchema,
     QuestionAdminRetrieveSchema as QstSchema,
@@ -22,15 +24,13 @@ from starlette import status
 
 from apps.quiz.actions import ComplaintsActions
 from apps.quiz.actions.questions import QuestionsActions
-from apps.users.models import UserEntity
-from apps.users.permissions.admin import IsAdminUser
 from config.containers import (
     Container,
     get_container,
 )
 from services.mapper import dataclass_to_schema
 
-from ..depends import get_user_from_token
+from ..depends import is_admin_permission
 
 
 router = APIRouter()
@@ -48,12 +48,9 @@ http_bearer = HTTPBearer()
 async def get_list_question(
     search: str | None = None,
     pagination_in: PagePaginationIn = Depends(),
-    user: UserEntity = Depends(get_user_from_token),
+    _=Depends(is_admin_permission),
     container: Container = Depends(get_container),
 ) -> PagePaginationResponseSchema[QstSchema]:
-    permission: IsAdminUser = container.resolve(IsAdminUser)
-    await permission.has_permission(user)
-
     action: QuestionsActions = container.resolve(QuestionsActions)
     paginator = PagePaginator(
         pagination=pagination_in,
@@ -76,12 +73,9 @@ async def get_list_question(
 )
 async def delete_question(
     question_id: int,
-    user: UserEntity = Depends(get_user_from_token),
+    _=Depends(is_admin_permission),
     container: Container = Depends(get_container),
 ) -> None:
-    permission: IsAdminUser = container.resolve(IsAdminUser)
-    await permission.has_permission(user)
-
     action: QuestionsActions = container.resolve(QuestionsActions)
     await action.delete_question(question_id)
     return None
@@ -94,12 +88,9 @@ async def delete_question(
 )
 async def create_question(
     question: QuestionFullCreateSchema,
-    user: UserEntity = Depends(get_user_from_token),
+    _=Depends(is_admin_permission),
     container: Container = Depends(get_container),
 ) -> QstSchema:
-    permission: IsAdminUser = container.resolve(IsAdminUser)
-    await permission.has_permission(user)
-
     action: QuestionsActions = container.resolve(QuestionsActions)
     question_dict = json.loads(question.model_dump_json())
     q = await action.create_question_with_answers(question_dict)
@@ -112,17 +103,15 @@ async def create_question(
     description="Массовое создание вопросов",
 )
 async def bulk_create_question(
-    questions: list[QuestionFullCreateSchema],
-    user: UserEntity = Depends(get_user_from_token),
+    questions: Annotated[list[QuestionFullCreateSchema], MaxLen(2000)],
+    _=Depends(is_admin_permission),
     container: Container = Depends(get_container),
 ) -> None:
-    permission: IsAdminUser = container.resolve(IsAdminUser)
-    await permission.has_permission(user)
-
     action: QuestionsActions = container.resolve(QuestionsActions)
-    for question in questions:
-        question_dict = json.loads(question.model_dump_json())
-        await action.create_question_with_answers(question_dict)
+
+    await action.bulk_create_question_with_answers(
+        [question.model_dump() for question in questions]
+    )
 
 
 @router.put(
@@ -132,12 +121,9 @@ async def bulk_create_question(
 )
 async def update_question(
     question: QuestionFullUpdateSchema,
-    user: UserEntity = Depends(get_user_from_token),
+    _=Depends(is_admin_permission),
     container: Container = Depends(get_container),
 ) -> QstSchema:
-    permission: IsAdminUser = container.resolve(IsAdminUser)
-    await permission.has_permission(user)
-
     action: QuestionsActions = container.resolve(QuestionsActions)
     question_dict = json.loads(question.model_dump_json())
     q = await action.update_question_with_answers(question_dict)
@@ -151,12 +137,9 @@ async def update_question(
 )
 async def get_question(
     question_id: int,
-    user: UserEntity = Depends(get_user_from_token),
     container: Container = Depends(get_container),
+    _=Depends(is_admin_permission),
 ) -> QuestionWithRelationshipsSchema:
-    permission: IsAdminUser = container.resolve(IsAdminUser)
-    await permission.has_permission(user)
-
     action: QuestionsActions = container.resolve(QuestionsActions)
     question = await action.get_with_complaints(question_id)
     return dataclass_to_schema(QuestionWithRelationshipsSchema, question)
@@ -172,12 +155,9 @@ async def get_question(
 )
 async def get_list_complaints(
     pagination_in: PagePaginationIn = Depends(),
-    user: UserEntity = Depends(get_user_from_token),
+    _=Depends(is_admin_permission),
     container: Container = Depends(get_container),
 ) -> PagePaginationResponseSchema[CplSchema]:
-    permission: IsAdminUser = container.resolve(IsAdminUser)
-    await permission.has_permission(user)
-
     action: ComplaintsActions = container.resolve(ComplaintsActions)
     paginator = PagePaginator(
         pagination=pagination_in,
@@ -198,12 +178,9 @@ async def get_list_complaints(
 )
 async def delete_complaint(
     complaint_id: int,
-    user: UserEntity = Depends(get_user_from_token),
+    _=Depends(is_admin_permission),
     container: Container = Depends(get_container),
 ) -> None:
-    permission: IsAdminUser = container.resolve(IsAdminUser)
-    await permission.has_permission(user)
-
     action: ComplaintsActions = container.resolve(ComplaintsActions)
     await action.delete_complaint(complaint_id)
     return None

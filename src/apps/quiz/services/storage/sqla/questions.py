@@ -2,11 +2,15 @@ import random as python_random
 from dataclasses import dataclass
 from typing import Type
 
+from loguru import logger
+
 from sqlalchemy import (
+    insert,
     select,
     tablesample,
     true,
 )
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import (
     aliased,
     joinedload,
@@ -18,6 +22,7 @@ from sqlalchemy.sql.functions import (
 )
 from sqlalchemy.sql.selectable import Select
 
+from apps.quiz.exceptions.question import QuestionIntegrityError
 from apps.quiz.models import (
     Complaint,
     QuestionEntity,
@@ -118,6 +123,23 @@ class ORMQuestionsService(CommonRepository, IQuestionService):
 
             result = await session.execute(query)
             return result.scalar_one()
+
+    async def bulk_create(
+        self, data: list[dict[str, str]]
+    ) -> list[QuestionEntity]:
+        try:
+            async with self.db.get_session() as session:
+                query = insert(self.model).returning(self.model)
+                result = await session.execute(query, data)
+                orm_objs = result.scalars().all()
+                return [obj.to_entity() for obj in orm_objs]
+        except IntegrityError as e:
+            logger.error(
+                "Ошибка при создании вопросов: {}\nданные: {}",
+                e,
+                data,
+            )
+            raise QuestionIntegrityError()
 
     def _select_complaints_count(self) -> Select:
         subquery = (

@@ -7,3 +7,9 @@ from core.constructor.exceptions import BaseHTTPException
 class QuestionDoesNotExists(BaseHTTPException):
     code: int = 400
     detail: str = "Такой вопрос не существует"
+
+
+@dataclass(eq=False)
+class QuestionIntegrityError(BaseHTTPException):
+    code: int = 409
+    detail: str = "Невозможно сохранить эти вопросы"

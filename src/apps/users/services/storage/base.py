@@ -120,7 +120,7 @@ class IStatisticService(IRepository, ABC, Generic[TModel]):
         """
 
     @overload
-    async def get_one(self, **filter_by) -> StatisticEntity:  # noqa
+    async def get_one(self, **filter_by) -> StatisticEntity | None:  # noqa
         """
         Получить статистику.
 
@@ -130,7 +130,7 @@ class IStatisticService(IRepository, ABC, Generic[TModel]):
                             profile_id - уникально;
                             games, score, rights, wrongs,
                             trend, perfect_rounds.
-        :return:            Статистика.
+        :return:            Статистика или None.
         """
 
     @overload

@@ -29,5 +29,5 @@ class AnswerDoesNotExists(BaseHTTPException):
 
 @dataclass(eq=False)
 class AnswerIntegrityError(BaseHTTPException):
-    code: int = 400
+    code: int = 409
     detail: str = "Невозможно сохранить такие ответы"

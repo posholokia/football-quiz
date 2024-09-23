@@ -6,7 +6,9 @@ from test.http_request import (
     send_put,
 )
 from test.test_api.fixture import (
+    jwt_access_admin_token,
     jwt_access_token,
+    jwt_refresh_admin_token,
     jwt_refresh_token,
 )
 
@@ -52,8 +54,8 @@ async def test_refresh_token_fail():
 
 
 @pytest.mark.asyncio(loop_scope="session")
-async def test_refresh_token_success(jwt_refresh_token):
-    refresh = await jwt_refresh_token
+async def test_refresh_token_success(jwt_refresh_admin_token):
+    refresh = await jwt_refresh_admin_token
     response = await send_post(
         url="/api/v1/jwt/refresh/",
         json={
@@ -65,19 +67,18 @@ async def test_refresh_token_success(jwt_refresh_token):
 
 
 @pytest.mark.asyncio(loop_scope="session")
-async def test_blacklisted_token(jwt_refresh_token):
-    refresh = await jwt_refresh_token
+async def test_blacklisted_token(jwt_refresh_admin_token):
+    refresh = await jwt_refresh_admin_token
     response = await send_post(
         url="/api/v1/jwt/blacklist/",
         json={
-            "refresh": refresh,
-        },
+            "refresh": refresh},
     )
     assert 204 == response.status_code
 
 
 @pytest.mark.asyncio(loop_scope="session")
-async def test_get_game_settings(jwt_access_token):
+async def test_get_game_settings(jwt_access_admin_token):
     settings_attrs = [
         "time_round",
         "question_limit",
@@ -92,12 +93,10 @@ async def test_get_game_settings(jwt_access_token):
         "right_ratio",
         "wrong_ratio",
     ]
-    access = await jwt_access_token
+    access = await jwt_access_admin_token
     response = await send_get(
         url="/api/v1/admin/settings/",
-        headers={
-            "Authorization": f"Bearer {access}",
-        },
+        headers={"Authorization": f"Bearer {access}"},
     )
     assert 200 == response.status_code
     for key in settings_attrs:
@@ -105,17 +104,25 @@ async def test_get_game_settings(jwt_access_token):
 
 
 @pytest.mark.asyncio(loop_scope="session")
-async def test_patch_game_settings(jwt_access_token):
+async def test_get_game_settings_perms(jwt_access_token):
     access = await jwt_access_token
+    response = await send_get(
+        url="/api/v1/admin/settings/",
+        headers={"Authorization": f"Bearer {access}"},
+    )
+    assert 403 == response.status_code
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_patch_game_settings(jwt_access_admin_token):
+    access = await jwt_access_admin_token
     response = await send_patch(
         url="/api/v1/admin/settings/",
         json={
             "round_cost": 75,
             "right_ratio": 1.7
         },
-        headers={
-            "Authorization": f"Bearer {access}",
-        },
+        headers={"Authorization": f"Bearer {access}"},
     )
     assert 200 == response.status_code
     assert 75 == response.json()["round_cost"]
@@ -123,13 +130,21 @@ async def test_patch_game_settings(jwt_access_token):
 
 
 @pytest.mark.asyncio(loop_scope="session")
-async def test_get_question_list(jwt_access_token):
+async def test_patch_game_settings_perms(jwt_access_token):
     access = await jwt_access_token
+    response = await send_patch(
+        url="/api/v1/admin/settings/",
+        headers={"Authorization": f"Bearer {access}"},
+    )
+    assert 403 == response.status_code
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_get_question_list(jwt_access_admin_token):
+    access = await jwt_access_admin_token
     response = await send_get(
         url="/api/v1/admin/question/?page=200&limit=100",
-        headers={
-            "Authorization": f"Bearer {access}",
-        },
+        headers={"Authorization": f"Bearer {access}"},
     )
     assert 200 == response.status_code
     assert 100 == len(response.json()["items"])
@@ -139,20 +154,38 @@ async def test_get_question_list(jwt_access_token):
 
 
 @pytest.mark.asyncio(loop_scope="session")
-async def test_delete_question(jwt_access_token):
+async def test_get_question_list_perms(jwt_access_token):
     access = await jwt_access_token
+    response = await send_get(
+        url="/api/v1/admin/question/?page=200&limit=100",
+        headers={"Authorization": f"Bearer {access}"},
+    )
+    assert 403 == response.status_code
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_delete_question(jwt_access_admin_token):
+    access = await jwt_access_admin_token
     response = await send_delete(
         url="/api/v1/admin/question/200/",
-        headers={
-            "Authorization": f"Bearer {access}",
-        },
+        headers={"Authorization": f"Bearer {access}"},
     )
     assert 204 == response.status_code
 
 
 @pytest.mark.asyncio(loop_scope="session")
-async def test_create_question(jwt_access_token):
+async def test_delete_question_perms(jwt_access_token):
     access = await jwt_access_token
+    response = await send_delete(
+        url="/api/v1/admin/question/200/",
+        headers={"Authorization": f"Bearer {access}"},
+    )
+    assert 403 == response.status_code
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_create_question(jwt_access_admin_token):
+    access = await jwt_access_admin_token
     response = await send_post(
         url="/api/v1/admin/question/",
         json={
@@ -177,16 +210,24 @@ async def test_create_question(jwt_access_token):
                 },
             ]
         },
-        headers={
-            "Authorization": f"Bearer {access}",
-        },
+        headers={"Authorization": f"Bearer {access}"},
     )
     assert 200 == response.status_code
 
 
 @pytest.mark.asyncio(loop_scope="session")
-async def test_create_question_no_right_answer(jwt_access_token):
+async def test_create_question_perms(jwt_access_token):
     access = await jwt_access_token
+    response = await send_post(
+        url="/api/v1/admin/question/",
+        headers={"Authorization": f"Bearer {access}"},
+    )
+    assert 403 == response.status_code
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_create_question_no_right_answer(jwt_access_admin_token):
+    access = await jwt_access_admin_token
     response = await send_post(
         url="/api/v1/admin/question/",
         json={
@@ -211,16 +252,14 @@ async def test_create_question_no_right_answer(jwt_access_token):
                 },
             ]
         },
-        headers={
-            "Authorization": f"Bearer {access}",
-        },
+        headers={"Authorization": f"Bearer {access}"},
     )
     assert 400 == response.status_code
 
 
 @pytest.mark.asyncio(loop_scope="session")
-async def test_create_question_no_four_answer(jwt_access_token):
-    access = await jwt_access_token
+async def test_create_question_no_four_answer(jwt_access_admin_token):
+    access = await jwt_access_admin_token
     response = await send_post(
         url="/api/v1/admin/question/",
         json={
@@ -241,96 +280,61 @@ async def test_create_question_no_four_answer(jwt_access_token):
                 },
             ]
         },
-        headers={
-            "Authorization": f"Bearer {access}",
-        },
+        headers={"Authorization": f"Bearer {access}"},
     )
     assert 400 == response.status_code
 
 
 @pytest.mark.asyncio(loop_scope="session")
-async def test_bulk_create_question(jwt_access_token):
-    access = await jwt_access_token
+async def test_bulk_create_question(jwt_access_admin_token):
+    access = await jwt_access_admin_token
+    js = []
+    for i in range(1, 500):
+        q = {
+            "text": f"Вопрос массового создания {i}",
+            "published": True,
+            "answers": [
+                {
+                    "text": f"Неправильный ответ1 на вопрос {i}",
+                    "right": False
+                },
+                {
+                    "text": f"Неправильный ответ2 на вопрос {i}",
+                    "right": False
+                },
+                {
+                    "text": f"Правильный ответ на вопрос {i}",
+                    "right": True
+                },
+                {
+                    "text": f"Неправильный ответ3 на вопрос {i}",
+                    "right": False
+                }
+            ]
+        }
+        js.append(q)
+
     response = await send_post(
         url="/api/v1/admin/question/bulk_create/",
-        json=[
-            {
-                "text": "Вопрос массового создания 1",
-                "published": True,
-                "answers": [
-                    {
-                        "text": "Неправильный ответ1",
-                        "right": False
-                    },
-                    {
-                        "text": "Неправильный ответ2",
-                        "right": False
-                    },
-                    {
-                        "text": "Правильный ответ",
-                        "right": True
-                    },
-                    {
-                        "text": "Неправильный ответ3",
-                        "right": False
-                    },
-                ]
-            },
-            {
-                "text": "Вопрос массового создания 2",
-                "published": True,
-                "answers": [
-                    {
-                        "text": "Неправильный ответ1",
-                        "right": False
-                    },
-                    {
-                        "text": "Неправильный ответ2",
-                        "right": False
-                    },
-                    {
-                        "text": "Правильный ответ",
-                        "right": True
-                    },
-                    {
-                        "text": "Неправильный ответ3",
-                        "right": False
-                    },
-                ]
-            },
-            {
-                "text": "Вопрос массового создания 3",
-                "published": True,
-                "answers": [
-                    {
-                        "text": "Неправильный ответ1",
-                        "right": False
-                    },
-                    {
-                        "text": "Неправильный ответ2",
-                        "right": False
-                    },
-                    {
-                        "text": "Правильный ответ",
-                        "right": True
-                    },
-                    {
-                        "text": "Неправильный ответ3",
-                        "right": False
-                    },
-                ]
-            },
-        ],
-        headers={
-            "Authorization": f"Bearer {access}",
-        },
+        json=js,
+        headers={"Authorization": f"Bearer {access}"},
     )
     assert 204 == response.status_code
 
 
 @pytest.mark.asyncio(loop_scope="session")
-async def test_edit_question(jwt_access_token):
+async def test_bulk_create_question_perms(jwt_access_token):
     access = await jwt_access_token
+    response = await send_post(
+        url="/api/v1/admin/question/bulk_create/",
+        headers={"Authorization": f"Bearer {access}"},
+    )
+    assert 403 == response.status_code
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_edit_question(jwt_access_admin_token):
+    access = await jwt_access_admin_token
     response = await send_put(
         url="/api/v1/admin/question/42611/",
         json={
@@ -361,22 +365,28 @@ async def test_edit_question(jwt_access_token):
                 }
             ]
         },
-        headers={
-            "Authorization": f"Bearer {access}",
-        },
+        headers={"Authorization": f"Bearer {access}"},
     )
     assert 200 == response.status_code
     assert "Губка Боб квадратные штаны" == response.json()["answers"][0]["text"]
 
 
 @pytest.mark.asyncio(loop_scope="session")
-async def test_get_one_question(jwt_access_token):
+async def test_edit_question_perms(jwt_access_token):
     access = await jwt_access_token
+    response = await send_put(
+        url="/api/v1/admin/question/42611/",
+        headers={"Authorization": f"Bearer {access}"},
+    )
+    assert 403 == response.status_code
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_get_one_question(jwt_access_admin_token):
+    access = await jwt_access_admin_token
     response = await send_get(
         url="/api/v1/admin/question/2346/",
-        headers={
-            "Authorization": f"Bearer {access}",
-        },
+        headers={"Authorization": f"Bearer {access}"},
     )
     assert 200 == response.status_code
     assert "Лучший бомбардир ПСЖ за всю историю?" == response.json()["text"]
@@ -384,50 +394,82 @@ async def test_get_one_question(jwt_access_token):
 
 
 @pytest.mark.asyncio(loop_scope="session")
-async def test_get_complaints(jwt_access_token):
+async def test_get_one_question_perms(jwt_access_token):
     access = await jwt_access_token
     response = await send_get(
+        url="/api/v1/admin/question/2346/",
+        headers={"Authorization": f"Bearer {access}"},
+    )
+    assert 403 == response.status_code
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_get_complaints(jwt_access_admin_token):
+    access = await jwt_access_admin_token
+    response = await send_get(
         url="/api/v1/admin/complaint/",
-        headers={
-            "Authorization": f"Bearer {access}",
-        },
+        headers={"Authorization": f"Bearer {access}"},
     )
     assert 200 == response.status_code
 
 
 @pytest.mark.asyncio(loop_scope="session")
-async def test_delete_complaint(jwt_access_token):
+async def test_get_complaints_perms(jwt_access_token):
     access = await jwt_access_token
+    response = await send_get(
+        url="/api/v1/admin/complaint/",
+        headers={"Authorization": f"Bearer {access}"},
+    )
+    assert 403 == response.status_code
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_delete_complaint(jwt_access_admin_token):
+    access = await jwt_access_admin_token
     response = await send_delete(
         url="/api/v1/admin/complaint/1/",
-        headers={
-            "Authorization": f"Bearer {access}",
-        },
+        headers={"Authorization": f"Bearer {access}"},
     )
     assert 204 == response.status_code
 
 
 @pytest.mark.asyncio(loop_scope="session")
-async def test_get_profiles(jwt_access_token):
+async def test_delete_complaint_perms(jwt_access_token):
     access = await jwt_access_token
+    response = await send_delete(
+        url="/api/v1/admin/complaint/1/",
+        headers={"Authorization": f"Bearer {access}"},
+    )
+    assert 403 == response.status_code
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_get_profiles(jwt_access_admin_token):
+    access = await jwt_access_admin_token
     response = await send_get(
         url="/api/v1/admin/profiles/?page=1&limit=2",
-        headers={
-            "Authorization": f"Bearer {access}",
-        },
+        headers={"Authorization": f"Bearer {access}"},
     )
     assert 200 == response.status_code
     assert 2 == len(response.json()["items"])
 
 
 @pytest.mark.asyncio(loop_scope="session")
-async def test_search_profiles(jwt_access_token):
+async def test_get_profiles_perms(jwt_access_token):
     access = await jwt_access_token
     response = await send_get(
+        url="/api/v1/admin/profiles/?page=1&limit=2",
+        headers={"Authorization": f"Bearer {access}"},
+    )
+    assert 403 == response.status_code
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_search_profiles(jwt_access_admin_token):
+    access = await jwt_access_admin_token
+    response = await send_get(
         url="/api/v1/admin/profiles/?page=1&limit=2&search=знайка",
-        headers={
-            "Authorization": f"Bearer {access}",
-        },
+        headers={"Authorization": f"Bearer {access}"},
     )
     assert 200 == response.status_code
     assert 2 == len(response.json()["items"])
@@ -435,13 +477,31 @@ async def test_search_profiles(jwt_access_token):
 
 
 @pytest.mark.asyncio(loop_scope="session")
-async def test_reset_profile_name(jwt_access_token):
+async def test_search_profiles_perms(jwt_access_token):
     access = await jwt_access_token
+    response = await send_get(
+        url="/api/v1/admin/profiles/?page=1&limit=2&search=знайка",
+        headers={"Authorization": f"Bearer {access}"},
+    )
+    assert 403 == response.status_code
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_reset_profile_name(jwt_access_admin_token):
+    access = await jwt_access_admin_token
     response = await send_post(
         url="/api/v1/admin/profiles/reset_name/2/",
-        headers={
-            "Authorization": f"Bearer {access}",
-        },
+        headers={"Authorization": f"Bearer {access}"},
     )
     assert 200 == response.status_code
     assert "Игрок-2" == response.json()["name"]
+
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_reset_profile_name_perms(jwt_access_token):
+    access = await jwt_access_token
+    response = await send_post(
+        url="/api/v1/admin/profiles/reset_name/2/",
+        headers={"Authorization": f"Bearer {access}"},
+    )
+    assert 403 == response.status_code

@@ -105,6 +105,18 @@ class IQuestionService(IRepository, ABC):
         :return:        Вопрос.
         """
 
+    @abstractmethod
+    async def bulk_create(
+        self, data: list[dict[str, str]]
+    ) -> list[QuestionEntity]:
+        """
+        Массовое создание вопросов.
+
+        :param data:    Список json'ов с данными для создания вопроса.
+                        Каждый вопрос должен содержать text, published.
+        :return:        Список созданных вопросов.
+        """
+
 
 @dataclass
 class IAnswerService(ABC):
